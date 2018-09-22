@@ -31,6 +31,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
+version = 1.0
 
 def initialize():
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
@@ -285,14 +286,14 @@ Current group name: '+str(self.groupName)+'\n')
         # credit "jfs" of stackoverflow for these 2 functions, which I modified for my needs
         # supported operators
 
-        self.version=1.0
+
         self.operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor, #ast.BitXor: op.pow would remap ^ to pow()
              ast.USub: op.neg}
         #add some constants and references that might be useful for users
         self.constants = {'pi':math.pi,'e':math.e, 'phi':16180339887e-10, 'golden':16180339887e-10,'golden_ratio':16180339887e-10,
              'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4}
-        self.references= {'version':self.version}
+        self.references= {'version':'version'}
         self.maths = {'cos':'cos','acos':'acos','tan':'tan','atan':'atan','sin':'sin','asin':'asin','log':'log','tlog':'log10'}
 
 
@@ -323,7 +324,7 @@ Current group name: '+str(self.groupName)+'\n')
             if node.id in self.constants:
                 return self.constants[node.id]
             elif node.id in self.references: #e.g. references[node.id] is a string, e.g. 'scale_factor' representing global variable scale_factor
-                return self.references[node.id]
+                return globals()[self.references[node.id]]
             elif node.id[:3] in self.maths:
                 func = getattr(math, self.maths[node.id[:3]])
                 opstring = node.id[3:].replace(self.SEPARATOR_STANDIN,self.SEPARATOR)
