@@ -223,34 +223,34 @@ Current group name: '+str(self.groupName)+'\n')
                 if 'dd' in name[:2] or 'Dd' in name[:2]:
                     name = name[2:] #strip dd temporarily
                 cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-                name = cap(name) #capitalize first character to add space between dd and name
-                tip=item #e.g. App::PropertyFloat
+                self.propertyName = cap(name) #capitalize first character to add space between dd and name
+                self.tooltip=item #e.g. App::PropertyFloat
                 val=None
                 hasVal = False
                 if ',' in name:
                     split = name.split(',')
-                    name = split[0]
+                    self.propertyName = split[0]
                     if len(split[1])>0:
                         self.groupName = split[1]
                     if len(split)>2:
-                        tip = split[2]
+                        self.tooltip = split[2]
                     if len(split)>3:
                         val = split[3]
                         hasVal = True
-                    p = obj.addProperty('App::Property'+item,'dd'+name,str(self.groupName),tip)
-                    if hasVal:
-                        import math
+                p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
+                if hasVal:
+                    import math
+                    try:
+                        atr = self.eval_expr(val)
+                    except:
                         try:
-                            atr = self.eval_expr(val)
-                        except:
-                            try:
-                                atr = val
-                            except:
-                                FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
-                        try:
-                            setattr(p,'dd'+name,atr)
+                            atr = val
                         except:
                             FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                    try:
+                        setattr(p,'dd'+name,atr)
+                    except:
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
                           
                 obj.touch()
                 doc.recompute()
@@ -274,6 +274,9 @@ Current group name: '+str(self.groupName)+'\n')
         import ast, locale
         import operator as op
         self.groupName="DynamicData"
+        self.propertyName="prop"
+        self.tooltip="tip"
+
         self.SEPARATOR = locale.localeconv()['decimal_point']
         self.SEPARATOR_STANDIN = 'p'
         self.DEGREES_INDICATOR = 'd'
