@@ -201,7 +201,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if not ok:
             return
         else:
-            name,ok = QtGui.QInputDialog.getText(window,'Property Name', 
+            self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
 'Enter Property Name,[group name],[tool tip]\n\
 \n\
 (\'dd\' will be prepended to the name)\n\
@@ -217,18 +217,18 @@ radius,piston properties,radius of the piston head\n\
 radius,,radius of the piston head\n\
 \n\
 Current group name: '+str(self.groupName)+'\n')
-            if not ok or len(name)==0:
+            if not ok or len(self.propertyName)==0:
                 return
             else:
-                if 'dd' in name[:2] or 'Dd' in name[:2]:
-                    name = name[2:] #strip dd temporarily
+                if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
+                    self.propertyName = self.propertyName[2:] #strip dd temporarily
                 cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-                self.propertyName = cap(name) #capitalize first character to add space between dd and name
+                self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
                 self.tooltip=item #e.g. App::PropertyFloat
                 val=None
                 hasVal = False
-                if ',' in name:
-                    split = name.split(',')
+                if ',' in self.propertyName:
+                    split = self.propertyName.split(',')
                     self.propertyName = split[0]
                     if len(split[1])>0:
                         self.groupName = split[1]
@@ -239,7 +239,6 @@ Current group name: '+str(self.groupName)+'\n')
                         hasVal = True
                 p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
                 if hasVal:
-                    import math
                     try:
                         atr = self.eval_expr(val)
                     except:
@@ -248,7 +247,7 @@ Current group name: '+str(self.groupName)+'\n')
                         except:
                             FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
                     try:
-                        setattr(p,'dd'+name,atr)
+                        setattr(p,'dd'+self.propertyName,atr)
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
                           
