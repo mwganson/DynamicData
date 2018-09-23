@@ -315,7 +315,7 @@ Current group name: '+str(self.groupName)+'\n')
         elif node.id:
             if node.id in self.constants:
                 return self.constants[node.id]
-            elif node.id in self.references: #e.g. references[node.id] is a string, e.g. 'scale_factor' representing global variable scale_factor
+            elif node.id in self.references: #e.g. references[node.id] is a string, e.g. 'version' representing global variable version
                 return globals()[self.references[node.id]]
             elif node.id[:3] in self.maths:
                 func = getattr(math, self.maths[node.id[:3]])
