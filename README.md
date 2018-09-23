@@ -5,7 +5,7 @@
 
 #### Installation
 
-Starting from FreeCAD 0.17 it can be installed via the [Addon Manager](https://github.com/FreeCAD/FreeCAD-addons) (from Tools menu)
+Starting from FreeCAD 0.17 it can be <strike>installed via the [Addon Manager]</strike>(https://github.com/FreeCAD/FreeCAD-addons) (from Tools menu)
 
 #### Release notes: 
 
