@@ -80,14 +80,6 @@ class DynamicDataSettingsCommandClass(object):
 #Gui.addCommand("DynamicDataKeepToolbar", DynamicDataKeepToolbarCommandClass())
 
 
-
-
-
-
-
-
-
-
 ####################################################################################
 # Create the dynamic data container object
 
@@ -203,19 +195,19 @@ class DynamicDataAddPropertyCommandClass(object):
             return
         else:
             self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
-'Enter Property Name,[group name],[tool tip]\n\
+'Enter Property Name,[group name],[tool tip],[value]\n\
 \n\
 (\'dd\' will be prepended to the name)\n\
 \n\
 (Separate with commas)\n\
 (Use 2 commas (,,) to keep same group name)\n\
-(Group name and tool tip are optional)\n\
+(Group name, tool tip, value are optional)\n\
 \n\
 Examples:\n\
 \n\
 radius\n\
-radius,piston properties,radius of the piston head\n\
-radius,,radius of the piston head\n\
+depth,base dimensions,depth of base plate,50\n\
+width,,width of base plate,150\n\
 \n\
 Current group name: '+str(self.groupName)+'\n')
             if not ok or len(self.propertyName)==0:
@@ -405,6 +397,9 @@ class DynamicDataRemovePropertyCommandClass(object):
             return False
         selection = Gui.Selection.getSelectionEx()
         if not selection:
+            return False
+        obj = selection[0].Object
+        if len(self.getProperties(obj))==0:
             return False
         if not hasattr(selection[0].Object,"DynamicData"):
             return False
