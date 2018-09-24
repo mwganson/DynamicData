@@ -1,7 +1,10 @@
 # DynamicData Workbench
 
 #### Developer:
-* Mark Ganson &lt;TheMarkster&gt;: mwganson at gmail (https://github.com/mwganson)  
+Mark Ganson &lt;TheMarkster&gt;: mwganson at gmail (https://github.com/mwganson)  
+
+#### Screenshot:
+Todo
 
 #### Installation
 
