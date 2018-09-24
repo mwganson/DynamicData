@@ -41,7 +41,15 @@ depth;base dimensions;;32.5<br/>
 <br/>
 New property has name = "ddDepth" in group name "base dimensions" with no tooltip and an initial value of 32.5 mm (assuming you are using mm as your default units).<br/>
 <br/>
-length
+length<br/>
+<br/>
+New property has name = "ddLength" in group named "DefaultGroup" (unless the group name default has been changed by previously naming a new group name for a previous property this session) with no tooltip and initial value of 0 (or suitable initial value for other property types).<br/>
+<br/>
+The initial value has some fairly good expression evaluation built-in, but it doesn't use the expression engine to do the evaluations.  It uses its own expression evaluator.  If it fails, no problem, you will get a warning message in the report view and status bar, and you can just set your desired value using the property editor.<br/>
+<br/>
+diameter;;;25.4*20*2<br/>
+<br/>
+
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
