@@ -71,7 +71,9 @@ Example: myInchValue;myGroup;myTip;10*inches <br/>
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon"><br/>
 <br/>
-Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go.<br/>
+Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. <b>(Care must be taken when removing properties because this action cannot be undone.)</b><br/>
+<br/>
+<img src="remove_property_scr.png" alt="remove property screenshot"><br/>
 <br/>
 ### Settings
 <img src="Resources/icons/Settings.png" alt="icon">
