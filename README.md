@@ -13,10 +13,15 @@ Creates a new DynamicData container object.
 
 ### Add Property
 <img src="Resources/icons/AddProperty.png" alt="icon">
-Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
-
-
+Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)<br/>
+<br/>
+Adding custom properties is a 2-step process.  First step is to select the property type from the drop down list.<br/>
+<br/>
 <img src="add_property_scr.png" alt="add property screenshot">
+<br/>
+Second step is to give your new property a name and (optionally) a group name, tooltip, an initial value.</br>
+<br/>
+<img src="add_property_scr2.png" alt="add property screenshot 2">
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
