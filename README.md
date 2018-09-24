@@ -13,7 +13,8 @@ Creates a new DynamicData container object.
 
 ### Add Property
 <img src="Resources/icons/AddProperty.png" alt="icon">
-Adds a new custom property to the selected DynamicData container object.  If no DynamicData object is selected in the tree view this command will be disabled.
+Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
+
 
 <img src="add_property_scr.png" alt="add property screenshot">
 
