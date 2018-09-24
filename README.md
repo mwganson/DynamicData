@@ -5,7 +5,8 @@
 
 With this workbench you can create custom FeaturePython objects (herein referred to as DynamicData dd objects) to serve as containers for custom properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.  (But without the workbench installed those other users will not be able to add/remove properties unless it is done via scripting.)
 
-## Commands
+##Warning Message:
+You might see this warning message in the report view: "Enumeration index -1 is out of range, ignore it".  This is a FreeCAD warning related to string properties, which can be safely ignored, as the warning itself suggests.
 
 ### Create Object
 <img src="Resources/icons/CreateObject.png" alt="icon">
