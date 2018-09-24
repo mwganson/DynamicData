@@ -49,7 +49,8 @@ The initial value has some fairly good expression evaluation built-in, but it do
 <br/>
 diameter;;;25.4*20*2<br/>
 <br/>
-
+Sets new property name = "ddDiameter" using default group name, no tooltip, and setting initial value to 25.4 * 20 * 2, which could be useful if you wanted to set a diameter of 40 inches, given a radius of 20 inches and your default units is set for mm.<br/>
+<br/>
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
