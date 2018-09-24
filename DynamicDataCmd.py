@@ -99,12 +99,12 @@ class DynamicDataCreateObjectCommandClass(object):
  
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        doc.openTransaction("CreateObject")
+        #doc.openTransaction("CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
         doc.recompute()
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
         doc.recompute()
-        doc.commitTransaction()
+        #doc.commitTransaction()
         a.touch()
         doc.recompute()
         Gui.Selection.clearSelection()
@@ -196,7 +196,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if not 'FeaturePython' in str(obj.TypeId):
             FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
             return
-        doc.openTransaction("AddProperty")
+        #doc.openTransaction("AddProperty")
         #add the property
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
@@ -272,7 +272,7 @@ Current group name: '+str(self.groupName)+'\n')
                 obj.touch()
                 doc.recompute()
 
-        doc.commitTransaction()
+        #doc.commitTransaction()
         doc.recompute()
         return
    
@@ -397,7 +397,7 @@ class DynamicDataRemovePropertyCommandClass(object):
         if not selection:
             return
         obj = selection[0].Object
-        doc.openTransaction("RemoveProperty")
+        #doc.openTransaction("RemoveProperty")
         #remove the property
         window = QtGui.QApplication.activeWindow()
         items = self.getProperties(obj)
@@ -414,7 +414,7 @@ class DynamicDataRemovePropertyCommandClass(object):
         else:
             obj.removeProperty(item)
         doc.recompute()
-        doc.commitTransaction()
+        #doc.commitTransaction()
         return
    
     def IsActive(self):
