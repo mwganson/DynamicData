@@ -119,10 +119,13 @@ class DynamicDataCreateObjectCommandClass(object):
         return True
 
     def getHelp(self):
-        return ["Created with DynamicData workbench",
-                "Workbench not required for use",
-                "only for adding/removing properties",
-                "which can be done via python console",
+        return ["Created with the DynamicData workbench.",
+                "This is a simple container object built",
+                "for holding custom properties.  Worbench",
+                "installation is not required to use the",
+                "container object -- but is required for",
+                "adding / removing custom properties.",
+                "(But this can also be done via scripting.)"
 
 
 ]
@@ -228,7 +231,7 @@ Current group name: '+str(self.groupName)+'\n')
                 hasVal = False
                 if ';' in self.propertyName:
                     split = self.propertyName.split(';')
-                    self.propertyName = split[0]
+                    self.propertyName = split[0].replace(' ','_')
                     if len(split)>1: #has a group name
                         if len(split[1])>0: #allow for ;; empty string to mean use current group name
                             self.groupName = split[1]
@@ -249,7 +252,7 @@ Current group name: '+str(self.groupName)+'\n')
                     try:
                         setattr(p,'dd'+self.propertyName,atr)
                     except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
                           
                 obj.touch()
                 doc.recompute()
