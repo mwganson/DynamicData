@@ -5,6 +5,10 @@
 
 With this workbench you can create custom FeaturePython objects (herein referred to as DynamicData dd objects) to serve as containers for custom properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.  (But without the workbench installed those other users will not be able to add/remove properties unless it is done via scripting.)
 
+### Example Video:
+
+<video src="Resources/media/example_vid.webm">
+
 ### Warning Message:
 You might see this warning message in the report view: <b>"Enumeration index -1 is out of range, ignore it".</b>  This is a FreeCAD warning related to string properties, which can be safely ignored, as the warning itself suggests.
 
@@ -18,15 +22,15 @@ Adds a new custom property to the selected DynamicData container object.  (If no
 <br/>
 Adding custom properties is a 2-step process.  First step is to select the property type from the drop down list.<br/>
 <br/>
-<img src="add_property_scr.png" alt="add property screenshot">
+<img src="Resources/media/add_property_scr.png" alt="add property screenshot">
 <br/>
 Second step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.</br>
 <br/>
-<img src="add_property_scr2.png" alt="add property screenshot 2"><br/>
+<img src="Resources/media/add_property_scr2.png" alt="add property screenshot 2"><br/>
 <br/>
 All property names are prepended with "dd" automatically and the first letter is capitalized.  Thus, a name entered of "length" would be converted to "ddLength" and get displayed in the property view as "dd Length".  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "=dd.dd" (or click the expression engine "fx" icon and enter "dd.dd") to bring up a list of available custom properties: <br/>
 <br/>
-<img src="dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
+<img src="Resources/media/dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
 <br/>
 In the same line edit widget where you enter the name of the property you may (optionally) include a new group name, tooltip, and set an initial value for the property.  Separate these with semicolons (;).  Some examples: <br/>
 <br/>
@@ -60,7 +64,7 @@ Here is an example of initializing a FloatList type with a list of floating poin
 <br/>
 <b>mylist;group name for lists;my tooltip;0;2;3.1;e;4</b><br/>
 <br/>
-<img src="list_example_scr.png" alt="list example screenshot">
+<img src="Resources/media/list_example_scr.png" alt="list example screenshot">
 <br/>
 Did you notice the value 'e'?  This is one of the constants the built-in expression evaluator understands to mean Euler's constant, E, the root of natural logarithms: 2.718...  Other constants recognized: pi (3.14...), phi (aliases: golden, golden ratio = 1.6180339887), inch (aliases: in, inches = 2.54), and thou (0.0254).  You would use inches, inch, and thou by multiplying them by a value you enter in inches where your default units in FreeCAD is set as mm.  <br/>
 <br/>
@@ -74,7 +78,7 @@ Example: <b>myInchValue;myGroup;myTip;10*inches</b> <br/>
 <br/>
 Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. <b>(Care must be taken when removing properties because this action cannot be undone.)</b><br/>
 <br/>
-<img src="remove_property_scr.png" alt="remove property screenshot"><br/>
+<img src="Resources/media/remove_property_scr.png" alt="remove property screenshot"><br/>
 <br/>
 ### Settings
 <img src="Resources/icons/Settings.png" alt="icon">
