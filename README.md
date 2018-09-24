@@ -8,7 +8,7 @@ With this workbench you can create custom FeaturePython objects (herein referred
 ### Example Video:
 <video width="320" height="240" controls>
 <source src="https://raw.githubusercontent.com/mwganson/DynamicData/master/Resources/media/example_vid.webm" type="video/webm">
-Your browser does not support the video tag.
+  <a href="Resources/media/example_vid.webm">example_vid.webm</a><br/>
 </video>
 
 
