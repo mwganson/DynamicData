@@ -19,9 +19,13 @@ Adding custom properties is a 2-step process.  First step is to select the prope
 <br/>
 <img src="add_property_scr.png" alt="add property screenshot">
 <br/>
-Second step is to give your new property a name and (optionally) a group name, tooltip, an initial value.</br>
+Second step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.</br>
 <br/>
-<img src="add_property_scr2.png" alt="add property screenshot 2">
+<img src="add_property_scr2.png" alt="add property screenshot 2"><br/>
+<br/>
+All property names are prepended with "dd" automatically.  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "dd.dd" to bring up a list of available custom properties: <br/>
+<br/>
+<img src="dd_constraint_reference_scr.png" alt="dd constraint reference screenshot">
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
