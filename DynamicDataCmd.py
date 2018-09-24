@@ -123,7 +123,7 @@ class DynamicDataCreateObjectCommandClass(object):
                 "This is a simple container object built",
                 "for holding custom properties.  Worbench",
                 "installation is not required to use the",
-                "container object -- but is required for",
+                "container object -- instead only for",
                 "adding / removing custom properties.",
                 "(But this can also be done via scripting.)"
 
@@ -275,7 +275,7 @@ Current group name: '+str(self.groupName)+'\n')
     def __init__(self):
         import ast, locale
         import operator as op
-        self.groupName="DynamicData"
+        self.groupName="DefaultGroup"
         self.propertyName="prop"
         self.tooltip="tip"
 
