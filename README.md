@@ -77,7 +77,15 @@ Use this tool to remove a property previously added using the Add Property tool.
 <br/>
 ### Settings
 <img src="Resources/icons/Settings.png" alt="icon">
-Todo
+Use this to change workbench settings.
+
+#### Keep Toolbar
+Setting this to True (default is True) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.<br/>
+<br/>
+You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)<br/>
+<br/>
+There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
+<br/>
 
 
 
