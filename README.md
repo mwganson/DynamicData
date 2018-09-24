@@ -61,6 +61,8 @@ mylist;group name for lists;my tooltip;0;2;3.1;e;4<br/>
 <br/>
 <img src="list_example_scr.png" alt="list example screenshot">
 <br/>
+Did you notice the value 'e'?  This is one of the constants the built-in expression evaluator understands to mean Euler's constant, E, the root of natural logarithms: 2.718...  Other constants recognized: pi (3.14...), phi (aliases: golden, golden ratio = 1.6180339887), inch (aliases: in, inches = 2.54), and thou (0.0254).  You would use inches, inch, and thou by multiplying them by a value you enter in inches where your default units in FreeCAD is set as mm.  Example: myInchValue;myGroup;myTip;10*inches  (But, if you use 'in' instead of inch or inches, just use it as you would normally in FreeCAD's expression engine: 6in or 6 in.)<br/>
+<br/>
 
 
 ### Remove Property
