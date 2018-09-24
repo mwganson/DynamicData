@@ -53,7 +53,16 @@ Sets new property name = "ddDiameter" using default group name, no tooltip, and 
 <br/>
 Using group names to organize your properties can be very useful where you have lots of properties in your model.  There is no way at this time to edit group names; they must be given at the time the property is added to the container object.  Properties will be listed in alphabetical order within the group name heirarchy.<br/>
 <br/>
-Tooltips can be very useful as reminders to yourself (and to others) of the use of the property.  This information is displayed when the user hovers the mouse over the property.  You can also include multi-line descriptions in the form of StringList property types.  (List types can be set to initial values by separating the initial values with commas.)
+Tooltips can be very useful as reminders to yourself (and to others) of the use of the property.  This information is displayed when the user hovers the mouse over the property.  You can also include multi-line descriptions in the form of StringList property types.  (List types can be set to initial values by separating the initial values with semicolons.)<br/>
+<br/>
+Here is an example of initializing a FloatList type with a list of floating point values.  First, select FloatList as the property type, then when naming the new property:<br/>
+<br/>
+mylist;group name for lists;my tooltip;0;2;3.1;e;4<br/>
+<br/>
+<img src="list_example_scr.png" alt="list example screenshot">
+<br/>
+
+
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
 Todo
