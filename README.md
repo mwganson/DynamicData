@@ -57,7 +57,10 @@ Tooltips can be very useful as reminders to yourself (and to others) of the use 
 <br/>
 Here is an example of initializing a FloatList type with a list of floating point values.  First, select FloatList as the property type, then when naming the new property:<br/>
 <br/>
-mylist;group name for lists;my tooltip;0;2;3.1;e;4
+mylist;group name for lists;my tooltip;0;2;3.1;e;4<br/>
+<br/>
+<img src="list_example_scr.png" alt="list example screenshot">
+<br/>
 
 
 ### Remove Property
