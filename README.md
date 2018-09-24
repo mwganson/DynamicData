@@ -51,13 +51,15 @@ diameter;;;25.4*20*2<br/>
 <br/>
 Sets new property name = "ddDiameter" using default group name, no tooltip, and setting initial value to 25.4 * 20 * 2, which could be useful if you wanted to set a diameter of 40 inches, given a radius of 20 inches and your default units is set for mm.<br/>
 <br/>
-
+Using group names to organize your properties can be very useful where you have lots of properties in your model.  There is no way at this time to edit group names; they must be given at the time the property is added to the container object.  Properties will be listed in alphabetical order within the group name heirarchy.<br/>
+<br/>
+Tooltips can be very useful as reminders to yourself (and to others) of the use of the property.  This information is displayed when the user hovers the mouse over the property.  You can also include multi-line descriptions in the form of StringList property types.  (List types can be set to initial values by separating the initial values with commas.)
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
-
+Todo
 ### Settings
 <img src="Resources/icons/Settings.png" alt="icon">
-
+Todo
 
 
 
