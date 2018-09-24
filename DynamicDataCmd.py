@@ -195,19 +195,19 @@ class DynamicDataAddPropertyCommandClass(object):
             return
         else:
             self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
-'Enter Property Name,[group name],[tool tip],[value]\n\
+'Enter Property Name;[group name];[tool tip];[value]\n\
 \n\
 (\'dd\' will be prepended to the name)\n\
 \n\
-(Separate with commas)\n\
-(Use 2 commas (,,) to keep same group name)\n\
-(Group name, tool tip, value are optional)\n\
+(Separate with semicolons)\n\
+(Use 2 semicolons (;;) to keep same group name)\n\
+(Group name; tool tip; value are optional)\n\
 \n\
 Examples:\n\
 \n\
 radius\n\
-depth,base dimensions,depth of base plate,50\n\
-width,,width of base plate,150\n\
+depth;base dimensions;depth of base plate;50\n\
+width;;width of base plate;150\n\
 \n\
 Current group name: '+str(self.groupName)+'\n')
             if not ok or len(self.propertyName)==0:
@@ -220,14 +220,15 @@ Current group name: '+str(self.groupName)+'\n')
                 self.tooltip=item #e.g. App::PropertyFloat
                 val=None
                 hasVal = False
-                if ',' in self.propertyName:
-                    split = self.propertyName.split(',')
+                if ';' in self.propertyName:
+                    split = self.propertyName.split(';')
                     self.propertyName = split[0]
-                    if len(split[1])>0:
-                        self.groupName = split[1]
-                    if len(split)>2:
+                    if len(split)>1: #has a group name
+                        if len(split[1])>0: #allow for ;; empty string to mean use current group name
+                            self.groupName = split[1]
+                    if len(split)>2: #has a tooltip
                         self.tooltip = split[2]
-                    if len(split)>3:
+                    if len(split)>3: #has a value
                         val = split[3]
                         hasVal = True
                 p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
