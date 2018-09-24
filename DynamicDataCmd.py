@@ -149,6 +149,7 @@ class DynamicDataAddPropertyCommandClass(object):
         "IntegerList",
         "Precision",
         "String",
+        "StringList",
         "Angle",
         "Distance",
         "Path",
