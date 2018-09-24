@@ -229,6 +229,7 @@ Current group name: '+str(self.groupName)+'\n')
                 self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
                 self.tooltip=item #e.g. App::PropertyFloat
                 val=None
+                vals=[]
                 hasVal = False
                 if ';' in self.propertyName:
                     split = self.propertyName.split(';')
@@ -238,11 +239,20 @@ Current group name: '+str(self.groupName)+'\n')
                             self.groupName = split[1]
                     if len(split)>2: #has a tooltip
                         self.tooltip = split[2]
-                    if len(split)>3: #has a value
+                    if len(split)==4: #has a value
                         val = split[3]
                         hasVal = True
+                    if len(split)>4 and 'List' in item: #multiple values for list type property
+                        hasVal = True
+                        for ii in range(3,len(split)):
+                            try:
+                                if len(split[ii])>0:
+                                    vals.append(self.eval_expr(split[ii]))
+                            except:
+                                vals.append(split[ii])
+
                 p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
-                if hasVal:
+                if hasVal and len(vals)==0:
                     try:
                         atr = self.eval_expr(val)
                     except:
@@ -254,7 +264,11 @@ Current group name: '+str(self.groupName)+'\n')
                         setattr(p,'dd'+self.propertyName,atr)
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
-                          
+                elif hasVal and len(vals)>0:
+                    try:
+                        setattr(p,'dd'+self.propertyName,vals)
+                    except:
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
                 obj.touch()
                 doc.recompute()
 
