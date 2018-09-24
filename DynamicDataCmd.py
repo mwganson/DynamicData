@@ -93,7 +93,7 @@ class DynamicDataCreateObjectCommandClass(object):
     """Create Object command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.png') , # the name of a svg file available in the resources
+        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.png') ,
             'MenuText': "&Create Object" ,
             'ToolTip' : "Create the DynamicData object to contain the custom properties"}
  
@@ -181,7 +181,7 @@ class DynamicDataAddPropertyCommandClass(object):
         "PlacementLink",)
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') , # the name of a svg file available in the resources
+        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
             'MenuText': "&Add Property" ,
             'ToolTip' : "Add a custom property to the DynamicData object"}
 
@@ -361,7 +361,7 @@ class DynamicDataRemovePropertyCommandClass(object):
     """Remove Property Command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.png') , # the name of a svg file available in the resources
+        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.png') ,
             'MenuText': "&Remove Property" ,
             'ToolTip' : "Remove a custom property from the DynamicData object"}
 
