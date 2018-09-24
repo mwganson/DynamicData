@@ -9,9 +9,14 @@ With this workbench you can create custom FeaturePython objects (herein referred
 
 ### Create Object
 <img src="Resources/icons/CreateObject.png" alt="icon">
+Creates a new DynamicData container object.
 
 ### Add Property
 <img src="Resources/icons/AddProperty.png" alt="icon">
+Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
+
+
+<img src="add_property_scr.png" alt="add property screenshot">
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.png" alt="icon">
