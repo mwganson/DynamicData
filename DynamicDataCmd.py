@@ -119,7 +119,7 @@ class DynamicDataCreateObjectCommandClass(object):
         return True
 
     def getHelp(self):
-        return ["Created with DynamicData v"+str(version)+" workbench.",
+        return ["Created with DynamicData (v"+str(version)+") workbench.",
                 "This is a simple container object built",
                 "for holding custom properties.  Worbench",
                 "installation is not required to use the",
