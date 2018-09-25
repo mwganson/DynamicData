@@ -27,7 +27,7 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2018.09.24"
-__version__ = "1.0"
+__version__ = "1.1"
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
