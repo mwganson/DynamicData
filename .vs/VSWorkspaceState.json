@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Resources",
+    "\\Resources\\media"
   ],
-  "SelectedNode": "\\DynamicDataCmd.py",
+  "SelectedNode": "\\Init.py",
   "PreviewInSolutionExplorer": false
 }

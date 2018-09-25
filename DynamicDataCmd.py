@@ -141,48 +141,48 @@ class DynamicDataAddPropertyCommandClass(object):
 
 
     def getPropertyTypes(self):
-        return (
-        "Length",
-        "Float",
-        "FloatList",
-        "Integer",
-        "IntegerList",
-        "Precision",
-        "String",
-        "StringList",
+        return [
+        "Acceleration",
         "Angle",
-        "Distance",
-        "Path",
-        "File",
-        "FileIncluded",
-        "IntegerConstraint",
-        "Percent",
-        "FloatConstraint",
-        "Font",
+        "Area",
         "Bool",
         "Color",
-        "MaterialList",
-        "Quantity",
-        "QuantityConstraint",
-        "Area",
-        "Volume",
-        "Speed",
-        "Acceleration",
+        "Direction",
+        "Distance",
+        "File",
+        "FileIncluded",
+        "Float",
+        "FloatConstraint",
+        "FloatList",
+        "Font",
         "Force",
-        "Pressure",
+        "Integer",
+        "IntegerConstraint",
+        "IntegerList",
+        "Length",
         "Link",
         "LinkChild",
         "LinkGlobal",
         "LinkList",
         "LinkListChild",
         "LinkListGlobal",
+        "MaterialList",
         "Matrix",
+        "Path",
+        "Percent",
+        "Placement",
+        "PlacementLink"
+        "Position",
+        "Precision",
+        "Pressure",
+        "Quantity",
+        "QuantityConstraint",
+        "Speed",
+        "String",
+        "StringList",
         "Vector",
         "VectorDistance",
-        "Position",
-        "Direction",
-        "Placement",
-        "PlacementLink",)
+        "Volume",]
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
@@ -200,10 +200,19 @@ class DynamicDataAddPropertyCommandClass(object):
         #add the property
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        for ii in range(4,-1,-1):
+            if self.mostRecentTypes[ii]:
+                items.insert(0,self.mostRecentTypes[ii])
+                pg.SetString('mru'+str(ii), self.mostRecentTypes[ii])
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',items,0,False)
         if not ok:
             return
         else:
+            if not item in self.mostRecentTypes:
+                self.mostRecentTypes.insert(0,item)
+            if len(self.mostRecentTypes)>5:
+                self.mostRecentTypes = self.mostRecentTypes[:5]
             self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
 'Enter Property Name;[group name];[tool tip];[value]\n\
 \n\
@@ -293,6 +302,10 @@ Current group name: '+str(self.groupName)+'\n')
         self.groupName="DefaultGroup"
         self.propertyName="prop"
         self.tooltip="tip"
+        self.mostRecentTypes = []
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        for ii in range(0,5):
+            self.mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
 
         self.SEPARATOR = locale.localeconv()['decimal_point']
         self.SEPARATOR_STANDIN = 'p'
