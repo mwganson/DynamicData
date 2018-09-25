@@ -37,7 +37,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
-version = 1.0
+version = 1.1
 
 def initialize():
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
@@ -119,7 +119,7 @@ class DynamicDataCreateObjectCommandClass(object):
         return True
 
     def getHelp(self):
-        return ["Created with the DynamicData workbench.",
+        return ["Created with DynamicData (v"+str(version)+") workbench.",
                 "This is a simple container object built",
                 "for holding custom properties.  Worbench",
                 "installation is not required to use the",
