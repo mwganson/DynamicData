@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2018.09.24"
-__version__ = "1.1"
+__date__    = "2018.09.25"
+__version__ = "1.11"
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -37,7 +37,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
-version = 1.1
+version = 1.11
 
 def initialize():
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
