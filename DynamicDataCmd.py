@@ -238,7 +238,7 @@ Current group name: '+str(self.groupName)+'\n')
                 self.propertyName = self.propertyName[2:] #strip dd temporarily
             cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
             self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
-            self.tooltip=item #e.g. App::PropertyFloat
+            self.tooltip='['+item+'] ' #e.g. [Float]
             val=None
             vals=[]
             hasVal = False
@@ -252,7 +252,7 @@ Current group name: '+str(self.groupName)+'\n')
                         self.groupName = split[1]
                 if len(split)>2: #has a tooltip
                     if len(split[2])>0:
-                        self.tooltip = split[2]
+                        self.tooltip = self.tooltip + split[2]
                 if len(split)==4: #has a value
                     val = split[3]
                     if len(val)>0:
