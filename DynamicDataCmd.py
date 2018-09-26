@@ -37,7 +37,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
-version = 1.11
+version = 1.12
 
 def initialize():
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
