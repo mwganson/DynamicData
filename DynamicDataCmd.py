@@ -229,57 +229,63 @@ depth;base dimensions;depth of base plate;50\n\
 width;;width of base plate;150\n\
 \n\
 Current group name: '+str(self.groupName)+'\n')
-            if not ok or len(self.propertyName)==0:
+            if not ok:
                 return
-            else:
-                if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
-                    self.propertyName = self.propertyName[2:] #strip dd temporarily
-                cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-                self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
-                self.tooltip=item #e.g. App::PropertyFloat
-                val=None
-                vals=[]
-                hasVal = False
-                if ';' in self.propertyName:
-                    split = self.propertyName.split(';')
-                    self.propertyName = split[0].replace(' ','_')
-                    if len(split)>1: #has a group name
-                        if len(split[1])>0: #allow for ;; empty string to mean use current group name
-                            self.groupName = split[1]
-                    if len(split)>2: #has a tooltip
-                        self.tooltip = split[2]
-                    if len(split)==4: #has a value
-                        val = split[3]
-                        hasVal = True
-                    if len(split)>4 and 'List' in item: #multiple values for list type property
-                        hasVal = True
-                        for ii in range(3,len(split)):
-                            try:
-                                if len(split[ii])>0:
-                                    vals.append(self.eval_expr(split[ii]))
-                            except:
-                                vals.append(split[ii])
+            if len(self.propertyName)==0:
+                self.propertyName=';;;;' #use defaults
 
-                p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
-                if hasVal and len(vals)==0:
-                    try:
-                        atr = self.eval_expr(val)
-                    except:
+            if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
+                self.propertyName = self.propertyName[2:] #strip dd temporarily
+            cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
+            self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
+            self.tooltip=item #e.g. App::PropertyFloat
+            val=None
+            vals=[]
+            hasVal = False
+            if ';' in self.propertyName:
+                split = self.propertyName.split(';')
+                self.propertyName = split[0].replace(' ','_')
+                if len(self.propertyName)==0:
+                    self.propertyName = self.defaultPropertyName
+                if len(split)>1: #has a group name
+                    if len(split[1])>0: #allow for ;; empty string to mean use current group name
+                        self.groupName = split[1]
+                if len(split)>2: #has a tooltip
+                    if len(split[2])>0:
+                        self.tooltip = split[2]
+                if len(split)==4: #has a value
+                    val = split[3]
+                    if len(val)>0:
+                        hasVal = True
+                if len(split)>4 and 'List' in item: #multiple values for list type property
+                    hasVal = True
+                    for ii in range(3,len(split)):
                         try:
-                            atr = val
+                            if len(split[ii])>0:
+                                vals.append(self.eval_expr(split[ii]))
                         except:
-                            FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                            vals.append(split[ii])
+
+            p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
+            if hasVal and len(vals)==0:
+                try:
+                    atr = self.eval_expr(val)
+                except:
                     try:
-                        setattr(p,'dd'+self.propertyName,atr)
+                        atr = val
                     except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
-                elif hasVal and len(vals)>0:
-                    try:
-                        setattr(p,'dd'+self.propertyName,vals)
-                    except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
-                obj.touch()
-                doc.recompute()
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                try:
+                    setattr(p,'dd'+self.propertyName,atr)
+                except:
+                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
+            elif hasVal and len(vals)>0:
+                try:
+                    setattr(p,'dd'+self.propertyName,vals)
+                except:
+                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
+            obj.touch()
+            doc.recompute()
 
         #doc.commitTransaction()
         doc.recompute()
@@ -300,7 +306,7 @@ Current group name: '+str(self.groupName)+'\n')
         import ast, locale
         import operator as op
         self.groupName="DefaultGroup"
-        self.propertyName="prop"
+        self.defaultPropertyName="Prop"
         self.tooltip="tip"
         self.mostRecentTypes = []
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
