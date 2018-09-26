@@ -102,7 +102,8 @@ There is also an option in the Edit -> Preferences -> Start -> Options section t
 
 
 #### Release notes: 
-
+* 2018.09.25 (version 1.11)<br/>
+** bugfixes, handle empty names better
 * 2018.09.24 (version 1.1)<br/> 
 ** Add 5 most recently used types to top of property type list, sort remainder.<br/>
 ** Display version information in DynamicData string property <br/>
