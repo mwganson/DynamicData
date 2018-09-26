@@ -27,7 +27,7 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2018.09.25"
-__version__ = "1.11"
+__version__ = "1.12"
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -232,7 +232,7 @@ Current group name: '+str(self.groupName)+'\n')
             if not ok:
                 return
             if len(self.propertyName)==0:
-                self.propertyName=';;;;' #use defaults
+                self.propertyName=';;;' #use defaults
 
             if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
                 self.propertyName = self.propertyName[2:] #strip dd temporarily
@@ -251,7 +251,7 @@ Current group name: '+str(self.groupName)+'\n')
                     if len(split[1])>0: #allow for ;; empty string to mean use current group name
                         self.groupName = split[1]
                 if len(split)>2: #has a tooltip
-                    if len(split[2])>0
+                    if len(split[2])>0:
                         self.tooltip = self.tooltip + split[2]
                 if len(split)==4: #has a value
                     val = split[3]
