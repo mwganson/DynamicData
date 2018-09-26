@@ -251,7 +251,7 @@ Current group name: '+str(self.groupName)+'\n')
                     if len(split[1])>0: #allow for ;; empty string to mean use current group name
                         self.groupName = split[1]
                 if len(split)>2: #has a tooltip
-                    if len(split[2])>0:
+                    if len(split[2])>0
                         self.tooltip = self.tooltip + split[2]
                 if len(split)==4: #has a value
                     val = split[3]
