@@ -522,11 +522,7 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
             name = 'dd'+con['sketchLabel']+cap(con['constraintName'])
             dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
             setattr(dd,name,value)
-
-
-        window = QtGui.QApplication.activeWindow()
-
-
+        doc.recompute()
         return
    
     def IsActive(self):
