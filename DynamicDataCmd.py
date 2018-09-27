@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2018.09.25"
-__version__ = "1.12"
-version = 1.12
+__date__    = "2018.09.27"
+__version__ = "1.2"
+version = 1.2
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -44,6 +44,7 @@ def initialize():
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
     Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
+    Gui.addCommand("DynamicDataImportNamedConstraints",DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     pass
 
@@ -452,5 +453,107 @@ class DynamicDataRemovePropertyCommandClass(object):
         return True
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
+
+########################################################################################
+# Import named constraints from sketch
+
+
+class DynamicDataImportNamedConstraintsCommandClass(object):
+    """Import Named Constraints Command"""
+
+    def getProperties(self,obj):
+        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
+        prop = []
+        for p in obj.PropertiesList: 
+            if cell_regex.search(p):
+                prop.append(p)
+        return prop
+
+
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.png') ,
+            'MenuText': "&Import Named Constraints" ,
+            'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
+
+
+    def Activated(self):
+        sketches=[]
+        dd = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
+        if not selection:
+            return
+        for sel in selection:
+            obj = sel.Object
+            if "Sketcher.SketchObject" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore sketch labels ending in underscore
+                sketches.append(obj)
+            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                if not dd:
+                    dd = obj
+                else:
+                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
+                    return
+        if len(sketches)==0:
+            #todo: handle no selected sketches.  For now, just return
+            FreeCAD.Console.PrintMessage("DynamicData: No selected sketch(es)\n")
+            return
+        if not dd:
+            #todo: handle no dd object selected.  For now, just return
+            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
+            return
+        constraints=[]
+        for sketch in sketches:
+            for con in sketch.Constraints:
+                if not con.Name or con.Name[-1:]=='_': #ignore constraint names ending in underscore
+                    continue
+                constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label})
+                sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
+        if len(constraints)==0:
+            FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
+            return
+
+        for con in constraints:
+            propertyType = "Length"
+            value = con['value']
+            if con['constraintType']=='Angle':
+                propertyType="Angle"
+                value *= (180.0/math.pi)
+            name = 'dd'+con['sketchLabel']+cap(con['constraintName'])
+            dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
+            setattr(dd,name,value)
+
+
+        window = QtGui.QApplication.activeWindow()
+
+
+        return
+   
+    def IsActive(self):
+        sketches=[]
+        dd = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        if not selection:
+            return
+        for sel in selection:
+            obj = sel.Object
+            if "Sketcher.SketchObject" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore sketch labels ending in underscore
+                sketches.append(obj)
+            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                if not dd:
+                    dd = obj
+                else:
+                    return False #more than 1 dd object selected
+        if len(sketches)==0:
+            return False
+        if not dd:
+            return False
+        return True
+
+#Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
+
+
+
 
 initialize()
