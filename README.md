@@ -85,6 +85,21 @@ Use this tool to remove a property previously added using the Add Property tool.
 <br/>
 <img src="Resources/media/remove_property_scr.png" alt="remove property screenshot"><br/>
 <br/>
+### Import Named Constraints
+<img src="Resources/icons/ImportNamedConstraints.png" alt="icon"><br/>
+Use this to import named constraints from selected sketches as properties into selected dd object.<br/>
+<br/>
+<b>Warning: selected sketches will be modified.  All named constraints will reference the dd object property.</b><br/>
+<br/>
+To prevent a named constraint from being imported, append an underscore to the constraint name.  For example, a radius constraint named "myRadius_" will be ignored.  Similarly sketches with labels ending in an underscore are also ignored, e.g. "Sketch_" cannot be imported.<br/>
+<br/>
+To use this feature, select your dd object and one or more sketches to be imported, then invoke the command either from the menu or the toolbar.  New properties of type "Length" will be added to the dd object for each named constraint found except "Angle" type will be used for "Angle" constraint types.<br/>
+<br/>
+<b>Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.</b>  For example, suppose you have a constraint named "radius" with an expression "Sketch.length*2" with a value of 2.75mm.  This would create a new property in the dd object named ddSketchRadius with a value of 2.75mm and the constraint is now set to "dd.ddSketchRadius".  The upshot of this is if you change the value of the Sketch.length constraint the ddSketchRadius property is NOT updated.  In such cases you should alter the value of the ddSketchRadius property so that it once again references that length property, presumably now called ddSketchLength.<br/>
+<br/>
+It is suggested to make a backup copy of your .FCStd file before using this feature.<br/>
+<br/>
+
 ### Settings
 <img src="Resources/icons/Settings.png" alt="icon">
 Use this to change workbench settings.
