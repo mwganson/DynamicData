@@ -27,7 +27,9 @@ Adding custom properties is a 2-step process.  First step is to select the prope
 <br/>
 <img src="Resources/media/add_property_scr.png" alt="add property screenshot">
 <br/>
-Second step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.</br>
+Second step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
+<br/>
+<b>Note: as of version 1.12 all tooltips now get [Type] prepended.  Example, if type is "Length" the tooltip would be something like "[Length] my tooltip".</b></br>
 <br/>
 <img src="Resources/media/add_property_scr2.png" alt="add property screenshot 2"><br/>
 <br/>
