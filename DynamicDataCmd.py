@@ -514,7 +514,7 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
                 try:
                     sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+conName+' (skipping)\n')
+                    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
                     constraints.pop() #remove the constraint that gave the error
         if len(constraints)==0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
