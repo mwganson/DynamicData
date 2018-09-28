@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2018.09.27"
-__version__ = "1.2"
-version = 1.2
+__version__ = "1.21"
+version = 1.21
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -507,8 +507,15 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
             for con in sketch.Constraints:
                 if not con.Name or con.Name[-1:]=='_': #ignore constraint names ending in underscore
                     continue
+                if ' ' in con.Name:
+                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Spaces invalid in constraint names.\n')
+                    continue
                 constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label})
-                sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
+                try:
+                    sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
+                except:
+                    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+conName+' (skipping)\n')
+                    constraints.pop() #remove the constraint that gave the error
         if len(constraints)==0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
             return
@@ -520,8 +527,12 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
                 propertyType="Angle"
                 value *= (180.0/math.pi)
             name = 'dd'+con['sketchLabel']+cap(con['constraintName'])
-            dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
-            setattr(dd,name,value)
+            if not hasattr(dd,name): #avoid adding the same property again
+                dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
+                setattr(dd,name,value)
+                FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object\n')
+            else:
+                FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
         doc.recompute()
         return
    
