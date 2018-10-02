@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2018.09.27"
-__version__ = "1.21"
-version = 1.21
+__version__ = "1.3"
+version = 1.3
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -46,7 +46,8 @@ def initialize():
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
     Gui.addCommand("DynamicDataImportNamedConstraints",DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
-    pass
+    Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
+
 
 #######################################################################################
 # Keep Toolbar active even after leaving workbench
@@ -106,6 +107,7 @@ class DynamicDataCreateObjectCommandClass(object):
         doc.recompute()
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
         doc.recompute()
+        setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
         #doc.commitTransaction()
         a.touch()
         doc.recompute()
@@ -128,8 +130,6 @@ class DynamicDataCreateObjectCommandClass(object):
                 "container object -- instead only for",
                 "adding / removing custom properties.",
                 "(But this can also be done via scripting.)"
-
-
 ]
 
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
@@ -561,6 +561,282 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
 #Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
 
 
+########################################################################################
+# Copy Property To and/or From dd <--> other object
+
+
+class DynamicDataCopyPropertyCommandClass(object):
+    """Copy Property Command"""
+
+    def getProperties(self,obj):
+        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
+        prop = []
+        for p in obj.PropertiesList: 
+            if cell_regex.search(p):
+                prop.append(p)
+        return prop
+
+
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.png') ,
+            'MenuText': "C&opy Property" ,
+            'ToolTip' : "Copy/Set property values between selected objects"}
+
+
+    def Activated(self):
+        other = None #other object to copy properties either to or from
+        dd = None
+        dd2 = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        if len(selection) != 1 and len(selection) != 2:
+            return False
+        for sel in selection:
+            obj = sel.Object
+            if "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                if not dd:
+                    dd = obj
+                else:
+                    dd2 = obj
+            else:
+                other = obj
+        if not dd:
+            return False
+        if dd and not dd2 and not other:
+            dd2 = dd #allow for copying within the same dd object
+        if other:
+            modes = ["Copy property from "+other.Label+" --> to dd ("+dd.Label+")",
+                     "Set property value from "+other.Label+" --> to dd ("+dd.Label+")",
+                     "Set property value from dd ("+dd.Label+") --> to "+other.Label,
+                    "Cancel"
+                    ]
+            MODE_COPY_OBJ_TO_DD = 0
+            MODE_SET_OBJ_TO_DD = 1
+            MODE_SET_DD_TO_OBJ = 2
+            MODE_COPY_DD_TO_DD2 = -1
+            MODE_COPY_DD2_TO_DD = -1
+            MODE_SET_DD_TO_DD2 = -1
+            MODE_SET_DD2_TO_DD = -1
+        elif dd and dd2:
+            modes = ["Copy property from dd ("+dd.Label+") --> to dd ("+dd2.Label+")",
+                     "Copy property from dd ("+dd2.Label+") --> to dd ("+dd.Label+")",
+                     "Set property value from dd ("+dd.Label+") --> to dd ("+dd2.Label+")",
+                     "Set property value from dd ("+dd2.Label+") --> to dd ("+dd.Label+")",
+                     "Cancel"]
+                    
+            MODE_COPY_DD_TO_DD2 = 0
+            MODE_COPY_DD2_TO_DD = 1
+            MODE_SET_DD_TO_DD2 = 2
+            MODE_SET_DD2_TO_DD = 3
+            MODE_COPY_OBJ_TO_DD = -1
+            MODE_SET_OBJ_TO_DD = -1
+            MODE_SET_DD_TO_OBJ = -1
+
+        if dd == dd2:
+            modes=["Copy property","Set property value","Cancel"]
+            MODE_COPY_DD_TO_DD2 = 0
+            MODE_COPY_DD2_TO_DD = -1
+            MODE_SET_DD_TO_DD2 = 1
+            MODE_SET_DD2_TO_DD = -1
+            MODE_COPY_OBJ_TO_DD = -1
+            MODE_SET_OBJ_TO_DD = -1
+            MODE_SET_DD_TO_OBJ = -1
+
+        window = QtGui.QApplication.activeWindow()
+        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of copy operation',modes,0,False)
+        if not ok:
+            return
+        if mode==modes[-1]:
+            return
+        if mode == modes[MODE_COPY_OBJ_TO_DD] or mode == modes[MODE_COPY_DD_TO_DD2] or mode == modes[MODE_COPY_DD2_TO_DD]:
+            if mode == modes[MODE_COPY_DD_TO_DD2]:
+                fromObj = dd
+                toObj = dd2
+            elif mode == modes[MODE_COPY_DD2_TO_DD]:
+                fromObj = dd2
+                toObj = dd
+            elif mode == modes[MODE_COPY_OBJ_TO_DD]:
+                fromObj = other
+                toObj = dd
+            #make a copy of the property and add it to the dd object
+            properties = self.getProperty(fromObj,allowMultiple=True)
+            if not properties:
+                return #user canceled
+            for property in properties:
+                cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
+                name = property['name']
+                if 'dd' in name[:2] or 'Dd' in name[:2]:
+                    name = name[2:]
+                name = 'dd'+cap(name)
+                propertyType = property['type']
+                if not propertyType:
+                    return #user canceled
+                name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name)
+                if 'dd' in name[:2] or 'Dd' in name[:2]:
+                    name = name[2:]
+                name = 'dd'+cap(name)
+                if not ok:
+                    return
+                while hasattr(toObj,name):
+                    name,ok=QtGui.QInputDialog.getText(window,'DynamicData','A property with that name already exists.  \n\
+Enter the name for the new property\n',text=name)
+                    if not ok:
+                        return
+                    if 'dd' in name[:2] or 'Dd' in name[:2]:
+                        name = name[2:]
+                    name = 'dd'+cap(name)
+
+                try:
+                    toObj.addProperty('App::Property'+propertyType, name,'Copied from: '+fromObj.Label,'['+propertyType+']')
+                except:
+                    FreeCAD.Console.PrintError('DynamicData: unable to add property ('+property['name']+')\n')
+                try:
+                    if propertyType=='String':
+                        setattr(toObj,name,str(property['value']))
+                    else:
+                        setattr(toObj,name,property['value'])
+                except:
+                    FreeCAD.Console.PrintError('DynamicData: unable to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
+        elif mode == modes[MODE_SET_OBJ_TO_DD] or mode==modes[MODE_SET_DD_TO_OBJ] or mode==modes[MODE_SET_DD_TO_DD2] or mode==modes[MODE_SET_DD2_TO_DD]:
+            if mode == modes[MODE_SET_OBJ_TO_DD]:
+                fromObj = other
+                toObj = dd
+            elif mode == modes[MODE_SET_DD_TO_OBJ]:
+                fromObj = dd
+                toObj = other
+            elif mode == modes[MODE_SET_DD_TO_DD2]:
+                fromObj = dd
+                toObj = dd2
+            elif mode == modes[MODE_SET_DD2_TO_DD]:
+                fromObj = dd2
+                toObj = dd
+            #here we just set the value of an existing property
+            fromProperty = self.getProperty(fromObj,'\nChoose the FROM property\n')
+            if not fromProperty:
+                return
+            fromProperty=fromProperty[0] #returns a list, but only valid for copy modes, not set modes
+            toProperty = self.getProperty(toObj,'\nChoose the TO property\n',matchType=fromProperty['type'])
+            if not toProperty:
+                return
+            toProperty=toProperty[0]
+
+            try:
+                setattr(toObj,toProperty['name'],fromProperty['value'])
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: unable to set property value ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+
+        doc.recompute()
+        return
+   
+    def getProperty(self,obj,msg='',allowMultiple=False,matchType=''):
+        """ask user which property and return it or None
+           property will be in the form of a list of dictionary objects
+           with keys 'type', 'name', 'value' """
+        available = []
+        propertiesList = obj.PropertiesList
+        whiteList=['Proxy','ExpressionEngine','DynamicData','Label','Shape']
+        for prop in propertiesList:
+            if prop in whiteList:
+                continue
+            p = getattr(obj,prop)
+            strType = str(type(p))
+            types = self.getPropertyTypes()
+            typeFound = False;
+            typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
+            if typeId in self.getPropertyTypes():
+                available.append({'type':typeId,'value':p,'name':prop})
+        items=[]
+        moved=[]
+        for ii in range(0,len(available)):
+            a = available[ii]
+            items.append("name: "+a['name']+", type: "+a['type']+", value: "+str(a['value']))
+            if matchType==a['type']: #put same types at top of list
+                items.insert(0,items[-1])
+                items.pop(-1)
+                moved.append(ii)
+        for mm in range(0,len(moved)): #arrange available list to match items list
+            available.insert(0,available[moved[mm]])
+            available.pop(moved[mm])
+
+        if allowMultiple:
+            items.append("<copy all>")
+        items.append("<cancel>")
+        window = QtGui.QApplication.activeWindow()
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Copy/Set Property Tool\n\nSelect property to copy\n'+msg,items,0,False)
+        if not ok or item==items[-1]:
+            return None
+        if allowMultiple and item==items[-2]:
+            return available
+        return [available[items.index(item)]]
+
+    def IsActive(self):
+        other = None #other object to copy properties either to or from
+        dd = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        if len(selection) != 1 and len(selection) != 2:
+            return False
+        for sel in selection:
+            obj = sel.Object
+            if "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                dd = obj
+            else:
+                other = obj
+        if not dd:
+            return False
+        return True
+
+    def getPropertyTypes(self):
+        return [
+        "Acceleration",
+        "Angle",
+        "Area",
+        "Bool",
+        "Color",
+        "Direction",
+        "Distance",
+        "File",
+        "FileIncluded",
+        "Float",
+        "FloatConstraint",
+        "FloatList",
+        "Font",
+        "Force",
+        "Integer",
+        "IntegerConstraint",
+        "IntegerList",
+        "Length",
+        "Link",
+        "LinkChild",
+        "LinkGlobal",
+        "LinkList",
+        "LinkListChild",
+        "LinkListGlobal",
+        "MaterialList",
+        "Matrix",
+        "Path",
+        "Percent",
+        "Placement",
+        "PlacementLink"
+        "Position",
+        "Precision",
+        "Pressure",
+        "Quantity",
+        "QuantityConstraint",
+        "Speed",
+        "String",
+        "StringList",
+        "Vector",
+        "VectorDistance",
+        "Volume",]
+
+
+#Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
 
 initialize()
