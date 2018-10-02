@@ -111,6 +111,13 @@ You must always open the DynamicData workbench at least once per FreeCAD session
 <br/>
 There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
 <br/>
+### Copy Property
+<img src="Resources/icons/CopyProperty.png" alt="icon"><br/>
+<br/>
+Copy a property from one object to another or within the same dd object.  Properties can only be copied to a dd object, but the source can be a non-dd object or a dd object.  Can also be used to set the value of an existing property rather than creating a new property.  To use, just select the object containing the original property to be copied and the dd object that will contain the new property, then click the Copy Property icon.  You will be guided through the process with a series of dialogs.<br/>
+<br/>
+#### Copy a property from another object to a dd object
+<br/>
 
 
 
