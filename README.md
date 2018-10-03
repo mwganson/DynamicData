@@ -136,7 +136,13 @@ There is also an option in the Edit -> Preferences -> Start -> Options section t
 
 
 
-#### Release notes: 
+#### Release notes:<br/>
+*2018.10.03 (version 1.31)<br/>
+** transparent background icons
+*2018.10.02 (version 1.30)<br/>
+** Add copy/set property<br/>
+*2018.09.27 (version 1.20)<br/>
+** Add sketch import
 * 2018.09.25 (version 1.11)<br/>
 ** bugfixes, handle empty names better
 * 2018.09.24 (version 1.1)<br/> 
