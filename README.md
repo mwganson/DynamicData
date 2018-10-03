@@ -13,7 +13,7 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 <img src="Resources/media/example.gif" alt="animated gif example">
 
 ### Warning Message:
-You might see this warning message in the report view: <b>"Enumeration index -1 is out of range, ignore it".</b>  This is a FreeCAD warning related to string properties, which can be safely ignored, as the warning itself suggests.
+You might see this warning message in the report view: <b>"Enumeration index -1 is out of range, ignore it".</b>  This is a FreeCAD warning related to the DisplayMode property, which can be safely ignored, since the dd container objects are not intended to be displayed in the 3d view and do not have view objects.  I have added a workaround for this issue in version 1.3, so hopefully dd objects created with version 1.3+ will no longer show this warning upon being loaded from disk.
 
 ### Create Object
 <img src="Resources/icons/CreateObject.png" alt="icon">
@@ -111,6 +111,10 @@ One potential application for this feature is to make copies of placement proper
 In this example we will copy a placement property from a Sphere to a dd object.  Select the Sphere and the dd object in the tree view, and then click the Copy Property icon in the toolbar (or select via the menu).  1) select the Copy property from Sphere --> to dd (dd) option and click OK.  2) You will be presented with a list of the properties available to be copied from the Sphere object, select the Placement property and click OK.  3) Give the new property to be created a new name or just click OK to accept the default name chosen for you.  (Note: if the new name you give conflicts with an existing property name in the dd object you will be prompted again for a new name, so if you see this multiple times it means there is a name conflict.)<br/>
 <br/>
 <img src="Resources/media/copy_property_scr.png" alt="copy property example screenshot"><br/>
+<br/>
+#### Set a property value <br/>
+<br/>
+The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.<br/>
 <br/>
 
 
