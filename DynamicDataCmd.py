@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2018.09.27"
-__version__ = "1.31"
-version = 1.31
+__version__ = "1.32"
+version = 1.32
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -585,6 +585,7 @@ class DynamicDataCopyPropertyCommandClass(object):
 
     def Activated(self):
         other = None #other object to copy properties either to or from
+        other2 = None #allow set value from one non-dd to other non-dd
         dd = None
         dd2 = None
         doc = FreeCAD.ActiveDocument
@@ -599,17 +600,21 @@ class DynamicDataCopyPropertyCommandClass(object):
                 else:
                     dd2 = obj
             else:
-                other = obj
-        if not dd:
-            return False
+                if not other:
+                    other = obj
+                else:
+                    other2 = obj
+        #if not dd:
+        #    return False
         if dd and not dd2 and not other:
             dd2 = dd #allow for copying within the same dd object
-        if other:
+        if other and not other2:
             modes = ["Copy property from "+other.Label+" --> to dd ("+dd.Label+")",
                      "Set property value from "+other.Label+" --> to dd ("+dd.Label+")",
                      "Set property value from dd ("+dd.Label+") --> to "+other.Label,
                     "Cancel"
                     ]
+
             MODE_COPY_OBJ_TO_DD = 0
             MODE_SET_OBJ_TO_DD = 1
             MODE_SET_DD_TO_OBJ = 2
@@ -617,6 +622,22 @@ class DynamicDataCopyPropertyCommandClass(object):
             MODE_COPY_DD2_TO_DD = -1
             MODE_SET_DD_TO_DD2 = -1
             MODE_SET_DD2_TO_DD = -1
+            MODE_SET_OBJ_TO_OBJ2 = -1
+            MODE_SET_OBJ2_TO_OBJ = -1
+        elif other and other2:
+            modes = ["Set property value from "+other.Label+" --> to "+other2.Label,
+                    "Set property value from "+other2.Label+" --> to "+other.Label,
+                    "Cancel"]
+            MODE_SET_OBJ_TO_OBJ2 = 0
+            MODE_SET_OBJ2_TO_OBJ = 1
+            MODE_COPY_OBJ_TO_DD = -1
+            MODE_SET_OBJ_TO_DD = -1
+            MODE_SET_DD_TO_OBJ = -1
+            MODE_COPY_DD_TO_DD2 = -1
+            MODE_COPY_DD2_TO_DD = -1
+            MODE_SET_DD_TO_DD2 = -1
+            MODE_SET_DD2_TO_DD = -1
+
         elif dd and dd2:
             modes = ["Copy property from dd ("+dd.Label+") --> to dd ("+dd2.Label+")",
                      "Copy property from dd ("+dd2.Label+") --> to dd ("+dd.Label+")",
@@ -631,8 +652,11 @@ class DynamicDataCopyPropertyCommandClass(object):
             MODE_COPY_OBJ_TO_DD = -1
             MODE_SET_OBJ_TO_DD = -1
             MODE_SET_DD_TO_OBJ = -1
+            MODE_SET_OBJ_TO_OBJ2 = -1
+            MODE_SET_OBJ2_TO_OBJ = -1
 
-        if dd == dd2:
+
+        if dd == dd2 and not other and not other2:
             modes=["Copy property","Set property value","Cancel"]
             MODE_COPY_DD_TO_DD2 = 0
             MODE_COPY_DD2_TO_DD = -1
@@ -641,6 +665,8 @@ class DynamicDataCopyPropertyCommandClass(object):
             MODE_COPY_OBJ_TO_DD = -1
             MODE_SET_OBJ_TO_DD = -1
             MODE_SET_DD_TO_OBJ = -1
+            MODE_SET_OBJ_TO_OBJ2 = -1
+            MODE_SET_OBJ2_TO_OBJ = -1
 
         window = QtGui.QApplication.activeWindow()
         mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of copy operation',modes,0,False)
@@ -697,7 +723,8 @@ Enter the name for the new property\n',text=name)
                         setattr(toObj,name,property['value'])
                 except:
                     FreeCAD.Console.PrintError('DynamicData: unable to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
-        elif mode == modes[MODE_SET_OBJ_TO_DD] or mode==modes[MODE_SET_DD_TO_OBJ] or mode==modes[MODE_SET_DD_TO_DD2] or mode==modes[MODE_SET_DD2_TO_DD]:
+        elif mode == modes[MODE_SET_OBJ_TO_DD] or mode==modes[MODE_SET_DD_TO_OBJ] or mode==modes[MODE_SET_DD_TO_DD2] \
+                    or mode==modes[MODE_SET_DD2_TO_DD] or mode==modes[MODE_SET_OBJ_TO_OBJ2] or mode == modes[MODE_SET_OBJ2_TO_OBJ]:
             if mode == modes[MODE_SET_OBJ_TO_DD]:
                 fromObj = other
                 toObj = dd
@@ -710,6 +737,12 @@ Enter the name for the new property\n',text=name)
             elif mode == modes[MODE_SET_DD2_TO_DD]:
                 fromObj = dd2
                 toObj = dd
+            elif mode == modes[MODE_SET_OBJ_TO_OBJ2]:
+                fromObj = other
+                toObj = other2
+            elif mode == modes[MODE_SET_OBJ2_TO_OBJ]:
+                fromObj = other2
+                toObj = other
             #here we just set the value of an existing property
             fromProperty = self.getProperty(fromObj,'\nChoose the FROM property\n')
             if not fromProperty:
@@ -787,7 +820,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                 dd = obj
             else:
                 other = obj
-        if not dd:
+        if not dd and not len(selection)==2:
             return False
         return True
 
