@@ -3,7 +3,7 @@
 #
 #  DynamicDataCmd.py
 #  
-#  Copyright 2018 Mark Ganson <TheMarkster> mwganson at gmail
+#  Copyright 2018-2019 Mark Ganson <TheMarkster> mwganson at gmail
 #  
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2018.09.27"
-__version__ = "1.32"
-version = 1.32
+__date__    = "2019.06.29"
+__version__ = "1.4"
+version = 1.4
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -41,10 +41,12 @@ keepToolbar = True
 
 
 def initialize():
+
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
     Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
-    Gui.addCommand("DynamicDataImportNamedConstraints",DynamicDataImportNamedConstraintsCommandClass())
+    Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
+    Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
@@ -198,7 +200,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if not 'FeaturePython' in str(obj.TypeId):
             FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
             return
-        #doc.openTransaction("AddProperty")
+        #doc.openTransaction("dd Add Property")
         #add the property
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
@@ -455,6 +457,166 @@ class DynamicDataRemovePropertyCommandClass(object):
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
 
 ########################################################################################
+# Import aliases from spreadsheet
+
+
+class DynamicDataImportAliasesCommandClass(object):
+    """Import Aliases Command"""
+
+    def getProperties(self,obj):
+        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
+        prop = []
+        for p in obj.PropertiesList: 
+            if cell_regex.search(p):
+                prop.append(p)
+        return prop
+
+
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.png') ,
+            'MenuText': "&Import Aliases" ,
+            'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
+
+
+    def Activated(self):
+
+
+        sheets=[]
+        dd = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
+        if not selection:
+            return
+        for sel in selection:
+            obj = sel.Object
+            if "Spreadsheet.Sheet" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore spreadsheet label's ending in underscore
+                sheets.append(obj)
+            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                if not dd:
+                    dd = obj
+                else:
+                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
+                    return
+        if len(sheets)==0:
+            #todo: handle no selected spreadsheets.  For now, just return
+            FreeCAD.Console.PrintMessage("DynamicData: No selected spreadsheet(s)\n")
+            return
+        if not dd:
+            #todo: handle no dd object selected.  For now, just return
+            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
+            return
+
+        #sanity check
+        window = QtGui.QApplication.activeWindow()
+        items=["Do the import, I know what I\'m doing","Cancel"]
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
+'Warning: This will modify your spreadsheet. \n\
+\n\
+It will import the aliases from the spreadsheet and reset them to \n\
+point to the dd object.  After the import is done you should make any changes \n\
+to the dd property rather than to the alias cell in the spreadsheet. \n\
+\n\
+All imports come in as values, not as expressions.\n\
+\n\
+For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2\n\
+\n\
+You should still keep your spreadsheet because other expressions referencing aliases in the\n\
+spreadsheet will still be referencing them.  The difference is now the spreadsheet cells \n\
+will be referencing the dd object.  Again, make any changes to the dd property, not to the spreadsheet.\n\
+\n\
+For example: \n\
+Dependency graph:\n\
+before import: constraint -> spreadsheet\n\
+after import: constraint -> spreadsheet -> dd object\n\
+\n\
+You can partially undo this operation.  If undone, the changes to the spreadsheet will be \n\
+reverted, but you will still need to manually remove the new properties from the dd object.\n\
+The new properties will remain after the undo, but they will no longer reference anything. \n\
+\n\
+You should save your document before proceeding.\n',items,0,False)
+        if not ok or item==items[-1]:
+            return
+        FreeCAD.ActiveDocument.openTransaction("dd Import Aliases") #setup undo
+        aliases=[]
+        for sheet in sheets:
+            for line in sheet.cells.Content.splitlines():
+                if "<Cells Count=" in line or "</Cells>" in line:
+                    continue
+                if not "alias=" in line:
+                    continue
+                idx = line.find("alias=\"")+len("alias=\"")
+                idx2 = line.find("\"",idx)
+                if not line[idx:idx2][-1]=="_": #skip aliases that end in an underscore
+                    aliases.append(line[idx:idx2])
+                else:
+                    FreeCAD.Console.PrintWarning('DynamicData: skipping alias \"'+line[idx:idx2]+'\" because it ends in an underscore (_).\n')
+
+                
+            for alias in aliases:
+                atr = getattr(sheet,alias)
+                if "Base.Quantity" in str(type(atr)):
+                    #handle quantity types
+                    propertyType = atr.Unit.Type #e.g. 'Length'
+                    userString = atr.UserString
+                elif "'float\'" in str(type(atr)):
+                    #handle float types
+                    propertyType='Float'
+                    userString=atr
+                elif "unicode" in str(type(atr)) or '<class \'str\'>' in str(type(atr)):
+                    #handle unicode string types
+                    propertyType='String'
+                    userString=atr
+                else:
+                    FreeCAD.Console.PrintError('DynamicData: please report: unknown property type error importing alias from spreadsheet ('+str(type(atr))+')\n')
+                    continue
+
+                name = 'dd'+sheet.Label+'_'+cap(alias)
+                if not hasattr(dd,name): #avoid adding the same property again
+                    dd.addProperty('App::Property'+propertyType,name,'Imported from: '+sheet.Label, propertyType)
+                    setattr(dd,name,userString)
+                    FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object, resetting spreadsheet: '+sheet.Label+'.'+alias+' to point to '+dd.Label+'.'+name+'\n')
+                    sheet.set(alias,str(dd.Label+'.'+name))
+                else:
+                    FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+                continue
+
+                    
+        FreeCAD.ActiveDocument.commitTransaction()
+        doc.recompute()
+        if len(aliases)==0:
+            FreeCAD.Console.PrintMessage('DynamicData: No aliases found.\n')
+            return
+
+        return
+   
+    def IsActive(self):
+        sheets=[]
+        dd = None
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelectionEx()
+        if not selection:
+            return
+        for sel in selection:
+            obj = sel.Object
+            if "Spreadsheet.Sheet" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore spreadsheet labels ending in underscore
+                sheets.append(obj)
+            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
+                if not dd:
+                    dd = obj
+                else:
+                    return False #more than 1 dd object selected
+        if len(sheets)==0:
+            return False
+        if not dd:
+            return False
+        return True
+
+#Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
+
+
+
+########################################################################################
 # Import named constraints from sketch
 
 
@@ -502,6 +664,31 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
             #todo: handle no dd object selected.  For now, just return
             FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
             return
+
+        #sanity check
+        window = QtGui.QApplication.activeWindow()
+        items=["Do the import, I know what I\'m doing","Cancel"]
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
+'Warning: This will modify your sketch. \n\
+It will import the named constraints from the sketch and reset them to \n\
+point to the dd object.  After the import is done you should make changes \n\
+to the dd object property rather than to the constraint itself. \n\
+\n\
+All imports come in as values.\n\
+\n\
+For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2\n\
+\n\
+For that reason, it might be necessary to rework some formulas in some cases \n\
+in order to maintain the parametricity of your model. \n\
+\n\
+This operation can be partially undone.  The sketch will be reset, but you will \n\
+still need to remove the newly created properties from the dd object.  The properties \n\
+will still be there, but they won\'t be linked to anything. \n\
+\n\
+You should save your document before proceeding\n',items,0,False)
+        if not ok or item==items[-1]:
+            return
+        FreeCAD.ActiveDocument.openTransaction("dd Import Constraints") #setup undo
         constraints=[]
         for sketch in sketches:
             for con in sketch.Constraints:
@@ -533,6 +720,7 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
                 FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object\n')
             else:
                 FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+        FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
         return
    
