@@ -58,8 +58,8 @@ class DynamicDataWorkbench(Workbench):
     def Initialize(self):
         "This function is executed when FreeCAD starts"
         import DynamicDataCmd #needed files for FreeCAD commands
-        self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty", "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints","DynamicDataCopyProperty","DynamicDataSettings"] # A list of command names created in the line above
-        self.appendToolbar("DynamicData Commands",self.list[:5]) # leave settings off toolbar
+        self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty", "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints","DynamicDataImportAliases","DynamicDataCopyProperty","DynamicDataSettings"] # A list of command names created in the line above
+        self.appendToolbar("DynamicData Commands",self.list[:-1]) # leave settings off toolbar
         self.appendMenu("&DynamicData",self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu
@@ -95,7 +95,7 @@ class DynamicDataWorkbench(Workbench):
             if "DynamicData Commands" in bar.objectName():
                 bar.setVisible(True)
         #following would reactivate menu after leaving workbench, but the menu moves, so don't reactivate for now
-        #we'll still have the toolbar anyway
+        #we'll still have the toolbar anyway and we don't want to clutter up the menu outside the workbench
         #menu = window.menuWidget()
         #actions = menu.actions
         #a = actions()
