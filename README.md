@@ -33,6 +33,8 @@ Second step is to give your new property a name and (optionally) a group name, t
 <br/>
 <img src="Resources/media/add_property_scr2.png" alt="add property screenshot 2"><br/>
 <br/>
+I know this looks complicated, but remember all you really need to do is enter a name for the property.  The value can be set later using the property editor.  The other stuff is just setting a name for the group to place the property in, if other than the default group, setting a tooltip, and setting the value of the property during the time of creation rather than later in the property editor.<br/>
+<br/>
 All property names are prepended with "dd" automatically and the first letter is capitalized.  Thus, a name entered of "length" would be converted to "ddLength" and get displayed in the property view as "dd Length".  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "=dd.dd" (or click the expression engine "fx" icon and enter "dd.dd") to bring up a list of available custom properties: <br/>
 <br/>
 <img src="Resources/media/dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
