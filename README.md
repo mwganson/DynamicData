@@ -85,6 +85,17 @@ Use this tool to remove a property previously added using the Add Property tool.
 <br/>
 <img src="Resources/media/remove_property_scr.png" alt="remove property screenshot"><br/>
 <br/>
+### Import Aliases
+<img src="Resources/icons/ImportAliases.png" alt="icon"><br/>
+Use this to import aliases from selected spreadsheets as properties into selected dd object.</br>
+<br/>
+<b>Warning: selected spreadsheets will be modified.  The cells containing the aliases will reference
+the dd object property. </b><br />
+<br/>
+To prevent a cell containing an alias from being imported you should end the alias name with an underscore (_).  When the workbench code sees an alias name that ends with an underscore it will skip that alias and display a warning message in the report view, informing the user that this alias was skipped.  Similarly, spreadsheets with labels ending in the underscore will likewise be skipped.</br>
+<br/>
+To use this feature, select your dd object and one or more spreadsheets to be imported, then invoke the command either from the menu or the toolbar.  New properties of various types, e.g. "Length" will be added to the dd object for each alias found.  The property type depends on who FreeCAD has interpreted the type to be, which is based on the units used in the cell contents.  For example, "10.5 mm" would be seen as a "Length" property type while "45 deg" would be seen as an "Angle" property type, etc.<br/>
+
 ### Import Named Constraints
 <img src="Resources/icons/ImportNamedConstraints.png" alt="icon"><br/>
 Use this to import named constraints from selected sketches as properties into selected dd object.<br/>
