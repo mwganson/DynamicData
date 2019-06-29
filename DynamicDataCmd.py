@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2019.06.29"
-__version__ = "1.4"
-version = 1.4
+__version__ = "1.41"
+version = 1.41
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -558,6 +558,9 @@ You should save your document before proceeding.\n',items,0,False)
                 if "Base.Quantity" in str(type(atr)):
                     #handle quantity types
                     propertyType = atr.Unit.Type #e.g. 'Length'
+                    #handle inconsistencies in naming convention between unit types and property types
+                    if 'Velocity' in propertyType:
+                        propertyType='Speed'
                     userString = atr.UserString
                 elif "'float\'" in str(type(atr)):
                     #handle float types
