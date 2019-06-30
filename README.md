@@ -155,19 +155,19 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
-*2019.06.30 (version 1.42)<br/>
+* 2019.06.30 (version 1.42)<br/>
 ** fixed bug in mru list
 ** added setting for length of mru (0-25)
-*2019.06.29 (version 1.41)<br/>
+* 2019.06.29 (version 1.41)<br/>
 ** minor bug fix
-*2019.06.29 (version 1.40)<br/>
+* 2019.06.29 (version 1.40)<br/>
 ** adds spreadsheet alias import feature
 ** adds undo capability to sketch import feature
-*2018.10.03 (version 1.31)<br/>
+* 2018.10.03 (version 1.31)<br/>
 ** transparent background icons
-*2018.10.02 (version 1.30)<br/>
+* 2018.10.02 (version 1.30)<br/>
 ** Add copy/set property<br/>
-*2018.09.27 (version 1.20)<br/>
+* 2018.09.27 (version 1.20)<br/>
 ** Add sketch import
 * 2018.09.25 (version 1.11)<br/>
 ** bugfixes, handle empty names better
