@@ -29,6 +29,9 @@ __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2019.06.29"
 __version__ = "1.41"
 version = 1.41
+mostRecentTypes=[]
+mostRecentTypesLength = 5 #will be updated from parameters
+
 
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
@@ -38,6 +41,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
+
 
 
 def initialize():
@@ -56,6 +60,7 @@ def initialize():
 
 class DynamicDataSettingsCommandClass(object):
     """Settings, currently only whether to keep toolbar after leaving workbench"""
+    global mostRecentTypes
 
     def __init__(self):
         pass        
@@ -73,14 +78,22 @@ class DynamicDataSettingsCommandClass(object):
         window = QtGui.QApplication.activeWindow()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         keep = pg.GetBool('KeepToolbar',True)
-        items=["Keep the toolbar active","Do not keep the toolbar active"]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nKeep Toolbar after leaving workbench?\n\nCurrent setting = '+str(keep)+'\n',items,0,False)
+        mostRecentTypesLength = pg.GetInt('mruLength',5)
+        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list"]
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False)
         if ok and item == items[0]:
             keep = True
+            pg.SetBool('KeepToolbar', keep)
         elif ok and item==items[1]:
             keep = False
-        pg.SetBool('KeepToolbar', keep)
-        
+            pg.SetBool('KeepToolbar', keep)
+        elif ok and item==items[2]:
+            count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1)
+            if ok:
+                pg.SetInt('mruLength',count)
+                mostRecentTypesLength = count
+                mostRecentTypes = []
+
 
         return
    
@@ -142,6 +155,8 @@ class DynamicDataCreateObjectCommandClass(object):
 
 class DynamicDataAddPropertyCommandClass(object):
     """Add Property Command"""
+    global mostRecentTypes
+    global mostRecentTypesLength
 
 
     def getPropertyTypes(self):
@@ -194,6 +209,8 @@ class DynamicDataAddPropertyCommandClass(object):
             'ToolTip' : "Add a custom property to the DynamicData object"}
 
     def Activated(self):
+        global mostRecentTypes
+        global mostRecentTypesLength
 
         doc = FreeCAD.ActiveDocument
         obj = Gui.Selection.getSelectionEx()[0].Object
@@ -205,21 +222,22 @@ class DynamicDataAddPropertyCommandClass(object):
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        for ii in range(4,-1,-1):
-            if self.mostRecentTypes[ii]:
-                items.insert(0,self.mostRecentTypes[ii])
-                pg.SetString('mru'+str(ii), self.mostRecentTypes[ii])
+        mostRecentTypesLength = pg.GetInt('mruLength',5)
+        for ii in range(mostRecentTypesLength-1,-1,-1):
+            if mostRecentTypes[ii]:
+                items.insert(0,mostRecentTypes[ii])
+                pg.SetString('mru'+str(ii), mostRecentTypes[ii])
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',items,0,False)
         if not ok:
             return
         else:
-            if not item in self.mostRecentTypes:
-                self.mostRecentTypes.insert(0,item)
+            if not item in mostRecentTypes:
+                mostRecentTypes.insert(0,item)
             else:
-                self.mostRecentTypes.remove(item) #ensure it is at front of the list
-                self.mostRecentTypes.insert(0,item)
-            if len(self.mostRecentTypes)>5:
-                self.mostRecentTypes = self.mostRecentTypes[:5]
+                mostRecentTypes.remove(item) #ensure it is at front of the list
+                mostRecentTypes.insert(0,item)
+            if len(mostRecentTypes)>mostRecentTypesLength:
+                mostRecentTypes = mostRecentTypes[:mostRecentTypesLength]
             self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
 'Enter Property Name;[group name];[tool tip];[value]\n\
 \n\
@@ -310,15 +328,18 @@ Current group name: '+str(self.groupName)+'\n')
         return True
 
     def __init__(self):
+        global mostRecentTypes
+        global mostRecentTypesLength
         import ast, locale
         import operator as op
         self.groupName="DefaultGroup"
         self.defaultPropertyName="Prop"
         self.tooltip="tip"
-        self.mostRecentTypes = []
+
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        for ii in range(4,-1,-1):
-            self.mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
+        mostRecentTypesLength = pg.GetInt('mruLength',5)
+        for ii in range(mostRecentTypesLength-1,-1,-1):
+            mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
 
         self.SEPARATOR = locale.localeconv()['decimal_point']
         self.SEPARATOR_STANDIN = 'p'
