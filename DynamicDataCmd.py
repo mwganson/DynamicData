@@ -215,6 +215,9 @@ class DynamicDataAddPropertyCommandClass(object):
         else:
             if not item in self.mostRecentTypes:
                 self.mostRecentTypes.insert(0,item)
+            else:
+                self.mostRecentTypes.remove(item) #ensure it is at front of the list
+                self.mostRecentTypes.insert(0,item)
             if len(self.mostRecentTypes)>5:
                 self.mostRecentTypes = self.mostRecentTypes[:5]
             self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
@@ -314,7 +317,7 @@ Current group name: '+str(self.groupName)+'\n')
         self.tooltip="tip"
         self.mostRecentTypes = []
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        for ii in range(0,5):
+        for ii in range(4,-1,-1):
             self.mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
 
         self.SEPARATOR = locale.localeconv()['decimal_point']
