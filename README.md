@@ -156,23 +156,23 @@ When you add a new property type you are presented with a list of property types
 
 #### Release notes:<br/>
 * 2019.06.30 (version 1.42)<br/>
-** fixed bug in mru list
-** added setting for length of mru (0-25)
+** fixed bug in mru list<br/>
+** added setting for length of mru (0-25)<br/>
 * 2019.06.29 (version 1.41)<br/>
-** minor bug fix
+** minor bug fix<br/>
 * 2019.06.29 (version 1.40)<br/>
-** adds spreadsheet alias import feature
-** adds undo capability to sketch import feature
+** adds spreadsheet alias import feature<br/>
+** adds undo capability to sketch import feature<br/>
 * 2018.10.03 (version 1.31)<br/>
-** transparent background icons
+** transparent background icons<br/>
 * 2018.10.02 (version 1.30)<br/>
 ** Add copy/set property<br/>
 * 2018.09.27 (version 1.20)<br/>
-** Add sketch import
+** Add sketch import<br/>
 * 2018.09.25 (version 1.11)<br/>
-** bugfixes, handle empty names better
+** bugfixes, handle empty names better<br/>
 * 2018.09.24 (version 1.1)<br/> 
 ** Add 5 most recently used types to top of property type list, sort remainder.<br/>
 ** Display version information in DynamicData string property <br/>
-* v2018.09.19  2018.09.19:  Initial version
+* v2018.09.19  2018.09.19:  Initial version<br/>
 
