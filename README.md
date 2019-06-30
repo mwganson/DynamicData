@@ -143,20 +143,21 @@ The process for this is substantially the same as for copying a property except 
 Use this to change workbench settings.
 
 #### Keep Toolbar
-Setting this to True (default is True) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.<br/>
+Setting this to True (default is True) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.<br/>
 <br/>
 You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)<br/>
 <br/>
 There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
 <br/>
-
-
-
-
-
+#### Change length of most recently used type list
+When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.<br/>
+<br/>
 
 
 #### Release notes:<br/>
+*2019.06.30 (version 1.42)<br/>
+** fixed bug in mru list
+** added setting for length of mru (0-25)
 *2019.06.29 (version 1.41)<br/>
 ** minor bug fix
 *2019.06.29 (version 1.40)<br/>
