@@ -155,6 +155,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2019.07.05 (version 1.43)<br/>
+** fixed bug in resetting length of mru list<br/>
 * 2019.06.30 (version 1.42)<br/>
 ** fixed bug in mru list<br/>
 ** added setting for length of mru (0-25)<br/>
