@@ -73,6 +73,7 @@ class DynamicDataSettingsCommandClass(object):
             'ToolTip' : "Workbench settings dialog"}
  
     def Activated(self):
+        global mostRecentTypes
         doc = FreeCAD.ActiveDocument
         from PySide import QtGui
         window = QtGui.QApplication.activeWindow()
@@ -90,9 +91,14 @@ class DynamicDataSettingsCommandClass(object):
         elif ok and item==items[2]:
             count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1)
             if ok:
-                pg.SetInt('mruLength',count)
-                mostRecentTypesLength = count
-                mostRecentTypes = []
+                if count != mostRecentTypesLength:
+                    pg.SetInt('mruLength',count)
+                    mostRecentTypesLength = count
+                    mostRecentTypes = ([""]*25) [:count]
+                    for ii in range(0,count):
+                        mru = pg.GetString('mru'+str(ii),"")
+                        if not mru in mostRecentTypes:
+                            mostRecentTypes[ii]=mru
 
 
         return
