@@ -26,7 +26,7 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.07.05"
+__date__    = "2019.07.17"
 __version__ = "1.44"
 version = 1.44
 mostRecentTypes=[]
