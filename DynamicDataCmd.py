@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2019.07.05"
-__version__ = "1.43"
-version = 1.43
+__version__ = "1.44"
+version = 1.44
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -729,6 +729,9 @@ You should save your document before proceeding\n',items,0,False)
                     continue
                 if ' ' in con.Name:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Spaces invalid in constraint names.\n')
+                    continue
+                if not con.Driving:
+                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Reference constraints skipped.\n')
                     continue
                 constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label})
                 try:
