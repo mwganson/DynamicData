@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.07.17"
-__version__ = "1.44"
-version = 1.44
+__date__    = "2019.07.26"
+__version__ = "1.50"
+version = 1.50
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -54,6 +54,75 @@ def initialize():
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
+propertyTypes =[
+    "Acceleration",
+    "Angle",
+    "Area",
+    "Bool",
+    "Color",
+    "Direction",
+    "Distance",
+    "File",
+    "FileIncluded",
+    "Float",
+    "FloatConstraint",
+    "FloatList",
+    "Font",
+    "Force",
+    "Integer",
+    "IntegerConstraint",
+    "IntegerList",
+    "Length",
+    "Link",
+    "LinkChild",
+    "LinkGlobal",
+    "LinkList",
+    "LinkListChild",
+    "LinkListGlobal",
+    "MaterialList",
+    "Matrix",
+    "Path",
+    "Percent",
+    "Placement",
+    "PlacementLink",
+    "Position",
+    "Precision",
+    "Pressure",
+    "Quantity",
+    "QuantityConstraint",
+    "Speed",
+    "String",
+    "StringList",
+    "Vector",
+    "VectorDistance",
+    "Volume"]
+
+nonLinkableTypes=[ #cannot be linked with setExpresion()
+    "Bool",
+    "Color",
+    "File",
+    "FileIncluded",
+    "FloatList",
+    "Font",
+    "IntegerList",
+    "Link",
+    "LinkChild",
+    "LinkGlobal",
+    "LinkList",
+    "LinkListChild",
+    "LinkListGlobal",
+    "MaterialList",
+    "Matrix",
+    "Path",
+    "PlacementLink",
+    "String",
+    "StringList"]
+
+xyzTypes = [#x,y,z elements must be linked separately
+    "Direction",
+    "Position",
+    "Vector",
+    "VectorDistance"]
 
 #######################################################################################
 # Keep Toolbar active even after leaving workbench
@@ -166,48 +235,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
 
     def getPropertyTypes(self):
-        return [
-        "Acceleration",
-        "Angle",
-        "Area",
-        "Bool",
-        "Color",
-        "Direction",
-        "Distance",
-        "File",
-        "FileIncluded",
-        "Float",
-        "FloatConstraint",
-        "FloatList",
-        "Font",
-        "Force",
-        "Integer",
-        "IntegerConstraint",
-        "IntegerList",
-        "Length",
-        "Link",
-        "LinkChild",
-        "LinkGlobal",
-        "LinkList",
-        "LinkListChild",
-        "LinkListGlobal",
-        "MaterialList",
-        "Matrix",
-        "Path",
-        "Percent",
-        "Placement",
-        "PlacementLink"
-        "Position",
-        "Precision",
-        "Pressure",
-        "Quantity",
-        "QuantityConstraint",
-        "Speed",
-        "String",
-        "StringList",
-        "Vector",
-        "VectorDistance",
-        "Volume",]
+        return propertyTypes
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
@@ -259,7 +287,7 @@ radius\n\
 depth;base dimensions;depth of base plate;50\n\
 width;;width of base plate;150\n\
 \n\
-Current group name: '+str(self.groupName)+'\n')
+Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+self.groupName+";tooltip;value")
             if not ok:
                 return
             if len(self.propertyName)==0:
@@ -939,14 +967,15 @@ Enter the name for the new property\n',text=name)
                 try:
                     toObj.addProperty('App::Property'+propertyType, name,'Copied from: '+fromObj.Label,'['+propertyType+']')
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: unable to add property ('+property['name']+')\n')
+                    FreeCAD.Console.PrintError('DynamicData: Exception trying to add property ('+property['name']+')\n')
                 try:
                     if propertyType=='String':
                         setattr(toObj,name,str(property['value']))
                     else:
                         setattr(toObj,name,property['value'])
+                    makeParametric(fromObj, fromProperty, toObj, toProperty)
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: unable to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
+                    FreeCAD.Console.PrintError('DynamicData: Exception trying to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
         elif mode == modes[MODE_SET_OBJ_TO_DD] or mode==modes[MODE_SET_DD_TO_OBJ] or mode==modes[MODE_SET_DD_TO_DD2] \
                     or mode==modes[MODE_SET_DD2_TO_DD] or mode==modes[MODE_SET_OBJ_TO_OBJ2] or mode == modes[MODE_SET_OBJ2_TO_OBJ]:
             if mode == modes[MODE_SET_OBJ_TO_DD]:
@@ -981,15 +1010,102 @@ Enter the name for the new property\n',text=name)
                 setattr(toObj,toProperty['name'],fromProperty['value'])
             except:
                 FreeCAD.Console.PrintError(\
-'DynamicData: unable to set property value ('+str(fromProperty['value'])+')\n\
+'DynamicData: Exception trying to set property value ('+str(fromProperty['value'])+')\n\
 Could be a property type mismatch\n\
 \n\
 From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
 To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-
+            doc.recompute()
+            self.makeParametric(fromObj, fromProperty, toObj, toProperty)
         doc.recompute()
         return
    
+    def makeParametric(self,fromObj,fromProperty,toObj,toProperty):
+        """create a parametric link using toObj.setExpression()
+        fromProperty and toProperty are dict objects with keys:
+        'name', 'type', and 'value' eg: {'name':'Height','type':'Length','value': 8 mm}
+        this function only gets called after a successful copy/set operation
+        copy operation is when new property was created in toObj
+        set operation is when existing property value was changed in toObj"""
+
+        #User might not want to do this, but we check to see if we can do it before asking
+        if fromProperty['type'] in nonLinkableTypes:
+            return
+        #todo: ask user if he wants the parametric linking
+        breakLink = False
+        window = QtGui.QApplication.activeWindow()
+        items = ["Create parametric link", "Break parametric link", "Make simple non-parametric copy by value"]
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False)
+        if not ok:
+            return
+        elif item==items[-1]:
+            return
+        elif item==items[1]: #break parametric link
+            breakLink=True
+
+        #handle xyzTypes first
+        if fromProperty['type'] in xyzTypes:
+            try:
+                if not breakLink:
+                    toObj.setExpression(toProperty['name']+'.x',fromObj.Name+'.'+fromProperty['name']+'.x')
+                    toObj.setExpression(toProperty['name']+'.y',fromObj.Name+'.'+fromProperty['name']+'.y')
+                    toObj.setExpression(toProperty['name']+'.z',fromObj.Name+'.'+fromProperty['name']+'.z')
+                else: #break the parametric link
+                    toObj.setExpression(toProperty['name']+'.x', None)
+                    toObj.setExpression(toProperty['name']+'.y', None)
+                    toObj.setExpression(toProperty['name']+'.z', None)
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: Exception tryin to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            return
+        
+        #handle placement types
+        if fromProperty['type'] in 'Placement':
+            try:
+                if not breakLink:
+                    toObj.setExpression(toProperty['name']+'.Base.x',fromObj.Name+'.'+fromProperty['name']+'.Base.x')
+                    toObj.setExpression(toProperty['name']+'.Base.y',fromObj.Name+'.'+fromProperty['name']+'.Base.y')
+                    toObj.setExpression(toProperty['name']+'.Base.z',fromObj.Name+'.'+fromProperty['name']+'.Base.z')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Angle',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Angle')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.x')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.y')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.z')
+                else: #break parametric link
+                    toObj.setExpression(toProperty['name']+'.Base.x', None)
+                    toObj.setExpression(toProperty['name']+'.Base.y', None)
+                    toObj.setExpression(toProperty['name']+'.Base.z', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Angle', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z', None)
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: Exception tryin to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            return
+
+        #handle all other general types
+        try:
+            if not breakLink:
+                toObj.setExpression(toProperty['name'],fromObj.Name+'.'+fromProperty['name'])
+            else: #break the link
+                toObj.setExpression(toProperty['name'], None)
+        except:
+            FreeCAD.Console.PrintError(\
+'DynamicData: Exception tryin to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+        return
+
     def getProperty(self,obj,msg='',allowMultiple=False,matchType=''):
         """ask user which property and return it or None
            property will be in the form of a list of dictionary objects
@@ -1049,48 +1165,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         return True
 
     def getPropertyTypes(self):
-        return [
-        "Acceleration",
-        "Angle",
-        "Area",
-        "Bool",
-        "Color",
-        "Direction",
-        "Distance",
-        "File",
-        "FileIncluded",
-        "Float",
-        "FloatConstraint",
-        "FloatList",
-        "Font",
-        "Force",
-        "Integer",
-        "IntegerConstraint",
-        "IntegerList",
-        "Length",
-        "Link",
-        "LinkChild",
-        "LinkGlobal",
-        "LinkList",
-        "LinkListChild",
-        "LinkListGlobal",
-        "MaterialList",
-        "Matrix",
-        "Path",
-        "Percent",
-        "Placement",
-        "PlacementLink"
-        "Position",
-        "Precision",
-        "Pressure",
-        "Quantity",
-        "QuantityConstraint",
-        "Speed",
-        "String",
-        "StringList",
-        "Vector",
-        "VectorDistance",
-        "Volume",]
+        return propertyTypes
 
 
 #Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
