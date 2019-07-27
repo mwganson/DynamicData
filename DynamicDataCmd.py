@@ -149,14 +149,20 @@ class DynamicDataSettingsCommandClass(object):
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         keep = pg.GetBool('KeepToolbar',True)
         mostRecentTypesLength = pg.GetInt('mruLength',5)
-        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list"]
+        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list","Support ViewObject properties", "Do not support ViewObject properties","Cancel"]
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False)
-        if ok and item == items[0]:
+        if ok and item == items[-1]:
+            return
+        elif ok and item == items[0]:
             keep = True
             pg.SetBool('KeepToolbar', keep)
         elif ok and item==items[1]:
             keep = False
             pg.SetBool('KeepToolbar', keep)
+        elif ok and item==items[3]:
+            pg.SetBool('SupportViewObjectProperties',True)
+        elif ok and item==items[4]:
+            pg.SetBool('SupportViewObjectProperties',False)
         elif ok and item==items[2]:
             count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1)
             if ok:
@@ -1027,7 +1033,9 @@ Enter the name for the new property\n',text=name)
                 return
             fromProperty=fromProperty[0] #returns a list, but only valid for copy modes, not set modes
             if not breakOnly:
-                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n',matchType=fromProperty['type'].replace('(ViewObject)',''))
+                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n', matchType=fromProperty['type'].replace('(ViewObject)',''))
+                if not toProperty:
+                    return #user canceled
                 toProperty=toProperty[0]
             else:
                 toProperty = fromProperty
@@ -1150,7 +1158,8 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
            property will be in the form of a list of dictionary objects
            with keys 'type', 'name', 'value' """
         available = []
-        useViewProperties = True #todo: add parameter check to see if user wants this or not
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        supportViewObjectProperties = pg.GetBool('SupportViewObjectProperties', True)
         propertiesList = obj.PropertiesList
         whiteList=['Proxy','ExpressionEngine','DynamicData','Label','Shape']
         for prop in propertiesList:
@@ -1163,7 +1172,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
             if typeId in self.getPropertyTypes():
                 available.append({'type':typeId,'value':p,'name':prop})
-        if useViewProperties:
+        if supportViewObjectProperties:
             viewPropertiesList = obj.ViewObject.PropertiesList
             for vprop in viewPropertiesList:
                 if vprop in whiteList:
