@@ -12,9 +12,6 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 ### Example Video:
 <img src="Resources/media/example.gif" alt="animated gif example">
 
-### Warning Message:
-You might see this warning message in the report view: <b>"Enumeration index -1 is out of range, ignore it".</b>  This is a FreeCAD warning related to the DisplayMode property, which can be safely ignored, since the dd container objects are not intended to be displayed in the 3d view and do not have view objects.  I have added a workaround for this issue in version 1.3, so hopefully dd objects created with version 1.3+ will no longer show this warning upon being loaded from disk.
-
 ### Create Object
 <img src="Resources/icons/CreateObject.png" alt="icon">
 Creates a new DynamicData container object.
@@ -122,6 +119,8 @@ This operation can now be partially undone (as of version 1.40).  If you use Fre
 ### Copy Property
 <img src="Resources/icons/CopyProperty.png" alt="icon"><br/>
 <br/>
+<b>New feature in version 1.5</b>: Now you can parametrically link a copied or set property. Then when the source property changes, the copy will parametrically change with it.  You can still choose the non-parametric copy when setting/copying.  The parametric link can also be broken later using the Set/Copy command.  For some property types breaking the parametric link is trivial enough to do it manually, but for other types, such as Placement, it can be very tedious to do it manually.<br/>
+<br/>
 Copy a property from one object to another or within the same dd object.  Properties can only be copied to a dd object, but the source can be a non-dd object or a dd object (including copies from within the same dd object).  Can also be used to set the value of an existing property rather than creating a new property.  To use, just select the object containing the original property to be copied and the dd object that will contain the new property, then click the Copy Property icon.  You will be guided through the process with a series of dialogs.<br/>
 <br/>
 One potential application for this feature is to make copies of placement properties.  These copies can then be used to easily set the original objects Placement property to any of the values held by any of the placement copies.  For example, your model might include a lever that can be in any of 3 positions, say forward, neutral, and reverse.  Move it to the forward position, and then make a copy of the placement.  Move it to the neutral position, and do the same, ditto for the reverse position.  Your dd object could contain 3 placement properties: ddForward, ddNeutral, and ddReverse.<br/>
@@ -155,6 +154,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2019.07.26 (version 1.50)<br/>
+** add ability create parametric links when setting/copying<br/>
 * 2019.07.17 (version 1.44)<br/>
 ** do not import non-driving reference mode constraints<br/>
 * 2019.07.05 (version 1.43)<br/>
