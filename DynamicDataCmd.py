@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.07.26"
-__version__ = "1.50"
-version = 1.50
+__date__    = "2019.07.27"
+__version__ = "1.60"
+version = 1.60
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -976,7 +976,7 @@ Enter the name for the new property\n',text=name)
                     name = 'dd'+cap(name)
 
                 try:
-                    toObj.addProperty('App::Property'+propertyType, name,'Copied from: '+fromObj.Label,'['+propertyType+']')
+                    toObj.addProperty('App::Property'+propertyType.replace('(ViewObject)',''), name,'Copied from: '+fromObj.Label,'['+propertyType+']')
                     toProperty = {'name':name,'type':propertyType,'value':property['value']}
                 except:
                     FreeCAD.Console.PrintError('DynamicData: Exception trying to add property ('+property['name']+')\n')
@@ -1027,7 +1027,7 @@ Enter the name for the new property\n',text=name)
                 return
             fromProperty=fromProperty[0] #returns a list, but only valid for copy modes, not set modes
             if not breakOnly:
-                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n',matchType=fromProperty['type'])
+                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n',matchType=fromProperty['type'].replace('(ViewObject)',''))
                 toProperty=toProperty[0]
             else:
                 toProperty = fromProperty
@@ -1035,7 +1035,10 @@ Enter the name for the new property\n',text=name)
                 return
             if not breakOnly:
                 try:
-                    setattr(toObj,toProperty['name'],fromProperty['value'])
+                    if '(ViewObject)' in toProperty['type']:
+                        setattr(toObj.ViewObject, toProperty['name'],fromProperty['value'])
+                    else:
+                        setattr(toObj,toProperty['name'],fromProperty['value'])
                 except:
                     FreeCAD.Console.PrintError(\
 'DynamicData: Exception trying to set property value ('+str(fromProperty['value'])+')\n\
@@ -1061,9 +1064,11 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         set operation is when existing property value was changed in toObj"""
 
         #User might not want to do this, but we check to see if we can do it before asking
-        if fromProperty['type'] in nonLinkableTypes:
+        if toProperty['type'] in nonLinkableTypes:
             return
-        #todo: ask user if he wants the parametric linking
+        #ViewObject does not have setExpression(), so do not try to parametrically link
+        if '(ViewObject)' in fromProperty['type'] or '(ViewObject)' in toProperty['type']:
+            return
         breakLink = False
         if not breakOnly:
             window = QtGui.QApplication.activeWindow()
@@ -1133,7 +1138,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                 toObj.setExpression(toProperty['name'], None)
         except:
             FreeCAD.Console.PrintError(\
-'DynamicData: Exception tryin to parametrically link ('+str(fromProperty['value'])+')\n\
+'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
 Could be a property type mismatch\n\
 \n\
 From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
@@ -1145,6 +1150,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
            property will be in the form of a list of dictionary objects
            with keys 'type', 'name', 'value' """
         available = []
+        useViewProperties = True #todo: add parameter check to see if user wants this or not
         propertiesList = obj.PropertiesList
         whiteList=['Proxy','ExpressionEngine','DynamicData','Label','Shape']
         for prop in propertiesList:
@@ -1157,12 +1163,25 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
             if typeId in self.getPropertyTypes():
                 available.append({'type':typeId,'value':p,'name':prop})
+        if useViewProperties:
+            viewPropertiesList = obj.ViewObject.PropertiesList
+            for vprop in viewPropertiesList:
+                if vprop in whiteList:
+                    continue
+                vp = getattr(obj.ViewObject,vprop)
+                strType = str(type(vp))
+                types = self.getPropertyTypes()
+                typeFound = False;
+                typeId = obj.ViewObject.getTypeIdOfProperty(vprop)[13:] #strip "App::Property" from beginning
+                if typeId in self.getPropertyTypes():
+                    available.append({'type':'(ViewObject)'+typeId,'value':vp,'name':vprop})
+
         items=[]
         moved=[]
         for ii in range(0,len(available)):
             a = available[ii]
             items.append("name: "+a['name']+", type: "+a['type']+", value: "+str(a['value']))
-            if matchType==a['type']: #put same types at top of list
+            if matchType==a['type'].replace('(ViewObject)',''): #put same types at top of list
                 items.insert(0,items[-1])
                 items.pop(-1)
                 moved.append(ii)
