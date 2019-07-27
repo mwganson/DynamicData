@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.07.17"
-__version__ = "1.44"
-version = 1.44
+__date__    = "2019.07.26"
+__version__ = "1.50"
+version = 1.50
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -54,6 +54,75 @@ def initialize():
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
+propertyTypes =[
+    "Acceleration",
+    "Angle",
+    "Area",
+    "Bool",
+    "Color",
+    "Direction",
+    "Distance",
+    "File",
+    "FileIncluded",
+    "Float",
+    "FloatConstraint",
+    "FloatList",
+    "Font",
+    "Force",
+    "Integer",
+    "IntegerConstraint",
+    "IntegerList",
+    "Length",
+    "Link",
+    "LinkChild",
+    "LinkGlobal",
+    "LinkList",
+    "LinkListChild",
+    "LinkListGlobal",
+    "MaterialList",
+    "Matrix",
+    "Path",
+    "Percent",
+    "Placement",
+    "PlacementLink",
+    "Position",
+    "Precision",
+    "Pressure",
+    "Quantity",
+    "QuantityConstraint",
+    "Speed",
+    "String",
+    "StringList",
+    "Vector",
+    "VectorDistance",
+    "Volume"]
+
+nonLinkableTypes=[ #cannot be linked with setExpresion()
+    "Bool",
+    "Color",
+    "File",
+    "FileIncluded",
+    "FloatList",
+    "Font",
+    "IntegerList",
+    "Link",
+    "LinkChild",
+    "LinkGlobal",
+    "LinkList",
+    "LinkListChild",
+    "LinkListGlobal",
+    "MaterialList",
+    "Matrix",
+    "Path",
+    "PlacementLink",
+    "String",
+    "StringList"]
+
+xyzTypes = [#x,y,z elements must be linked separately
+    "Direction",
+    "Position",
+    "Vector",
+    "VectorDistance"]
 
 #######################################################################################
 # Keep Toolbar active even after leaving workbench
@@ -166,48 +235,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
 
     def getPropertyTypes(self):
-        return [
-        "Acceleration",
-        "Angle",
-        "Area",
-        "Bool",
-        "Color",
-        "Direction",
-        "Distance",
-        "File",
-        "FileIncluded",
-        "Float",
-        "FloatConstraint",
-        "FloatList",
-        "Font",
-        "Force",
-        "Integer",
-        "IntegerConstraint",
-        "IntegerList",
-        "Length",
-        "Link",
-        "LinkChild",
-        "LinkGlobal",
-        "LinkList",
-        "LinkListChild",
-        "LinkListGlobal",
-        "MaterialList",
-        "Matrix",
-        "Path",
-        "Percent",
-        "Placement",
-        "PlacementLink"
-        "Position",
-        "Precision",
-        "Pressure",
-        "Quantity",
-        "QuantityConstraint",
-        "Speed",
-        "String",
-        "StringList",
-        "Vector",
-        "VectorDistance",
-        "Volume",]
+        return propertyTypes
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
@@ -259,7 +287,7 @@ radius\n\
 depth;base dimensions;depth of base plate;50\n\
 width;;width of base plate;150\n\
 \n\
-Current group name: '+str(self.groupName)+'\n')
+Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+self.groupName+";tooltip;value")
             if not ok:
                 return
             if len(self.propertyName)==0:
@@ -808,6 +836,7 @@ class DynamicDataCopyPropertyCommandClass(object):
 
 
     def Activated(self):
+        breakOnly = False #only break existing parametric link if True
         other = None #other object to copy properties either to or from
         other2 = None #allow set value from one non-dd to other non-dd
         dd = None
@@ -828,90 +857,100 @@ class DynamicDataCopyPropertyCommandClass(object):
                     other = obj
                 else:
                     other2 = obj
-        #if not dd:
-        #    return False
+
+        MODE_CANCEL = -1
+        MODE_COPY_OBJ_TO_DD = 0
+        MODE_SET_OBJ_TO_DD = 1
+        MODE_SET_DD_TO_OBJ = 2
+        MODE_COPY_DD_TO_DD2 = 3
+        MODE_COPY_DD2_TO_DD = 4
+        MODE_SET_DD_TO_DD2 = 5
+        MODE_SET_DD2_TO_DD = 6
+        MODE_SET_OBJ_TO_OBJ2 = 7
+        MODE_SET_OBJ2_TO_OBJ = 8
+        MODE_UNLINK_DD = 9
+        MODE_UNLINK_OBJ = 10
+        MODE_COPY_DD_TO_DD = 11
+        MODE_SET_DD_TO_DD = 12
+        #this is just to avoid exceptions in generating ops strings
+        no_dd = no_dd2 = no_other = no_other2 = False
+        if not dd:
+            no_dd = True
+            dd = other
+        if not dd2:
+            no_dd2 = True
+            dd2 = dd or other
+        if not other:
+            no_other = True
+            other = dd
+        if not other2:
+            no_other2 = True
+            other2 = dd or other
+        ops = { MODE_COPY_OBJ_TO_DD:"Copy property from "+other.Label+" --> to new dd ("+dd.Label+") property",
+                MODE_SET_OBJ_TO_DD:"Set property value from "+other.Label+" --> to existing dd ("+dd.Label+") property",
+                MODE_SET_DD_TO_OBJ:"Set property value from dd ("+dd.Label+") --> to existing "+other.Label +" property",
+                MODE_SET_OBJ_TO_OBJ2:"Set property value from "+other.Label+" --> to existing "+other2.Label+" property",
+                MODE_SET_OBJ2_TO_OBJ:"Set property value from "+other2.Label+" --> to existing "+other.Label+" property",
+                MODE_COPY_DD_TO_DD2:"Copy property from dd ("+dd.Label+") --> to new dd ("+dd2.Label+") property",
+                MODE_COPY_DD2_TO_DD:"Copy property from dd ("+dd2.Label+") --> to new dd ("+dd.Label+") property",
+                MODE_SET_DD_TO_DD2:"Set property value from dd ("+dd.Label+") --> to existing dd ("+dd2.Label+") property",
+                MODE_SET_DD2_TO_DD:"Set property value from dd ("+dd2.Label+") --> to exiting dd ("+dd.Label+") property",
+                MODE_COPY_DD_TO_DD:"Copy existing property to new property",
+                MODE_SET_DD_TO_DD:"Set existing property from existing property",
+                MODE_UNLINK_DD:"Break existing parametric link of existing dd ("+dd.Label+") property",
+                MODE_UNLINK_OBJ:"Break existing parametric link of existing ("+obj.Label+") property",
+                MODE_CANCEL:"Cancel"}
+        if no_dd:
+            dd = None
+        if no_dd2:
+            dd2 = None
+        if no_other:
+            other = None
+        if no_other2:
+            other2 = None
+
         if dd and not dd2 and not other:
             dd2 = dd #allow for copying within the same dd object
-        if other and not other2:
-            modes = ["Copy property from "+other.Label+" --> to dd ("+dd.Label+")",
-                     "Set property value from "+other.Label+" --> to dd ("+dd.Label+")",
-                     "Set property value from dd ("+dd.Label+") --> to "+other.Label,
-                    "Cancel"
-                    ]
 
-            MODE_COPY_OBJ_TO_DD = 0
-            MODE_SET_OBJ_TO_DD = 1
-            MODE_SET_DD_TO_OBJ = 2
-            MODE_COPY_DD_TO_DD2 = -1
-            MODE_COPY_DD2_TO_DD = -1
-            MODE_SET_DD_TO_DD2 = -1
-            MODE_SET_DD2_TO_DD = -1
-            MODE_SET_OBJ_TO_OBJ2 = -1
-            MODE_SET_OBJ2_TO_OBJ = -1
+        if other and dd:
+            modes=[ops[MODE_COPY_OBJ_TO_DD], ops[MODE_SET_OBJ_TO_DD], ops[MODE_SET_DD_TO_OBJ], ops[MODE_CANCEL]]
+
         elif other and other2:
-            modes = ["Set property value from "+other.Label+" --> to "+other2.Label,
-                    "Set property value from "+other2.Label+" --> to "+other.Label,
-                    "Cancel"]
-            MODE_SET_OBJ_TO_OBJ2 = 0
-            MODE_SET_OBJ2_TO_OBJ = 1
-            MODE_COPY_OBJ_TO_DD = -1
-            MODE_SET_OBJ_TO_DD = -1
-            MODE_SET_DD_TO_OBJ = -1
-            MODE_COPY_DD_TO_DD2 = -1
-            MODE_COPY_DD2_TO_DD = -1
-            MODE_SET_DD_TO_DD2 = -1
-            MODE_SET_DD2_TO_DD = -1
+            modes=[ops[MODE_SET_OBJ_TO_OBJ2], ops[MODE_SET_OBJ2_TO_OBJ], ops[MODE_CANCEL]]
 
         elif dd and dd2:
-            modes = ["Copy property from dd ("+dd.Label+") --> to dd ("+dd2.Label+")",
-                     "Copy property from dd ("+dd2.Label+") --> to dd ("+dd.Label+")",
-                     "Set property value from dd ("+dd.Label+") --> to dd ("+dd2.Label+")",
-                     "Set property value from dd ("+dd2.Label+") --> to dd ("+dd.Label+")",
-                     "Cancel"]
-                    
-            MODE_COPY_DD_TO_DD2 = 0
-            MODE_COPY_DD2_TO_DD = 1
-            MODE_SET_DD_TO_DD2 = 2
-            MODE_SET_DD2_TO_DD = 3
-            MODE_COPY_OBJ_TO_DD = -1
-            MODE_SET_OBJ_TO_DD = -1
-            MODE_SET_DD_TO_OBJ = -1
-            MODE_SET_OBJ_TO_OBJ2 = -1
-            MODE_SET_OBJ2_TO_OBJ = -1
-
-
+            modes = [ops[MODE_COPY_DD_TO_DD2], ops[MODE_COPY_DD2_TO_DD], ops[MODE_SET_DD_TO_DD2], ops[MODE_SET_DD2_TO_DD], ops[MODE_CANCEL]]
+                   
         if dd == dd2 and not other and not other2:
-            modes=["Copy property","Set property value","Cancel"]
-            MODE_COPY_DD_TO_DD2 = 0
-            MODE_COPY_DD2_TO_DD = -1
-            MODE_SET_DD_TO_DD2 = 1
-            MODE_SET_DD2_TO_DD = -1
-            MODE_COPY_OBJ_TO_DD = -1
-            MODE_SET_OBJ_TO_DD = -1
-            MODE_SET_DD_TO_OBJ = -1
-            MODE_SET_OBJ_TO_OBJ2 = -1
-            MODE_SET_OBJ2_TO_OBJ = -1
+            modes=[ops[MODE_COPY_DD_TO_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_UNLINK_DD], ops[MODE_CANCEL]]
+
+        if len(selection) == 1 and other and not dd:
+            modes=[ops[MODE_UNLINK_OBJ], ops[MODE_CANCEL]]
+
+        if len(selection) == 1 and not other and dd:
+            modes=[ops[MODE_UNLINK_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_COPY_DD_TO_DD], ops[MODE_CANCEL]]
 
         window = QtGui.QApplication.activeWindow()
-        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of copy operation',modes,0,False)
+        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of operation',modes,0,False)
         if not ok:
             return
-        if mode==modes[-1]:
+        if mode==ops[MODE_CANCEL]:
             return
-        if mode == modes[MODE_COPY_OBJ_TO_DD] or mode == modes[MODE_COPY_DD_TO_DD2] or mode == modes[MODE_COPY_DD2_TO_DD]:
-            if mode == modes[MODE_COPY_DD_TO_DD2]:
+        if mode == ops[MODE_COPY_OBJ_TO_DD] or mode == ops[MODE_COPY_DD_TO_DD2] or mode == ops[MODE_COPY_DD2_TO_DD]:
+            if mode == ops[MODE_COPY_DD_TO_DD2]:
                 fromObj = dd
                 toObj = dd2
-            elif mode == modes[MODE_COPY_DD2_TO_DD]:
+            elif mode == ops[MODE_COPY_DD2_TO_DD]:
                 fromObj = dd2
                 toObj = dd
-            elif mode == modes[MODE_COPY_OBJ_TO_DD]:
+            elif mode == ops[MODE_COPY_OBJ_TO_DD]:
                 fromObj = other
                 toObj = dd
             #make a copy of the property and add it to the dd object
             properties = self.getProperty(fromObj,allowMultiple=True)
             if not properties:
                 return #user canceled
+            fromProperty = properties[0]
             for property in properties:
                 cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
                 name = property['name']
@@ -938,58 +977,169 @@ Enter the name for the new property\n',text=name)
 
                 try:
                     toObj.addProperty('App::Property'+propertyType, name,'Copied from: '+fromObj.Label,'['+propertyType+']')
+                    toProperty = {'name':name,'type':propertyType,'value':property['value']}
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: unable to add property ('+property['name']+')\n')
+                    FreeCAD.Console.PrintError('DynamicData: Exception trying to add property ('+property['name']+')\n')
                 try:
                     if propertyType=='String':
                         setattr(toObj,name,str(property['value']))
                     else:
                         setattr(toObj,name,property['value'])
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: unable to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
-        elif mode == modes[MODE_SET_OBJ_TO_DD] or mode==modes[MODE_SET_DD_TO_OBJ] or mode==modes[MODE_SET_DD_TO_DD2] \
-                    or mode==modes[MODE_SET_DD2_TO_DD] or mode==modes[MODE_SET_OBJ_TO_OBJ2] or mode == modes[MODE_SET_OBJ2_TO_OBJ]:
-            if mode == modes[MODE_SET_OBJ_TO_DD]:
+                    FreeCAD.Console.PrintError('DynamicData: Exception trying to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
+                doc.recompute()
+                self.makeParametric(fromObj, fromProperty, toObj, toProperty)
+        elif mode == ops[MODE_SET_OBJ_TO_DD] or mode==ops[MODE_SET_DD_TO_OBJ] or mode==ops[MODE_SET_DD_TO_DD2] \
+                    or mode==ops[MODE_SET_DD2_TO_DD] or mode==ops[MODE_SET_OBJ_TO_OBJ2] or mode == ops[MODE_SET_OBJ2_TO_OBJ] \
+                    or mode==ops[MODE_UNLINK_DD] or mode==ops[MODE_UNLINK_OBJ]:
+            if mode == ops[MODE_UNLINK_DD]:
+                fromObj = dd
+                toObj = dd
+                breakOnly = True
+            elif mode == ops[MODE_UNLINK_OBJ]:
+                fromObj = other
+                toObj = other
+                breakOnly = True
+            elif mode == ops[MODE_SET_OBJ_TO_DD]:
                 fromObj = other
                 toObj = dd
-            elif mode == modes[MODE_SET_DD_TO_OBJ]:
+            elif mode == ops[MODE_SET_DD_TO_OBJ]:
                 fromObj = dd
                 toObj = other
-            elif mode == modes[MODE_SET_DD_TO_DD2]:
+            elif mode == ops[MODE_SET_DD_TO_DD2]:
                 fromObj = dd
                 toObj = dd2
-            elif mode == modes[MODE_SET_DD2_TO_DD]:
+            elif mode == ops[MODE_SET_DD2_TO_DD]:
                 fromObj = dd2
                 toObj = dd
-            elif mode == modes[MODE_SET_OBJ_TO_OBJ2]:
+            elif mode == ops[MODE_SET_OBJ_TO_OBJ2]:
                 fromObj = other
                 toObj = other2
-            elif mode == modes[MODE_SET_OBJ2_TO_OBJ]:
+            elif mode == ops[MODE_SET_OBJ2_TO_OBJ]:
                 fromObj = other2
                 toObj = other
             #here we just set the value of an existing property
-            fromProperty = self.getProperty(fromObj,'\nChoose the FROM property\n')
+            if breakOnly:
+                fromProperty = self.getProperty(fromObj, '\nChoose the property of '+fromObj.Label+' to unlink\n')
+            else:
+                fromProperty = self.getProperty(fromObj,'\nChoose the FROM property of '+fromObj.Label+'\n')
             if not fromProperty:
                 return
             fromProperty=fromProperty[0] #returns a list, but only valid for copy modes, not set modes
-            toProperty = self.getProperty(toObj,'\nChoose the TO property\n',matchType=fromProperty['type'])
+            if not breakOnly:
+                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n',matchType=fromProperty['type'])
+                toProperty=toProperty[0]
+            else:
+                toProperty = fromProperty
             if not toProperty:
                 return
-            toProperty=toProperty[0]
-
-            try:
-                setattr(toObj,toProperty['name'],fromProperty['value'])
-            except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: unable to set property value ('+str(fromProperty['value'])+')\n\
+            if not breakOnly:
+                try:
+                    setattr(toObj,toProperty['name'],fromProperty['value'])
+                except:
+                    FreeCAD.Console.PrintError(\
+'DynamicData: Exception trying to set property value ('+str(fromProperty['value'])+')\n\
 Could be a property type mismatch\n\
 \n\
 From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
 To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+                doc.recompute()
+                self.makeParametric(fromObj, fromProperty, toObj, toProperty)
+            else: #break only
+                self.makeParametric(fromObj, fromProperty, toObj, toProperty, breakOnly=True)
+
 
         doc.recompute()
         return
    
+    def makeParametric(self,fromObj,fromProperty,toObj,toProperty,breakOnly=False):
+        """create a parametric link using toObj.setExpression()
+        fromProperty and toProperty are dict objects with keys:
+        'name', 'type', and 'value' eg: {'name':'Height','type':'Length','value': 8 mm}
+        this function only gets called after a successful copy/set operation
+        copy operation is when new property was created in toObj
+        set operation is when existing property value was changed in toObj"""
+
+        #User might not want to do this, but we check to see if we can do it before asking
+        if fromProperty['type'] in nonLinkableTypes:
+            return
+        #todo: ask user if he wants the parametric linking
+        breakLink = False
+        if not breakOnly:
+            window = QtGui.QApplication.activeWindow()
+            items = ["Create parametric link", "Break parametric link", "Make simple non-parametric copy by value"]
+            item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False)
+            if not ok:
+                return
+            elif item==items[-1]:
+                return
+            elif item==items[1]: #break parametric link
+                breakLink=True
+        else:
+            breakLink = True
+        #handle xyzTypes first
+        if fromProperty['type'] in xyzTypes:
+            try:
+                if not breakLink:
+                    toObj.setExpression(toProperty['name']+'.x',fromObj.Name+'.'+fromProperty['name']+'.x')
+                    toObj.setExpression(toProperty['name']+'.y',fromObj.Name+'.'+fromProperty['name']+'.y')
+                    toObj.setExpression(toProperty['name']+'.z',fromObj.Name+'.'+fromProperty['name']+'.z')
+                else: #break the parametric link
+                    toObj.setExpression(toProperty['name']+'.x', None)
+                    toObj.setExpression(toProperty['name']+'.y', None)
+                    toObj.setExpression(toProperty['name']+'.z', None)
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            return
+        
+        #handle placement types
+        if fromProperty['type'] in 'Placement':
+            try:
+                if not breakLink:
+                    toObj.setExpression(toProperty['name']+'.Base.x',fromObj.Name+'.'+fromProperty['name']+'.Base.x')
+                    toObj.setExpression(toProperty['name']+'.Base.y',fromObj.Name+'.'+fromProperty['name']+'.Base.y')
+                    toObj.setExpression(toProperty['name']+'.Base.z',fromObj.Name+'.'+fromProperty['name']+'.Base.z')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Angle',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Angle')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.x')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.y')
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.z')
+                else: #break parametric link
+                    toObj.setExpression(toProperty['name']+'.Base.x', None)
+                    toObj.setExpression(toProperty['name']+'.Base.y', None)
+                    toObj.setExpression(toProperty['name']+'.Base.z', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Angle', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y', None)
+                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z', None)
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            return
+
+        #handle all other general types
+        try:
+            if not breakLink:
+                toObj.setExpression(toProperty['name'],fromObj.Name+'.'+fromProperty['name'])
+            else: #break the link
+                toObj.setExpression(toProperty['name'], None)
+        except:
+            FreeCAD.Console.PrintError(\
+'DynamicData: Exception tryin to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+        return
+
     def getProperty(self,obj,msg='',allowMultiple=False,matchType=''):
         """ask user which property and return it or None
            property will be in the form of a list of dictionary objects
@@ -1036,6 +1186,8 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         dd = None
         doc = FreeCAD.ActiveDocument
         selection = Gui.Selection.getSelectionEx()
+        if len(selection) == 1:
+            return True #only can break parametric link with only 1 object selected
         if len(selection) != 1 and len(selection) != 2:
             return False
         for sel in selection:
@@ -1049,48 +1201,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         return True
 
     def getPropertyTypes(self):
-        return [
-        "Acceleration",
-        "Angle",
-        "Area",
-        "Bool",
-        "Color",
-        "Direction",
-        "Distance",
-        "File",
-        "FileIncluded",
-        "Float",
-        "FloatConstraint",
-        "FloatList",
-        "Font",
-        "Force",
-        "Integer",
-        "IntegerConstraint",
-        "IntegerList",
-        "Length",
-        "Link",
-        "LinkChild",
-        "LinkGlobal",
-        "LinkList",
-        "LinkListChild",
-        "LinkListGlobal",
-        "MaterialList",
-        "Matrix",
-        "Path",
-        "Percent",
-        "Placement",
-        "PlacementLink"
-        "Position",
-        "Precision",
-        "Pressure",
-        "Quantity",
-        "QuantityConstraint",
-        "Speed",
-        "String",
-        "StringList",
-        "Vector",
-        "VectorDistance",
-        "Volume",]
+        return propertyTypes
 
 
 #Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
