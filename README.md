@@ -148,12 +148,17 @@ You must always open the DynamicData workbench at least once per FreeCAD session
 <br/>
 There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
 <br/>
+#### Support ViewObject Properties
+If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.<br/>
+<br/>
 #### Change length of most recently used type list
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.<br/>
 <br/>
 
 
 #### Release notes:<br/>
+* 2019.07.27 (version 1.60)<br/>
+** add support for ViewObject properties<br/>
 * 2019.07.26 (version 1.50)<br/>
 ** add ability create parametric links when setting/copying<br/>
 * 2019.07.17 (version 1.44)<br/>
