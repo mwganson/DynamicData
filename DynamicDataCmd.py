@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.07.27"
-__version__ = "1.60"
-version = 1.60
+__date__    = "2019.08.06"
+__version__ = "1.61"
+version = 1.61
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -261,14 +261,19 @@ class DynamicDataAddPropertyCommandClass(object):
         #add the property
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
+        recent = []
+        separator = "-----"
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         mostRecentTypesLength = pg.GetInt('mruLength',5)
         for ii in range(mostRecentTypesLength-1,-1,-1):
             if mostRecentTypes[ii]:
-                items.insert(0,mostRecentTypes[ii])
+                recent.insert(0,mostRecentTypes[ii])
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',items,0,False)
-        if not ok:
+
+        if len(recent) > 0:
+            recent += [separator]
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',recent+items,0,False)
+        if not ok or item==separator:
             return
         else:
             if not item in mostRecentTypes:
@@ -368,7 +373,7 @@ Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+s
         return True
 
     def __init__(self):
-        global mostRecentTypes
+        #global mostRecentTypes
         global mostRecentTypesLength
         import ast, locale
         import operator as op
