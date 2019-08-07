@@ -157,6 +157,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2019.08.06 (version 1.61)<br/>
+** fix but (yet again) in most recent types list
 * 2019.07.27 (version 1.60)<br/>
 ** add support for ViewObject properties<br/>
 * 2019.07.26 (version 1.50)<br/>
