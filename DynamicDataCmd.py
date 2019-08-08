@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.08.06"
-__version__ = "1.61"
-version = 1.61
+__date__    = "2019.08.07"
+__version__ = "1.70"
+version = 1.70
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -79,6 +79,7 @@ propertyTypes =[
     "LinkList",
     "LinkListChild",
     "LinkListGlobal",
+#    "Material",
     "MaterialList",
     "Matrix",
     "Path",
@@ -111,6 +112,7 @@ nonLinkableTypes=[ #cannot be linked with setExpresion()
     "LinkList",
     "LinkListChild",
     "LinkListGlobal",
+    #"Material",
     "MaterialList",
     "Matrix",
     "Path",
@@ -230,6 +232,77 @@ class DynamicDataCreateObjectCommandClass(object):
 
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
 
+class MultiTextInput(QtGui.QDialog):
+    def __init__(self):
+        QtGui.QDialog.__init__(self)
+
+        layout = QtGui.QGridLayout()
+        #layout.setColumnStretch(1, 1)
+
+        self.label = QtGui.QLabel(self)
+        self.spacer = QtGui.QLabel(" ")
+        self.nameLabel = QtGui.QLabel("Name: ")
+        self.nameEdit = QtGui.QLineEdit(self)
+        self.nameEdit.editingFinished.connect(self.on_edit_finished)
+        self.valueLabel = QtGui.QLabel("Value: ")
+        self.valueEdit = QtGui.QLineEdit(self)
+        self.groupLabel = QtGui.QLabel("Group: ")
+        self.groupEdit = QtGui.QLineEdit(self)
+        self.tooltipLabel = QtGui.QLabel("Tooltip: ")
+        self.tooltipPrependLabel = QtGui.QLabel("")
+        self.tooltipEdit = QtGui.QLineEdit(self)
+
+        layout.addWidget(self.label, 0, 0, 2, 5)
+        layout.addWidget(self.spacer, 3, 0, 1, 5)
+        layout.addWidget(self.nameLabel, 4, 0, 1, 1)
+        layout.addWidget(self.nameEdit, 4, 1, 1, 5)
+        layout.addWidget(self.valueLabel, 5, 0, 1, 1)
+        layout.addWidget(self.valueEdit, 5, 1, 1, 5)
+        layout.addWidget(self.groupLabel, 6, 0, 1, 1)
+        layout.addWidget(self.groupEdit, 6, 1, 1, 5)
+        layout.addWidget(self.tooltipLabel, 7, 0, 1, 1)
+        layout.addWidget(self.tooltipPrependLabel, 7, 1, 1, 1)
+        layout.addWidget(self.tooltipEdit, 7, 2, 1, 4)
+        layout.addWidget(self.spacer, 8, 0, 1, 5)
+        buttons = QtGui.QDialogButtonBox(
+            QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
+            QtCore.Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        buttons.setCenterButtons(True)
+        layout.addWidget(buttons, 9, 0, 1, 5)
+        self.setLayout(layout)
+
+
+    def on_edit_finished(self):
+        if ";" in self.nameEdit.text():
+            hasValue = False
+            propertyName = self.nameEdit.text()
+            split = propertyName.split(';')
+            propertyName = split[0].replace(' ','_')
+            if len(propertyName)==0:
+                propertyName = "Prop"
+            if len(split)>1: #has a group name
+                if len(split[1])>0: #allow for ;; empty string to mean use current group name
+                    self.groupEdit.setText(split[1])
+            if len(split)>2: #has a tooltip
+                if len(split[2])>0:
+                    self.tooltipEdit.setText(split[2])
+            if len(split)==4: #has a value
+                hasValue = True
+                val = split[3]
+
+            self.groupEdit.setEnabled(False)
+            if hasValue:
+                self.valueEdit.setText(val)
+            self.valueEdit.setEnabled(False)
+            self.tooltipEdit.setEnabled(False)
+        else:
+            self.groupEdit.setEnabled(True)
+            self.valueEdit.setEnabled(True)
+            self.tooltipEdit.setEnabled(True)
+
+
 ######################################################################################
 # Add a dynamic property to the object
 
@@ -283,24 +356,43 @@ class DynamicDataAddPropertyCommandClass(object):
                 mostRecentTypes.insert(0,item)
             if len(mostRecentTypes)>mostRecentTypesLength:
                 mostRecentTypes = mostRecentTypes[:mostRecentTypesLength]
-            self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
-'Enter Property Name;[group name];[tool tip];[value]\n\
-\n\
-(\'dd\' will be prepended to the name)\n\
-\n\
-(Separate with semicolons)\n\
-(Use 2 semicolons (;;) to keep same group name)\n\
-(Group name; tool tip; value are optional)\n\
-\n\
-Examples:\n\
-\n\
-radius\n\
-depth;base dimensions;depth of base plate;50\n\
-width;;width of base plate;150\n\
-\n\
-Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+self.groupName+";tooltip;value")
+
+            dlg = MultiTextInput()
+            dlg.setWindowTitle("DynamicData")
+            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field")
+            dlg.nameEdit.setText(item)
+            dlg.nameEdit.selectAll()
+            if "List" in item:
+                dlg.valueLabel.setText("Values:")
+                dlg.label.setText("List values should be semicolon delimited, e.g. 1;2;3;7")
+            dlg.groupEdit.setText(self.groupName)
+            dlg.tooltipLabel.setText("Tooltip:")
+            dlg.tooltipPrependLabel.setText("["+item+"]")
+
+
+#            self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
+#'Enter Property Name;[group name];[tool tip];[value]\n\
+#\n\
+#(\'dd\' will be prepended to the name)\n\
+#\n\
+#(Separate with semicolons)\n\
+#(Use 2 semicolons (;;) to keep same group name)\n\
+#(Group name; tool tip; value are optional)\n\
+#\n\
+#Examples:\n\
+#\n\
+#radius\n\
+#depth;base dimensions;depth of base plate;50\n\
+#width;;width of base plate;150\n\
+#\n\
+#Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+self.groupName+";tooltip;value")
+            ok = dlg.exec_()
             if not ok:
                 return
+            if not ";" in dlg.nameEdit.text():
+                self.propertyName = dlg.nameEdit.text()+";"+dlg.groupEdit.text()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
+            else:
+                self.propertyName = dlg.nameEdit.text()
             if len(self.propertyName)==0:
                 self.propertyName=';;;' #use defaults
 
@@ -351,7 +443,7 @@ Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+s
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
             elif hasVal and len(vals)>0:
                 try:
-                    setattr(p,'dd'+self.propertyName,vals)
+                    setattr(p,'dd'+self.propertyName,list(vals))
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
             obj.touch()
