@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2019.08.07"
-__version__ = "1.70"
-version = 1.70
+__version__ = "1.71"
+version = 1.71
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -41,7 +41,7 @@ __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 
 keepToolbar = True
-
+windowFlags = QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint
 
 
 def initialize():
@@ -152,7 +152,7 @@ class DynamicDataSettingsCommandClass(object):
         keep = pg.GetBool('KeepToolbar',True)
         mostRecentTypesLength = pg.GetInt('mruLength',5)
         items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list","Support ViewObject properties", "Do not support ViewObject properties","Cancel"]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False)
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False,windowFlags)
         if ok and item == items[-1]:
             return
         elif ok and item == items[0]:
@@ -166,7 +166,7 @@ class DynamicDataSettingsCommandClass(object):
         elif ok and item==items[4]:
             pg.SetBool('SupportViewObjectProperties',False)
         elif ok and item==items[2]:
-            count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1)
+            count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1,windowFlags)
             if ok:
                 if count != mostRecentTypesLength:
                     pg.SetInt('mruLength',count)
@@ -345,7 +345,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
         if len(recent) > 0:
             recent += [separator]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',recent+items,0,False)
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',recent+items,0,False,windowFlags)
         if not ok or item==separator:
             return
         else:
@@ -356,8 +356,12 @@ class DynamicDataAddPropertyCommandClass(object):
                 mostRecentTypes.insert(0,item)
             if len(mostRecentTypes)>mostRecentTypesLength:
                 mostRecentTypes = mostRecentTypes[:mostRecentTypesLength]
+            for ii in range(mostRecentTypesLength-1,-1,-1):
+                if mostRecentTypes[ii]:
+                    pg.SetString('mru'+str(ii), mostRecentTypes[ii])
 
             dlg = MultiTextInput()
+            dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
             dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field")
             dlg.nameEdit.setText(item)
@@ -369,23 +373,6 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg.tooltipLabel.setText("Tooltip:")
             dlg.tooltipPrependLabel.setText("["+item+"]")
 
-
-#            self.propertyName,ok = QtGui.QInputDialog.getText(window,'Property Name', 
-#'Enter Property Name;[group name];[tool tip];[value]\n\
-#\n\
-#(\'dd\' will be prepended to the name)\n\
-#\n\
-#(Separate with semicolons)\n\
-#(Use 2 semicolons (;;) to keep same group name)\n\
-#(Group name; tool tip; value are optional)\n\
-#\n\
-#Examples:\n\
-#\n\
-#radius\n\
-#depth;base dimensions;depth of base plate;50\n\
-#width;;width of base plate;150\n\
-#\n\
-#Current group name: '+str(self.groupName)+'\n',QtGui.QLineEdit.Normal,item+";"+self.groupName+";tooltip;value")
             ok = dlg.exec_()
             if not ok:
                 return
@@ -475,7 +462,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         mostRecentTypesLength = pg.GetInt('mruLength',5)
-        for ii in range(mostRecentTypesLength-1,-1,-1):
+        for ii in range(0, mostRecentTypesLength):
             mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
 
         self.SEPARATOR = locale.localeconv()['decimal_point']
@@ -589,7 +576,7 @@ class DynamicDataRemovePropertyCommandClass(object):
             FreeCAD.Console.PrintMessage("DyanmicData: no properties to remove.  Add some properties first.\n")
             return
         items.insert(0,"<Remove all properties>")
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove',items,0,False)
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove',items,0,False,windowFlags)
         if not ok:
             return
         if item==items[0]:
@@ -695,7 +682,7 @@ You can partially undo this operation.  If undone, the changes to the spreadshee
 reverted, but you will still need to manually remove the new properties from the dd object.\n\
 The new properties will remain after the undo, but they will no longer reference anything. \n\
 \n\
-You should save your document before proceeding.\n',items,0,False)
+You should save your document before proceeding.\n',items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return
         FreeCAD.ActiveDocument.openTransaction("dd Import Aliases") #setup undo
@@ -849,7 +836,7 @@ This operation can be partially undone.  The sketch will be reset, but you will 
 still need to remove the newly created properties from the dd object.  The properties \n\
 will still be there, but they won\'t be linked to anything. \n\
 \n\
-You should save your document before proceeding\n',items,0,False)
+You should save your document before proceeding\n',items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return
         FreeCAD.ActiveDocument.openTransaction("dd Import Constraints") #setup undo
@@ -1034,7 +1021,7 @@ class DynamicDataCopyPropertyCommandClass(object):
             modes=[ops[MODE_UNLINK_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_COPY_DD_TO_DD], ops[MODE_CANCEL]]
 
         window = QtGui.QApplication.activeWindow()
-        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of operation',modes,0,False)
+        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of operation',modes,0,False,windowFlags)
         if not ok:
             return
         if mode==ops[MODE_CANCEL]:
@@ -1063,7 +1050,7 @@ class DynamicDataCopyPropertyCommandClass(object):
                 propertyType = property['type']
                 if not propertyType:
                     return #user canceled
-                name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name)
+                name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name, flags=windowFlags)
                 if 'dd' in name[:2] or 'Dd' in name[:2]:
                     name = name[2:]
                 name = 'dd'+cap(name)
@@ -1071,7 +1058,7 @@ class DynamicDataCopyPropertyCommandClass(object):
                     return
                 while hasattr(toObj,name):
                     name,ok=QtGui.QInputDialog.getText(window,'DynamicData','A property with that name already exists.  \n\
-Enter the name for the new property\n',text=name)
+Enter the name for the new property\n',text=name, flags=windowFlags)
                     if not ok:
                         return
                     if 'dd' in name[:2] or 'Dd' in name[:2]:
@@ -1178,7 +1165,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         if not breakOnly:
             window = QtGui.QApplication.activeWindow()
             items = ["Create parametric link", "Break parametric link", "Make simple non-parametric copy by value"]
-            item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False)
+            item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False,windowFlags)
             if not ok:
                 return
             elif item==items[-1]:
@@ -1299,7 +1286,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             items.append("<copy all>")
         items.append("<cancel>")
         window = QtGui.QApplication.activeWindow()
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Copy/Set Property Tool\n\nSelect property to copy\n'+msg,items,0,False)
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Copy/Set Property Tool\n\nSelect property to copy\n'+msg,items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return None
         if allowMultiple and item==items[-2]:
