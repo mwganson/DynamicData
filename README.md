@@ -129,6 +129,11 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2019.08.08 (version 1.71)<br/>
+** remove unused help button from dialogs
+** fix recent types list -- sigh<br/>
+* 2019.08.08 (version 1.70)<br/>
+** revamp add property dialog<br/>
 * 2019.08.06 (version 1.61)<br/>
 ** fix but (yet again) in most recent types list
 * 2019.07.27 (version 1.60)<br/>
