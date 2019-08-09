@@ -129,6 +129,9 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2019.08.08 (version 1.72)<br/>
+** make simple copy default instead of parametric link
+** bugfix with copy all when user cancels midway<br/>
 * 2019.08.08 (version 1.71)<br/>
 ** remove unused help button from dialogs
 ** fix recent types list -- sigh<br/>
