@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.08.07"
-__version__ = "1.71"
-version = 1.71
+__date__    = "2019.08.08"
+__version__ = "1.72"
+version = 1.72
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -1053,9 +1053,9 @@ class DynamicDataCopyPropertyCommandClass(object):
                 name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name, flags=windowFlags)
                 if 'dd' in name[:2] or 'Dd' in name[:2]:
                     name = name[2:]
-                name = 'dd'+cap(name)
                 if not ok:
                     return
+                name = 'dd'+cap(name)
                 while hasattr(toObj,name):
                     name,ok=QtGui.QInputDialog.getText(window,'DynamicData','A property with that name already exists.  \n\
 Enter the name for the new property\n',text=name, flags=windowFlags)
@@ -1164,13 +1164,13 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         breakLink = False
         if not breakOnly:
             window = QtGui.QApplication.activeWindow()
-            items = ["Create parametric link", "Break parametric link", "Make simple non-parametric copy by value"]
+            items = ["Make simple non-parametric copy by value","Create parametric link", "Break parametric link"]
             item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False,windowFlags)
             if not ok:
                 return
-            elif item==items[-1]:
+            elif item==items[0]:
                 return
-            elif item==items[1]: #break parametric link
+            elif item==items[-11]: #break parametric link
                 breakLink=True
         else:
             breakLink = True
