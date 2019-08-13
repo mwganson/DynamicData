@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2019.08.08"
-__version__ = "1.72"
-version = 1.72
+__version__ = "1.73"
+version = 1.73
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -1170,7 +1170,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                 return
             elif item==items[0]:
                 return
-            elif item==items[-11]: #break parametric link
+            elif item==items[-1]: #break parametric link
                 breakLink=True
         else:
             breakLink = True
