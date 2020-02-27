@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2019.08.08"
-__version__ = "1.73"
-version = 1.73
+__date__    = "2020.02.27"
+__version__ = "1.74"
+version = 1.74
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -712,6 +712,11 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     userString = atr.UserString
                 elif "'float\'" in str(type(atr)):
                     #handle float types
+                    propertyType='Float'
+                    userString=atr
+                elif "'int\'" in str(type(atr)):
+                    #handle int types (actually, just treat them as floats
+                    #since many users no doubt will expect this behavior for imported aliases)
                     propertyType='Float'
                     userString=atr
                 elif "unicode" in str(type(atr)) or '<class \'str\'>' in str(type(atr)):
