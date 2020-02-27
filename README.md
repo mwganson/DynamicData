@@ -129,6 +129,10 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.02.27 (version 1.73)<br/>
+** maintenance issue due to code changes in spreadsheet workbench
+** treats int types as floats since that will likely be users'
+** expectations for handling values, such as 10.0 as float not int
 * 2019.08.13 (version 1.73)<br/>
 ** bugfix -- typo
 * 2019.08.08 (version 1.72)<br/>
