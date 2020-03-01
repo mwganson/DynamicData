@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.02.27"
-__version__ = "1.74"
-version = 1.74
+__date__    = "2020.03.01"
+__version__ = "1.75"
+version = 1.75
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -1169,16 +1169,26 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         breakLink = False
         if not breakOnly:
             window = QtGui.QApplication.activeWindow()
-            items = ["Make simple non-parametric copy by value","Create parametric link", "Break parametric link"]
+            items = ["Create parametric link", "Make simple non-parametric copy by value","Break parametric link"]
             item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False,windowFlags)
             if not ok:
                 return
-            elif item==items[0]:
+            elif item==items[1]:
                 return
             elif item==items[-1]: #break parametric link
                 breakLink=True
         else:
             breakLink = True
+
+        #only set parametric link in non-dd objects
+        if hasattr(toObj, "DynamicData"):
+            tmpObj = fromObj
+            fromObj = toObj
+            toObj = tmpObj
+            tmpProp = fromProperty
+            fromProperty = toProperty
+            toProperty = tmpProp
+
         #handle xyzTypes first
         if fromProperty['type'] in xyzTypes:
             try:
