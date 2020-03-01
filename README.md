@@ -129,6 +129,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.03.01 (version 1.76)<br/>
+** bugfix: import constraints was giving error when linking to new dd property
 * 2020.03.01 (version 1.75)<br/>
 ** make create parametric links option default when copying/setting
 ** create parametric links only in the non-dd objects when copying
