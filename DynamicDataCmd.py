@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2020.03.01"
-__version__ = "1.75"
-version = 1.75
+__version__ = "1.76"
+version = 1.76
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -856,9 +856,10 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
                 if not con.Driving:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Reference constraints skipped.\n')
                     continue
-                constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label})
+                constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch})
                 try:
-                    sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
+                    pass
+                    #sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
                 except:
                     FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
                     constraints.pop() #remove the constraint that gave the error
@@ -877,6 +878,8 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
                 dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
                 setattr(dd,name,value)
                 FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object\n')
+                sketch = con['sketch']
+                sketch.setExpression('Constraints.'+con['constraintName'], dd.Label+'.dd'+sketch.Label+cap(con['constraintName']))
             else:
                 FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
         FreeCAD.ActiveDocument.commitTransaction()
