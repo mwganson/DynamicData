@@ -129,7 +129,10 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
-* 2020.02.27 (version 1.73)<br/>
+* 2020.03.01 (version 1.75)<br/>
+** make create parametric links option default when copying/setting
+** create parametric links only in the non-dd objects when copying
+* 2020.02.27 (version 1.74)<br/>
 ** maintenance issue due to code changes in spreadsheet workbench
 ** treats int types as floats since that will likely be users'
 ** expectations for handling values, such as 10.0 as float not int
