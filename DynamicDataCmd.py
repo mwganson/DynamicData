@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2020.06.23"
-__version__ = "1.8"
-version = 1.8
+__version__ = "1.81"
+version = 1.81
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -243,9 +243,12 @@ class MultiTextInput(QtGui.QDialog):
 
         self.label = QtGui.QLabel(self)
         self.spacer = QtGui.QLabel(" ")
-        self.nameLabel = QtGui.QLabel("Name: ")
+        self.label2 = QtGui.QLabel(self)
+        self.label2.setStyleSheet('color: red')
+        self.nameLabel = QtGui.QLabel("Name: dd")
         self.nameEdit = QtGui.QLineEdit(self)
         self.nameEdit.editingFinished.connect(self.on_edit_finished)
+        self.nameEdit.textChanged.connect(self.on_text_changed)
         self.valueLabel = QtGui.QLabel("Value: ")
         self.valueEdit = QtGui.QLineEdit(self)
         self.groupLabel = QtGui.QLabel("Group: ")
@@ -266,15 +269,18 @@ class MultiTextInput(QtGui.QDialog):
         layout.addWidget(self.tooltipPrependLabel, 7, 1, 1, 1)
         layout.addWidget(self.tooltipEdit, 7, 2, 1, 4)
         layout.addWidget(self.spacer, 8, 0, 1, 5)
+        layout.addWidget(self.label2, 9, 0, 1, 5)
         buttons = QtGui.QDialogButtonBox(
             QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
             QtCore.Qt.Horizontal, self)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         buttons.setCenterButtons(True)
-        layout.addWidget(buttons, 9, 0, 1, 5)
+        layout.addWidget(buttons, 10, 0, 1, 5)
         self.setLayout(layout)
 
+    def on_text_changed(self):
+        self.on_edit_finished()
 
     def on_edit_finished(self):
         if ";" in self.nameEdit.text():
@@ -303,6 +309,12 @@ class MultiTextInput(QtGui.QDialog):
             self.groupEdit.setEnabled(True)
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
+            propertyName = self.nameEdit.text()
+        obj = FreeCAD.ActiveDocument.ActiveObject
+        if hasattr(obj,'dd'+propertyName):
+            self.label2.setText('Property name already exists')
+        else:
+            self.label2.setText('')
 
 
 ######################################################################################
@@ -366,7 +378,20 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
             dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field")
-            dlg.nameEdit.setText(item)
+            obj = FreeCAD.ActiveDocument.ActiveObject
+            vals=['']
+            for ii in range(1,1000):
+                vals.append(str(ii))
+            idx = 0
+            while hasattr(obj,'dd' + item + str(vals[idx])):
+                idx += 1
+            item + str(vals[idx])              
+            dlg.nameEdit.setText(item + vals[idx])
+
+            if hasattr(obj,'dd'+ item + vals[idx]):
+                dlg.label2.setText('Property name already exists')
+            else:
+                dlg.label2.setText('')
             dlg.nameEdit.selectAll()
             if "List" in item:
                 dlg.valueLabel.setText("Values:")
@@ -416,7 +441,9 @@ class DynamicDataAddPropertyCommandClass(object):
                                 vals.append(self.eval_expr(split[ii]))
                         except:
                             vals.append(split[ii])
-
+            if hasattr(obj,'dd'+self.propertyName):
+                FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
+                return
             p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
             if hasVal and len(vals)==0:
                 try:
@@ -482,7 +509,7 @@ class DynamicDataAddPropertyCommandClass(object):
              ast.USub: op.neg}
         #add some constants and references that might be useful for users
         self.constants = {'pi':math.pi,'e':math.e, 'phi':16180339887e-10, 'golden':16180339887e-10,'golden_ratio':16180339887e-10,
-             'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4}
+             'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4, 'mm':' 1', 'm':' 1000'}
         self.references= {'version':'version'}
         self.maths = {'cos':'cos','acos':'acos','tan':'tan','atan':'atan','sin':'sin','asin':'asin','log':'log','tlog':'log10'}
 
@@ -538,7 +565,7 @@ class DynamicDataAddPropertyCommandClass(object):
                 else:
                     return func(float(opstring))
             else:
-                App.Console.PrintMessage(u'unsupported token: '+node.id+u'\n')
+                App.Console.PrintMessage('unsupported token: '+node.id+'\n')
         else:
             raise TypeError(node)
 

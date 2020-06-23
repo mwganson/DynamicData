@@ -129,6 +129,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.06.23 (version 1.81)<br/>
+** check for existing property name before creating property
 * 2020.06.23 (version 1.80)<br/>
 ** add support for VectorList type (requires recent build of 0.19)
 * 2020.03.01 (version 1.76)<br/>
