@@ -509,7 +509,7 @@ class DynamicDataAddPropertyCommandClass(object):
              ast.USub: op.neg}
         #add some constants and references that might be useful for users
         self.constants = {'pi':math.pi,'e':math.e, 'phi':16180339887e-10, 'golden':16180339887e-10,'golden_ratio':16180339887e-10,
-             'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4, 'mm':' 1', 'm':' 1000'}
+             'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4}
         self.references= {'version':'version'}
         self.maths = {'cos':'cos','acos':'acos','tan':'tan','atan':'atan','sin':'sin','asin':'asin','log':'log','tlog':'log10'}
 
