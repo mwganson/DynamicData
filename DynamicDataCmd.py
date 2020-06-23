@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.03.01"
-__version__ = "1.76"
-version = 1.76
+__date__    = "2020.06.23"
+__version__ = "1.8"
+version = 1.8
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -95,6 +95,7 @@ propertyTypes =[
     "String",
     "StringList",
     "Vector",
+    "VectorList",
     "VectorDistance",
     "Volume"]
 
@@ -118,7 +119,8 @@ nonLinkableTypes=[ #cannot be linked with setExpresion()
     "Path",
     "PlacementLink",
     "String",
-    "StringList"]
+    "StringList",
+    "VectorList"]
 
 xyzTypes = [#x,y,z elements must be linked separately
     "Direction",
