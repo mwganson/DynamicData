@@ -129,6 +129,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.07.12 (version 1.82)<br/>
+** fix a bug related to evaluating some values
 * 2020.06.23 (version 1.81)<br/>
 ** check for existing property name before creating property
 * 2020.06.23 (version 1.80)<br/>
