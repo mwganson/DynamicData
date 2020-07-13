@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.06.23"
-__version__ = "1.81"
-version = 1.81
+__date__    = "2020.07.12"
+__version__ = "1.82"
+version = 1.82
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -513,29 +513,15 @@ class DynamicDataAddPropertyCommandClass(object):
         self.references= {'version':'version'}
         self.maths = {'cos':'cos','acos':'acos','tan':'tan','atan':'atan','sin':'sin','asin':'asin','log':'log','tlog':'log10'}
 
-
-    def eval_expr(self,expr):
-        import ast
-        import operator as op
-        """
-        >>> eval_expr('2^6')
-        4
-        >>> eval_expr('2**6')
-        64
-        >>> eval_expr('1 + 2*3**(4^5) / (6 + -7)')
-        -5.0
-        """
-        return self.eval_(ast.parse(expr, mode='eval').body)
-
-    def eval_(self,node):
+    def eval_this(self,node):
         import ast
         import operator as op
         if isinstance(node, ast.Num): # <number>
             return node.n
         elif isinstance(node, ast.BinOp): # <left> <operator> <right>
-            return self.operators[type(node.op)](self.eval_(node.left), self.eval_(node.right))
+            return self.operators[type(node.op)](self.eval_this(node.left), self.eval_this(node.right))
         elif isinstance(node, ast.UnaryOp): # <operator> <operand> e.g., -1
-            return operators[type(node.op)](eval_(node.operand))
+            return self.operators[type(node.op)](self.eval_this(node.operand))
     #provide support for constants and references
         elif node.id:
             if node.id in self.constants:
@@ -568,6 +554,21 @@ class DynamicDataAddPropertyCommandClass(object):
                 App.Console.PrintMessage('unsupported token: '+node.id+'\n')
         else:
             raise TypeError(node)
+
+    def eval_expr(self,expr):
+        import ast
+        import operator as op
+        """
+        >>> eval_expr('2^6')
+        4
+        >>> eval_expr('2**6')
+        64
+        >>> eval_expr('1 + 2*3**(4^5) / (6 + -7)')
+        -5.0
+        """
+        return self.eval_this(ast.parse(expr, mode='eval').body)
+
+
 
 #Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
 
