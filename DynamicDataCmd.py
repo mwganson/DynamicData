@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.07.12"
-__version__ = "1.82"
-version = 1.82
+__date__    = "2020.07.20"
+__version__ = "1.83"
+version = 1.83
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -378,7 +378,7 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
             dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field")
-            obj = FreeCAD.ActiveDocument.ActiveObject
+           # obj = FreeCAD.ActiveDocument.ActiveObject
             vals=['']
             for ii in range(1,1000):
                 vals.append(str(ii))

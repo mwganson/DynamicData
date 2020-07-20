@@ -129,6 +129,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.07.20 (version 1.83)<br/>
+** fix a bug where creating new body caused properties to no longer get added to dd object
 * 2020.07.12 (version 1.82)<br/>
 ** fix a bug related to evaluating some values
 * 2020.06.23 (version 1.81)<br/>
