@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.07.20"
-__version__ = "1.83"
-version = 1.83
+__date__    = "2020.07.22"
+__version__ = "1.90"
+version = 1.90
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -153,7 +153,19 @@ class DynamicDataSettingsCommandClass(object):
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         keep = pg.GetBool('KeepToolbar',True)
         mostRecentTypesLength = pg.GetInt('mruLength',5)
-        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list","Support ViewObject properties", "Do not support ViewObject properties","Cancel"]
+        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list","Support ViewObject properties", "Do not support ViewObject properties","Add to active container on creation", "Do not add to active container on creation","Cancel"]
+        if pg.GetBool("KeepToolbar",True):
+            items[0]="*"+items[0]
+        else:
+            items[1] = "*"+items[1]
+        if pg.GetBool("SupportViewObjectProperties",False):
+            items[3] = "*"+items[3]
+        else:
+            items[4] = "*"+items[4]
+        if pg.GetBool("AddToActiveContainer",False):
+            items[5] = "*"+items[5]
+        else:
+            items[6] = "*"+items[6]
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False,windowFlags)
         if ok and item == items[-1]:
             return
@@ -167,6 +179,10 @@ class DynamicDataSettingsCommandClass(object):
             pg.SetBool('SupportViewObjectProperties',True)
         elif ok and item==items[4]:
             pg.SetBool('SupportViewObjectProperties',False)
+        elif ok and item==items[5]:
+            pg.SetBool('AddToActiveContainer',True)
+        elif ok and item==items[6]:
+            pg.SetBool('AddToActiveContainer',False)
         elif ok and item==items[2]:
             count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1,windowFlags)
             if ok:
@@ -212,6 +228,14 @@ class DynamicDataCreateObjectCommandClass(object):
         a.touch()
         doc.recompute()
         Gui.Selection.clearSelection()
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        if pg.GetBool('AddToActiveContainer',False):
+            body = Gui.ActiveDocument.ActiveView.getActiveObject("pdbody")
+            part = Gui.ActiveDocument.ActiveView.getActiveObject("part")
+            if body:
+                body.Group += [a]
+            elif part:
+                part.Group += [a]
         doc.recompute()
         Gui.Selection.addSelection(a) #select so the user can immediately add a new property
         doc.recompute()

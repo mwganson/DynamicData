@@ -123,12 +123,18 @@ There is also an option in the Edit -> Preferences -> Start -> Options section t
 #### Support ViewObject Properties
 If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.<br/>
 <br/>
+#### Add to active container on creation
+If this is True when you create a new dd object it will be added to the currently active container, if there is one active.  The container can be either a Part container or a Body (Part Design) container.  If you do not wish for the dd object to be in one of the containers you can always drag it out by dropping onto the document name in the tree view.  (But the opposite will not work for Part Design Body containers -- the dd object must be placed into the Body container upon creation of the dd object.)  Note: this does not change the scope of the dd object properties, which will always be global.<br/>
+
 #### Change length of most recently used type list
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.<br/>
 <br/>
 
 
 #### Release notes:<br/>
+* 2020.07.22 (version 1.90)<br/>
+** add option to put new dd object into current active container (part or body)
+** improve settings by add asterisk (*) before currently set option
 * 2020.07.20 (version 1.83)<br/>
 ** fix a bug where creating new body caused properties to no longer get added to dd object
 * 2020.07.12 (version 1.82)<br/>
