@@ -132,6 +132,12 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.01 (version 1.91)<br/>
+** add default shortcuts:
+** D,D,C (or ddc) create new dd object
+** D,D,A (or dda) add new property to dd object
+** D,D,R (or ddr) remove existing property from dd object
+** D,D,S (or dds) open settings
 * 2020.07.22 (version 1.90)<br/>
 ** add option to put new dd object into current active container (part or body)
 ** improve settings by add asterisk (*) before currently set option
