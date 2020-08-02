@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2020.08.01"
-__version__ = "1.91"
-version = 1.91
+__version__ = "1.92"
+version = 1.92
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -142,7 +142,7 @@ class DynamicDataSettingsCommandClass(object):
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'Settings.png') , # the name of an icon file available in the resources
 
-            'MenuText': "&Settings" ,'Accel': "D,D,S",
+            'MenuText': "&Settings" ,'Accel': "Ctrl+D,S",
             'ToolTip' : "Workbench settings dialog"}
  
     def Activated(self):
@@ -213,7 +213,7 @@ class DynamicDataCreateObjectCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.png') ,
-            'MenuText': "&Create Object" ,'Accel': "D,D,C",
+            'MenuText': "&Create Object" ,'Accel': "Ctrl+D,C",
             'ToolTip' : "Create the DynamicData object to contain the custom properties"}
  
     def Activated(self):
@@ -356,7 +356,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
-            'MenuText': "&Add Property" ,'Accel': "D,D,A",
+            'MenuText': "&Add Property" ,'Accel': "Ctrl+D,A",
             'ToolTip' : "Add a custom property to the DynamicData object"}
 
     def Activated(self):
@@ -605,7 +605,7 @@ class DynamicDataRemovePropertyCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.png') ,
-            'MenuText': "&Remove Property" ,'Accel': "D,D,R",
+            'MenuText': "&Remove Property" ,'Accel': "Ctrl+D,R",
             'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):

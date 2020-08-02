@@ -132,6 +132,12 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.02 (version 1.92)<br/>
+** changed default shortcuts due to potential conflicts
+** Ctrl+D,C -- create new dd object
+** Ctrl+D,A -- add new property to dd object
+** Ctrl+D,R -- remove property from dd object
+** Ctrl+D,S -- open settings
 * 2020.08.01 (version 1.91)<br/>
 ** add default shortcuts:
 ** D,D,C (or ddc) create new dd object
