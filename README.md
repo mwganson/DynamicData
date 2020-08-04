@@ -1,5 +1,5 @@
 # DynamicData Workbench
-<img src="Resources/icons/DynamicDataLogo.png" alt="icon">
+<img src="Resources/icons/DynamicDataLogo.svg" alt="icon">
 
 ## Installation
 
@@ -13,11 +13,11 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 <img src="Resources/media/example.gif" alt="animated gif example">
 
 ### Create Object
-<img src="Resources/icons/CreateObject.png" alt="icon">
+<img src="Resources/icons/CreateObject.svg" alt="icon">
 Creates a new DynamicData container object.
 
 ### Add Property
-<img src="Resources/icons/AddProperty.png" alt="icon">
+<img src="Resources/icons/AddProperty.svg" alt="icon">
 Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)<br/>
 <br/>
 Adding custom properties is a 2-step process.  First step is to select the property type from the drop down list.<br/>
@@ -50,14 +50,14 @@ For List property types, e.g. IntegerList or FloatList, you can separate the val
 <br/>
 
 ### Remove Property
-<img src="Resources/icons/RemoveProperty.png" alt="icon"><br/>
+<img src="Resources/icons/RemoveProperty.svg" alt="icon"><br/>
 <br/>
 Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. <b>(Care must be taken when removing properties because this action cannot be undone.)</b><br/>
 <br/>
 <img src="Resources/media/remove_property_scr.png" alt="remove property screenshot"><br/>
 <br/>
 ### Import Aliases
-<img src="Resources/icons/ImportAliases.png" alt="icon"><br/>
+<img src="Resources/icons/ImportAliases.svg" alt="icon"><br/>
 Use this to import aliases from selected spreadsheets as properties into selected dd object.</br>
 <br/>
 <b>Warning: selected spreadsheets will be modified.  The cells containing the aliases will reference
@@ -75,7 +75,7 @@ This operation can be partially undone using FreeCAD's undo toolbar command.  Th
 <br/>
 
 ### Import Named Constraints
-<img src="Resources/icons/ImportNamedConstraints.png" alt="icon"><br/>
+<img src="Resources/icons/ImportNamedConstraints.svg" alt="icon"><br/>
 Use this to import named constraints from selected sketches as properties into selected dd object.<br/>
 <br/>
 <b>Warning: selected sketches will be modified.  All named constraints will reference the dd object property.</b><br/>
@@ -89,7 +89,7 @@ To use this feature, select your dd object and one or more sketches to be import
 This operation can now be partially undone (as of version 1.40).  If you use FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, but the newly created dd property objects will remain.  The new properties will not reference anything else and will not be reference by anything else, but the Undo operation does not delete properties.  It is suggested to make a backup copy of your .FCStd file before using this feature.<br/>
 <br/>
 ### Copy Property
-<img src="Resources/icons/CopyProperty.png" alt="icon"><br/>
+<img src="Resources/icons/CopyProperty.svg" alt="icon"><br/>
 <br/>
 <b>New feature in version 1.5</b>: Now you can parametrically link a copied or set property. Then when the source property changes, the copy will parametrically change with it.  You can still choose the non-parametric copy when setting/copying.  The parametric link can also be broken later using the Set/Copy command.  For some property types breaking the parametric link is trivial enough to do it manually, but for other types, such as Placement, it can be very tedious to do it manually.<br/>
 <br/>
@@ -110,7 +110,7 @@ The process for this is substantially the same as for copying a property except 
 
 
 ### Settings
-<img src="Resources/icons/Settings.png" alt="icon">
+<img src="Resources/icons/Settings.svg" alt="icon">
 Use this to change workbench settings.
 
 #### Keep Toolbar
@@ -132,6 +132,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.04 (version 1.93)<br/>
+** switched to svg icons for those with higher def displays
 * 2020.08.02 (version 1.92)<br/>
 ** changed default shortcuts due to potential conflicts
 ** Ctrl+D,C -- create new dd object

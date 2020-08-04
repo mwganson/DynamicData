@@ -29,7 +29,7 @@ dynamicdataWB_icons_path = os.path.join(dynamicdataWBPath,'Resources','icons')
 
 global main_dynamicdataWB_Icon
 
-main_dynamicdataWB_Icon = os.path.join(dynamicdataWB_icons_path , 'DynamicDataLogo.png')
+main_dynamicdataWB_Icon = os.path.join(dynamicdataWB_icons_path , 'DynamicDataLogo.svg')
 
 #def myFunc(string):
 #    print (string)
