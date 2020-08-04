@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.08.01"
-__version__ = "1.92"
-version = 1.92
+__date__    = "2020.08.04"
+__version__ = "1.93"
+version = 1.93
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -140,7 +140,7 @@ class DynamicDataSettingsCommandClass(object):
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'Settings.png') , # the name of an icon file available in the resources
+        return {'Pixmap'  : os.path.join( iconPath , 'Settings.svg') , # the name of an icon file available in the resources
 
             'MenuText': "&Settings" ,'Accel': "Ctrl+D,S",
             'ToolTip' : "Workbench settings dialog"}
@@ -212,7 +212,7 @@ class DynamicDataCreateObjectCommandClass(object):
     """Create Object command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.svg') ,
             'MenuText': "&Create Object" ,'Accel': "Ctrl+D,C",
             'ToolTip' : "Create the DynamicData object to contain the custom properties"}
  
@@ -355,7 +355,7 @@ class DynamicDataAddPropertyCommandClass(object):
         return propertyTypes
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg') ,
             'MenuText': "&Add Property" ,'Accel': "Ctrl+D,A",
             'ToolTip' : "Add a custom property to the DynamicData object"}
 
@@ -604,7 +604,7 @@ class DynamicDataRemovePropertyCommandClass(object):
     """Remove Property Command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.svg') ,
             'MenuText': "&Remove Property" ,'Accel': "Ctrl+D,R",
             'ToolTip' : "Remove a custom property from the DynamicData object"}
 
@@ -675,7 +675,7 @@ class DynamicDataImportAliasesCommandClass(object):
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg') ,
             'MenuText': "&Import Aliases" ,
             'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
@@ -843,7 +843,7 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg') ,
             'MenuText': "&Import Named Constraints" ,
             'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
 
@@ -982,7 +982,7 @@ class DynamicDataCopyPropertyCommandClass(object):
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.png') ,
+        return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg') ,
             'MenuText': "C&opy Property" ,
             'ToolTip' : "Copy/Set property values between selected objects"}
 
