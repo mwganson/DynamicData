@@ -132,6 +132,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.05 (version 1.94)<br/>
+** support property type LinkSubList
 * 2020.08.04 (version 1.93)<br/>
 ** switched to svg icons for those with higher def displays
 * 2020.08.02 (version 1.92)<br/>

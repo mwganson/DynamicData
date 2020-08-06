@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.08.04"
-__version__ = "1.93"
-version = 1.93
+__date__    = "2020.08.06"
+__version__ = "1.94"
+version = 1.94
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -79,6 +79,7 @@ propertyTypes =[
     "LinkList",
     "LinkListChild",
     "LinkListGlobal",
+    "LinkSubList",
 #    "Material",
     "MaterialList",
     "Matrix",
@@ -113,6 +114,7 @@ nonLinkableTypes=[ #cannot be linked with setExpresion()
     "LinkList",
     "LinkListChild",
     "LinkListGlobal",
+    "LinkSubList",
     #"Material",
     "MaterialList",
     "Matrix",
