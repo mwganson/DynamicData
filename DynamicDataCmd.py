@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.08.06"
-__version__ = "1.94"
-version = 1.94
+__date__    = "2020.08.12"
+__version__ = "1.95"
+version = 1.95
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -144,7 +144,7 @@ class DynamicDataSettingsCommandClass(object):
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'Settings.svg') , # the name of an icon file available in the resources
 
-            'MenuText': "&Settings" ,'Accel': "Ctrl+D,S",
+            'MenuText': "&Settings" ,'Accel': "Ctrl+Shift+D,S",
             'ToolTip' : "Workbench settings dialog"}
  
     def Activated(self):
@@ -215,7 +215,7 @@ class DynamicDataCreateObjectCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.svg') ,
-            'MenuText': "&Create Object" ,'Accel': "Ctrl+D,C",
+            'MenuText': "&Create Object" ,'Accel': "Ctrl+Shift+D,C",
             'ToolTip' : "Create the DynamicData object to contain the custom properties"}
  
     def Activated(self):
@@ -358,7 +358,7 @@ class DynamicDataAddPropertyCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg') ,
-            'MenuText': "&Add Property" ,'Accel': "Ctrl+D,A",
+            'MenuText': "&Add Property" ,'Accel': "Ctrl+Shift+D,A",
             'ToolTip' : "Add a custom property to the DynamicData object"}
 
     def Activated(self):
@@ -607,7 +607,7 @@ class DynamicDataRemovePropertyCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.svg') ,
-            'MenuText': "&Remove Property" ,'Accel': "Ctrl+D,R",
+            'MenuText': "&Remove Property" ,'Accel': "Ctrl+Shift+D,R",
             'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):

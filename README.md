@@ -132,6 +132,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.12 (Version 1.95)<br/>
+** Change default shortcuts from Ctrl+D,A to Ctrl+Shift+D,A due to conflict with Ctrl+D tree display properties
 * 2020.08.05 (version 1.94)<br/>
 ** support property type LinkSubList
 * 2020.08.04 (version 1.93)<br/>
