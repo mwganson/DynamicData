@@ -36,10 +36,16 @@ All property names are prepended with "dd" automatically and the first letter is
 <br/>
 <img src="Resources/media/dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
 <br/>
-DynamicData has its own built-in evaluator, which can be used when entering values.  The actual value that gets placed into the property is the evaluated amount.<br/>
+DynamicData has its own built-in evaluator, which can be used when entering values.  The actual value that gets placed into the property is the evaluated amount.  New, beginning with version 2.0, you can now enter FreeCAD expressions into the value field.  To signify to DynamicData that your entry is to be evaluated as a FreeCAD expression, prepend and equals sign (=) to the value.  If initializing a list type, such as IntegerList or FloatList, use something like =list(3;2;1) to initialize them.  For a list of type VectorList you can use the create() function integrated into the expression engine, see example below.  Create() works for types vector, placement, and rotation.<br/>
+<br/>
+Note: even though your value will be evaluated by the FreeCAD expression engine, you don't get the benefit of being prompted with autocompletions when entering it into the value field.<br/>
 <br/>
 Some examples:<br/>
 <br/>
+=(7/8)*25.4<br/>
+=Cylinder.Radius*2<br/>
+=list(3;2;1)<br/>
+=list(create(<<vector>>; 2; 1; 2);create(<<vector>>; 0;0;0))<br/>
 3*5<br/>
 cos(pi)<br/>
 golden_ratio<br/>
@@ -47,6 +53,8 @@ golden_ratio<br/>
 For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:<br/>
 <br/>
 3;5;9;12<br/>
+or if using the expression engine:<br/>
+=list(3;5;9;12)<br/>
 <br/>
 
 ### Remove Property
@@ -132,6 +140,11 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.08.13 (version 2.0)<br/>
+** adds ability to handle expressions in value box during property creation
+** to use, prepend "=" to the value, for example:
+** =(7/8)*25.4
+** =Cylinder.Radius*2
 * 2020.08.12 (Version 1.95)<br/>
 ** Change default shortcuts from Ctrl+D,A to Ctrl+Shift+D,A due to conflict with Ctrl+D tree display properties
 * 2020.08.05 (version 1.94)<br/>

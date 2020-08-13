@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2020.08.12"
-__version__ = "1.95"
-version = 1.95
+__version__ = "2.00"
+version = 2.0
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -277,6 +277,7 @@ class MultiTextInput(QtGui.QDialog):
         self.nameEdit.textChanged.connect(self.on_text_changed)
         self.valueLabel = QtGui.QLabel("Value: ")
         self.valueEdit = QtGui.QLineEdit(self)
+        self.valueEdit.textChanged.connect(self.on_value_changed)
         self.groupLabel = QtGui.QLabel("Group: ")
         self.groupEdit = QtGui.QLineEdit(self)
         self.tooltipLabel = QtGui.QLabel("Tooltip: ")
@@ -304,6 +305,19 @@ class MultiTextInput(QtGui.QDialog):
         buttons.setCenterButtons(True)
         layout.addWidget(buttons, 10, 0, 1, 5)
         self.setLayout(layout)
+
+    def on_value_changed(self): #commented out for now because it throws exceptions even inside try: except: block
+        pass
+        #obj = FreeCAD.ActiveDocument.ActiveObject
+        #val = self.valueEdit.text()
+        #result = "Invalid expression as of yet"
+        #if len(val) > 1 and val[0] == "=":
+        #    try:
+        #        result = obj.evalExpression(val[1:])
+        #        self.label2.setStyleSheet('color: black')
+        #    except:
+        #        self.label2.setStyleSheet('color: red')
+        #    self.label2.setText(str(result))
 
     def on_text_changed(self):
         self.on_edit_finished()
@@ -444,6 +458,7 @@ class DynamicDataAddPropertyCommandClass(object):
             val=None
             vals=[]
             hasVal = False
+            listval = ''
             if ';' in self.propertyName:
                 split = self.propertyName.split(';')
                 self.propertyName = split[0].replace(' ','_')
@@ -455,7 +470,11 @@ class DynamicDataAddPropertyCommandClass(object):
                 if len(split)>2: #has a tooltip
                     if len(split[2])>0:
                         self.tooltip = self.tooltip + split[2]
-                if len(split)==4: #has a value
+                if len(split)>=4: #has a value
+                    if "=list(" in split[3]:
+                        listval = split[3]
+                        for ii in range(4, len(split)):
+                            listval += ';' + split[ii]
                     val = split[3]
                     if len(val)>0:
                         hasVal = True
@@ -472,6 +491,15 @@ class DynamicDataAddPropertyCommandClass(object):
                 return
             p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
             if hasVal and len(vals)==0:
+                if val[0] == "=":
+                    try:
+                        obj.setExpression('dd'+self.propertyName, val[1:])
+                        obj.touch()
+                        doc.recompute()
+                        return
+                    except:
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
+                        return
                 try:
                     atr = self.eval_expr(val)
                 except:
@@ -484,6 +512,15 @@ class DynamicDataAddPropertyCommandClass(object):
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
             elif hasVal and len(vals)>0:
+                if listval:
+                    try:
+                        obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
+                        obj.touch()
+                        doc.recompute()
+                        return
+                    except:
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(listval[1:])+'\n')
+                        return
                 try:
                     setattr(p,'dd'+self.propertyName,list(vals))
                 except:
