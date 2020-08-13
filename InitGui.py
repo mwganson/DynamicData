@@ -63,13 +63,19 @@ class DynamicDataWorkbench(Workbench):
         self.appendMenu("&DynamicData",self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu
-
-
  
     def Activated(self):
         "This function is executed when the workbench is activated"
         #global act
         #act.setVisible(True)
+        #def myCallbackFunction(result):
+        #    if result == "True":
+        #        FreeCAD.Console.PrintMessage("A new version of DynamicData is available for update in the Addon Manager.\n")
+        #    else:
+        #        pass #up to date
+        #import AddonManager
+        #if hasattr(AddonManager, "check_updates"):
+        #    AddonManager.check_updates("DynamicData",myCallbackFunction)
         return
  
     def Deactivated(self):
