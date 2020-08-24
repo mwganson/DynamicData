@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.08.12"
-__version__ = "2.00"
-version = 2.0
+__date__    = "2020.08.24"
+__version__ = "2.01"
+version = 2.01
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -417,7 +417,7 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg = MultiTextInput()
             dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
-            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field")
+            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height")
            # obj = FreeCAD.ActiveDocument.ActiveObject
             vals=['']
             for ii in range(1,1000):
@@ -519,7 +519,7 @@ class DynamicDataAddPropertyCommandClass(object):
                         doc.recompute()
                         return
                     except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(listval[1:])+'\n')
+                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
                         return
                 try:
                     setattr(p,'dd'+self.propertyName,list(vals))
