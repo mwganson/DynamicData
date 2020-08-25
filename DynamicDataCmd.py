@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.08.24"
-__version__ = "2.01"
-version = 2.01
+__date__    = "2020.08.25"
+__version__ = "2.1"
+version = 2.1
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -384,7 +384,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if not 'FeaturePython' in str(obj.TypeId):
             FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
             return
-        #doc.openTransaction("dd Add Property")
+        doc.openTransaction("dd Add Property")
         #add the property
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
@@ -496,9 +496,11 @@ class DynamicDataAddPropertyCommandClass(object):
                         obj.setExpression('dd'+self.propertyName, val[1:])
                         obj.touch()
                         doc.recompute()
+                        doc.commitTransaction()
                         return
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
+                        doc.commitTransaction()
                         return
                 try:
                     atr = self.eval_expr(val)
@@ -517,9 +519,11 @@ class DynamicDataAddPropertyCommandClass(object):
                         obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
                         obj.touch()
                         doc.recompute()
+                        doc.commitTransaction()
                         return
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
+                        doc.commitTransaction()
                         return
                 try:
                     setattr(p,'dd'+self.propertyName,list(vals))
@@ -528,7 +532,7 @@ class DynamicDataAddPropertyCommandClass(object):
             obj.touch()
             doc.recompute()
 
-        #doc.commitTransaction()
+        doc.commitTransaction()
         doc.recompute()
         return
    
@@ -661,7 +665,6 @@ class DynamicDataRemovePropertyCommandClass(object):
         if not selection:
             return
         obj = selection[0].Object
-        #doc.openTransaction("RemoveProperty")
         #remove the property
         window = QtGui.QApplication.activeWindow()
         items = self.getProperties(obj)
@@ -673,14 +676,17 @@ class DynamicDataRemovePropertyCommandClass(object):
         if not ok:
             return
         if item==items[0]:
+            doc.openTransaction("dd RemoveProperties")
             for ii in range(1,len(items)):
                 obj.removeProperty(items[ii])
+            doc.commitTransaction()
         else:
+            doc.openTransaction("dd RemoveProperty")
             obj.removeProperty(item)
+            doc.commitTransaction()
         doc.recompute()
-        #doc.commitTransaction()
         return
-   
+
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
@@ -692,7 +698,6 @@ class DynamicDataRemovePropertyCommandClass(object):
             return False
         if not hasattr(selection[0].Object,"DynamicData"):
             return False
-
         return True
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
@@ -1165,7 +1170,7 @@ Enter the name for the new property\n',text=name, flags=windowFlags)
                     if 'dd' in name[:2] or 'Dd' in name[:2]:
                         name = name[2:]
                     name = 'dd'+cap(name)
-
+                doc.openTransaction("dd CopyProperty")
                 try:
                     toObj.addProperty('App::Property'+propertyType.replace('(ViewObject)',''), name,'Copied from: '+fromObj.Label,'['+propertyType+']')
                     toProperty = {'name':name,'type':propertyType,'value':property['value']}
@@ -1178,6 +1183,7 @@ Enter the name for the new property\n',text=name, flags=windowFlags)
                         setattr(toObj,name,property['value'])
                 except:
                     FreeCAD.Console.PrintError('DynamicData: Exception trying to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
+                doc.commitTransaction()
                 doc.recompute()
                 self.makeParametric(fromObj, fromProperty, toObj, toProperty)
         elif mode == ops[MODE_SET_OBJ_TO_DD] or mode==ops[MODE_SET_DD_TO_OBJ] or mode==ops[MODE_SET_DD_TO_DD2] \
@@ -1227,6 +1233,7 @@ Enter the name for the new property\n',text=name, flags=windowFlags)
             if not toProperty:
                 return
             if not breakOnly:
+                doc.openTransaction("dd SetProperty")
                 try:
                     if '(ViewObject)' in toProperty['type']:
                         setattr(toObj.ViewObject, toProperty['name'],fromProperty['value'])
@@ -1239,6 +1246,7 @@ Could be a property type mismatch\n\
 \n\
 From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
 To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+                doc.commitTransaction()
                 doc.recompute()
                 self.makeParametric(fromObj, fromProperty, toObj, toProperty)
             else: #break only
