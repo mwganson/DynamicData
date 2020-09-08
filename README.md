@@ -140,6 +140,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.09.08 (version 2.2)<br/>
+** enable check for updates on workbench startup
 * 2020.08.25 (version 2.1)<br/>
 ** enable undo and redo for adding/removing properties
 * 2020.08.24 (version 2.01)<br/>
