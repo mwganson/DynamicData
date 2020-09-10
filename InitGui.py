@@ -68,14 +68,14 @@ class DynamicDataWorkbench(Workbench):
         "This function is executed when the workbench is activated"
         #global act
         #act.setVisible(True)
-        #def myCallbackFunction(result):
-        #    if result == "True":
-        #        FreeCAD.Console.PrintMessage("A new version of DynamicData is available for update in the Addon Manager.\n")
-        #    else:
-        #        pass #up to date
-        #import AddonManager
-        #if hasattr(AddonManager, "check_updates"):
-        #    AddonManager.check_updates("DynamicData",myCallbackFunction)
+        def myCallbackFunction(result):
+            if result == "True":
+                FreeCAD.Console.PrintWarning("A new version of DynamicData is available for update in the Addon Manager.\n")
+            else:
+                pass #up to date
+        import AddonManager
+        if hasattr(AddonManager, "check_updates"):
+            AddonManager.check_updates("DynamicData",myCallbackFunction)
         return
  
     def Deactivated(self):
