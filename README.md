@@ -140,6 +140,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2020.09.10 (version 2.21)<br/>
+** testing check updater function
 * 2020.09.10 (version 2.2)<br/>
 ** enable check for updates on workbench startup
 * 2020.08.25 (version 2.1)<br/>
