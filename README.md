@@ -140,6 +140,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2021.05.16 (version 2.23)<br/>
+** fix bug in spreadsheet import alias (prepend = sign to redirected spreadsheet cells)
 * 2020.09.10 (version 2.22)<br/>
 ** fix update checker (and test)
 * 2020.09.10 (version 2.21)<br/>
