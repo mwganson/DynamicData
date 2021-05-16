@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2020.09.10"
-__version__ = "2.22"
-version = 2.22
+__date__    = "2021.05.16"
+__version__ = "2.23"
+version = 2.23
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -830,7 +830,7 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     dd.addProperty('App::Property'+propertyType,name,'Imported from: '+sheet.Label, propertyType)
                     setattr(dd,name,userString)
                     FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object, resetting spreadsheet: '+sheet.Label+'.'+alias+' to point to '+dd.Label+'.'+name+'\n')
-                    sheet.set(alias,str(dd.Label+'.'+name))
+                    sheet.set(alias,str('='+dd.Label+'.'+name))
                 else:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
                 continue
