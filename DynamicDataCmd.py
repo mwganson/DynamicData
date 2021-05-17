@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2021.05.16"
-__version__ = "2.23"
-version = 2.23
+__date__    = "2021.05.17"
+__version__ = "2.24"
+version = 2.24
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -672,12 +672,15 @@ class DynamicDataRemovePropertyCommandClass(object):
             FreeCAD.Console.PrintMessage("DyanmicData: no properties to remove.  Add some properties first.\n")
             return
         items.insert(0,"<Remove all properties>")
+        items.insert(0,"<Cancel>")
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove',items,0,False,windowFlags)
         if not ok:
             return
         if item==items[0]:
+            return
+        if item==items[1]:
             doc.openTransaction("dd RemoveProperties")
-            for ii in range(1,len(items)):
+            for ii in range(2,len(items)):
                 obj.removeProperty(items[ii])
             doc.commitTransaction()
         else:
