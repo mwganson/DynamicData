@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2021.05.17"
-__version__ = "2.24"
-version = 2.24
+__date__    = "2021.05.31"
+__version__ = "2.3"
+version = 2.3
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -279,7 +279,8 @@ class MultiTextInput(QtGui.QDialog):
         self.valueEdit = QtGui.QLineEdit(self)
         self.valueEdit.textChanged.connect(self.on_value_changed)
         self.groupLabel = QtGui.QLabel("Group: ")
-        self.groupEdit = QtGui.QLineEdit(self)
+        self.groupCombo = QtGui.QComboBox(self)
+        self.groupCombo.setEditable(True)
         self.tooltipLabel = QtGui.QLabel("Tooltip: ")
         self.tooltipPrependLabel = QtGui.QLabel("")
         self.tooltipEdit = QtGui.QLineEdit(self)
@@ -291,7 +292,7 @@ class MultiTextInput(QtGui.QDialog):
         layout.addWidget(self.valueLabel, 5, 0, 1, 1)
         layout.addWidget(self.valueEdit, 5, 1, 1, 5)
         layout.addWidget(self.groupLabel, 6, 0, 1, 1)
-        layout.addWidget(self.groupEdit, 6, 1, 1, 5)
+        layout.addWidget(self.groupCombo, 6, 1 , 1, 5)
         layout.addWidget(self.tooltipLabel, 7, 0, 1, 1)
         layout.addWidget(self.tooltipPrependLabel, 7, 1, 1, 1)
         layout.addWidget(self.tooltipEdit, 7, 2, 1, 4)
@@ -332,21 +333,20 @@ class MultiTextInput(QtGui.QDialog):
                 propertyName = "Prop"
             if len(split)>1: #has a group name
                 if len(split[1])>0: #allow for ;; empty string to mean use current group name
-                    self.groupEdit.setText(split[1])
+                    self.groupCombo.setCurrentText(split[1])
             if len(split)>2: #has a tooltip
                 if len(split[2])>0:
                     self.tooltipEdit.setText(split[2])
             if len(split)==4: #has a value
                 hasValue = True
                 val = split[3]
-
-            self.groupEdit.setEnabled(False)
+            self.groupCombo.setEnabled(False)
             if hasValue:
                 self.valueEdit.setText(val)
             self.valueEdit.setEnabled(False)
             self.tooltipEdit.setEnabled(False)
         else:
-            self.groupEdit.setEnabled(True)
+            self.groupCombo.setEnabled(True)
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
             propertyName = self.nameEdit.text()
@@ -436,7 +436,14 @@ class DynamicDataAddPropertyCommandClass(object):
             if "List" in item:
                 dlg.valueLabel.setText("Values:")
                 dlg.label.setText("List values should be semicolon delimited, e.g. 1;2;3;7")
-            dlg.groupEdit.setText(self.groupName)
+            props = obj.PropertiesList
+            groups = []
+            groups.append(self.groupName)
+            for p in props:
+                cur_group = obj.getGroupOfProperty(p)
+                if len(cur_group) > 0 and not cur_group in groups:
+                    groups.append(cur_group)
+            dlg.groupCombo.addItems(groups)
             dlg.tooltipLabel.setText("Tooltip:")
             dlg.tooltipPrependLabel.setText("["+item+"]")
 
@@ -444,7 +451,7 @@ class DynamicDataAddPropertyCommandClass(object):
             if not ok:
                 return
             if not ";" in dlg.nameEdit.text():
-                self.propertyName = dlg.nameEdit.text()+";"+dlg.groupEdit.text()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
+                self.propertyName = dlg.nameEdit.text()+";"+dlg.groupCombo.currentText()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
             else:
                 self.propertyName = dlg.nameEdit.text()
             if len(self.propertyName)==0:
