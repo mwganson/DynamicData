@@ -140,6 +140,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2021.07.25 (version 2.31)<br/>
+** in adding new property and remove property dialogs Ctrl + OK = OK and Continue
 * 2021.05.31 (version 2.3)<br/>
 ** in adding new property dialog put current group in an editable combo box
 * 2021.05.17 (version 2.24)<br/>

@@ -417,7 +417,8 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg = MultiTextInput()
             dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
-            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height")
+            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n\n\
+(Ctrl + OK = OK and Continue)\n\n")
            # obj = FreeCAD.ActiveDocument.ActiveObject
             vals=['']
             for ii in range(1,1000):
@@ -541,6 +542,9 @@ class DynamicDataAddPropertyCommandClass(object):
 
         doc.commitTransaction()
         doc.recompute()
+        modifiers = QtGui.QApplication.keyboardModifiers()
+        if modifiers == QtCore.Qt.ControlModifier: #Ctrl+OK = OK and Continue
+            self.Activated()
         return
    
     def IsActive(self):
@@ -680,7 +684,7 @@ class DynamicDataRemovePropertyCommandClass(object):
             return
         items.insert(0,"<Remove all properties>")
         items.insert(0,"<Cancel>")
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove',items,0,False,windowFlags)
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove\n\n(Ctrl + OK = OK and Continue)\n',items,0,False,windowFlags)
         if not ok:
             return
         if item==items[0]:
@@ -694,6 +698,10 @@ class DynamicDataRemovePropertyCommandClass(object):
             doc.openTransaction("dd RemoveProperty")
             obj.removeProperty(item)
             doc.commitTransaction()
+            modifiers = QtGui.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier: #ok and continue if ctrl+click on OK
+                doc.recompute()
+                self.Activated()
         doc.recompute()
         return
 
