@@ -15,7 +15,7 @@
       <description>Container object for holding custom properties, alternative to spreadsheet</description>
         <version>2.31</version>
       <subdirectory>./</subdirectory>
-      <icon>DynamicData/Resources/icons/DynamicDataLogo.svg</icon>
+      <icon>Resources/icons/DynamicDataLogo.svg</icon>
       <freecadmin>0.18.0</freecadmin>
     </workbench>
   </content>
