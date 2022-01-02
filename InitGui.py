@@ -50,7 +50,7 @@ class DynamicDataWorkbench(Workbench):
 
     MenuText = "DynamicData"
     ToolTip = "DynamicData workbench"
-    #Icon = main_dynamicdataWB_Icon #already defined in package.xml file
+    Icon = main_dynamicdataWB_Icon #already defined in package.xml file
     
     def __init__(self):
         pass
