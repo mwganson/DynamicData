@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.01.01"
-__version__ = "2.32"
-version = 2.32
+__date__    = "2022.02.21"
+__version__ = "2.33"
+version = 2.33
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -39,6 +39,7 @@ from PySide import QtCore, QtGui
 import FreeCAD, FreeCADGui, Part, os, math, re
 __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
+uiPath = os.path.join( __dir__, 'Resources', 'ui' )
 
 keepToolbar = True
 windowFlags = QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint
@@ -137,9 +138,33 @@ class DynamicDataSettingsCommandClass(object):
     """Settings, currently only whether to keep toolbar after leaving workbench"""
     global mostRecentTypes
 
+    class DynamicDataSettingsDlg(QtGui.QDialog):
+
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+
+        def __init__(self):
+            super(DynamicDataSettingsCommandClass.DynamicDataSettingsDlg, self).__init__(Gui.getMainWindow())
+            self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
+            self.form = Gui.PySideUic.loadUi(uiPath + "/dynamicdataprefs.ui")
+            self.setWindowTitle(self.form.windowTitle())
+            lay = QtGui.QVBoxLayout(self)
+            lay.addWidget(self.form)
+            self.setLayout(lay)
+            self.form.KeepToolbar.setChecked(self.pg.GetBool('KeepToolbar', True))
+            self.form.SupportViewObjectProperties.setChecked(self.pg.GetBool('SupportViewObjectProperties', False))
+            self.form.AddToActiveContainer.setChecked(self.pg.GetBool('AddToActiveContainer', False))
+            self.form.mruLength.setValue(self.pg.GetInt('mruLength', 5))
+
+        def closeEvent(self, event):
+            self.pg.SetBool('KeepToolbar', self.form.KeepToolbar.isChecked())
+            self.pg.SetBool('SupportViewObjectProperties', self.form.SupportViewObjectProperties.isChecked())
+            self.pg.SetBool('AddToActiveContainer', self.form.AddToActiveContainer.isChecked())
+            self.pg.SetInt('mruLength', self.form.mruLength.value())
+            super(DynamicDataSettingsCommandClass.DynamicDataSettingsDlg, self).closeEvent(event)
+
     def __init__(self):
         pass        
-
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'Settings.svg') , # the name of an icon file available in the resources
@@ -148,57 +173,8 @@ class DynamicDataSettingsCommandClass(object):
             'ToolTip' : "Workbench settings dialog"}
  
     def Activated(self):
-        global mostRecentTypes
-        doc = FreeCAD.ActiveDocument
-        from PySide import QtGui
-        window = QtGui.QApplication.activeWindow()
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        keep = pg.GetBool('KeepToolbar',True)
-        mostRecentTypesLength = pg.GetInt('mruLength',5)
-        items=["Keep the toolbar active","Do not keep the toolbar active","Change length ("+str(mostRecentTypesLength)+") of most recently used type list","Support ViewObject properties", "Do not support ViewObject properties","Add to active container on creation", "Do not add to active container on creation","Cancel"]
-        if pg.GetBool("KeepToolbar",True):
-            items[0]="*"+items[0]
-        else:
-            items[1] = "*"+items[1]
-        if pg.GetBool("SupportViewObjectProperties",False):
-            items[3] = "*"+items[3]
-        else:
-            items[4] = "*"+items[4]
-        if pg.GetBool("AddToActiveContainer",False):
-            items[5] = "*"+items[5]
-        else:
-            items[6] = "*"+items[6]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Settings\n\nSelect the settings option\n',items,0,False,windowFlags)
-        if ok and item == items[-1]:
-            return
-        elif ok and item == items[0]:
-            keep = True
-            pg.SetBool('KeepToolbar', keep)
-        elif ok and item==items[1]:
-            keep = False
-            pg.SetBool('KeepToolbar', keep)
-        elif ok and item==items[3]:
-            pg.SetBool('SupportViewObjectProperties',True)
-        elif ok and item==items[4]:
-            pg.SetBool('SupportViewObjectProperties',False)
-        elif ok and item==items[5]:
-            pg.SetBool('AddToActiveContainer',True)
-        elif ok and item==items[6]:
-            pg.SetBool('AddToActiveContainer',False)
-        elif ok and item==items[2]:
-            count,ok = QtGui.QInputDialog.getInt(window,'DynamicData','Settings\n\nHow many items in most recently used type list?\n\nCurrent setting = '+str(mostRecentTypesLength)+'\n',mostRecentTypesLength,0,20,1,windowFlags)
-            if ok:
-                if count != mostRecentTypesLength:
-                    pg.SetInt('mruLength',count)
-                    mostRecentTypesLength = count
-                    mostRecentTypes = ([""]*25) [:count]
-                    for ii in range(0,count):
-                        mru = pg.GetString('mru'+str(ii),"")
-                        if not mru in mostRecentTypes:
-                            mostRecentTypes[ii]=mru
-
-
-        return
+        dlg = self.DynamicDataSettingsDlg()
+        dlg.open()
    
     def IsActive(self):
         return True
