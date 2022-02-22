@@ -140,6 +140,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2022.02.22 (version 2.34)<br/>
+** add support for Enumeration property types
 * 2022.02.22 (version 2.33)<br/>
 ** fix error message when running tests without Gui up
 * 2021.07.25 (version 2.31)<br/>
