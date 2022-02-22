@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2022.02.22"
-__version__ = "2.33"
-version = 2.33
+__version__ = "2.34"
+version = 2.34
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -62,6 +62,7 @@ propertyTypes =[
     "Color",
     "Direction",
     "Distance",
+    "Enumeration",
     "File",
     "FileIncluded",
     "Float",
@@ -103,6 +104,7 @@ propertyTypes =[
 nonLinkableTypes=[ #cannot be linked with setExpresion()
     "Bool",
     "Color",
+    "Enumeration",
     "File",
     "FileIncluded",
     "FloatList",
@@ -518,7 +520,14 @@ class DynamicDataAddPropertyCommandClass(object):
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
                 try:
-                    setattr(p,'dd'+self.propertyName,atr)
+                    if item == "Enumeration":
+                        list2 = split[3:]
+                        try:
+                            setattr(p,'dd'+self.propertyName, list2)
+                        except Exception:
+                            FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
+                    else:
+                        setattr(p,'dd'+self.propertyName,atr)
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
             elif hasVal and len(vals)>0:
