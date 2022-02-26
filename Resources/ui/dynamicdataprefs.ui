@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Gui::Dialog::DlgSettingsDraft</class>
+ <widget class="QWidget" name="Gui::Dialog::DlgSettingsDynamicData">
+  <property name="windowTitle">
+   <string>Dynamic Data Settings</string>
+  </property>
+  <layout class="QVBoxLayout">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="Gui::PrefCheckBox" name="KeepToolbar">
+     <property name="toolTip">
+      <string>If enabled, DynamicData toolbar will remain active across workbenches</string>
+     </property>
+     <property name="text">
+      <string>Keep the toolbar active</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>KeepToolbar</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/DynamicData</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Gui::PrefCheckBox" name="SupportViewObjectProperties">
+     <property name="toolTip">
+      <string>If enabled, Dynamic Data will support operating on View properties of objects</string>
+     </property>
+     <property name="text">
+      <string>Support View object properties</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>SupportViewObjectProperties</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/DynamicData</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Gui::PrefCheckBox" name="AddToActiveContainer">
+     <property name="toolTip">
+      <string>If enabled, Dynamic Data table will be added into active container rather than at document root</string>
+     </property>
+     <property name="text">
+      <string>Add to active container</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>AddToActiveContainer</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/DynamicData</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout">
+     <property name="spacing">
+      <number>3</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="Label1">
+       <property name="text">
+        <string>Size of most recently used types list:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="Gui::PrefSpinBox" name="mruLength">
+       <property name="toolTip">
+        <string>Size of the list showing the most recently used types</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+       <property name="prefEntry" stdset="0">
+        <cstring>mruLength</cstring>
+       </property>
+       <property name="prefPath" stdset="0">
+        <cstring>Mod/DynamicData</cstring>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="3" margin="6"/>
+ <customwidgets>
+  <customwidget>
+   <class>Gui::PrefCheckBox</class>
+   <extends>QCheckBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Gui::PrefSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>Gui/PrefWidgets.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

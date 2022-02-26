@@ -2,19 +2,18 @@
 <package format="1">
   <name>DynamicData</name>
   <description>Container object for holding custom properties, alternative to spreadsheet</description>
-  <version>2.36</version>
+  <version>2.37</version>
   <date>2022.02.26</date>
   <maintainer email="mwganson@gmail.com">TheMarkster</maintainer>
   <license file="LICENSE">LGPL-2.1</license>
   <url type="repository" branch="master">https://github.com/mwganson/DynamicData</url>
   <url type="documentation">https://wiki.freecad.org/DynamicData_Workbench</url>
-
     <content>
     <workbench>
       <name>DynamicData</name>
       <classname>DynamicDataWorkbench</classname>
       <description>Container object for holding custom properties, alternative to spreadsheet</description>
-        <version>2.36</version>
+        <version>2.37</version>
       <subdirectory>./</subdirectory>
       <icon>Resources/icons/DynamicDataLogo.svg</icon>
       <freecadmin>0.18.0</freecadmin>
