@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.02.21"
-__version__ = "2.33"
-version = 2.33
+__date__    = "2022.02.26"
+__version__ = "2.37"
+version = 2.37
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -63,6 +63,7 @@ propertyTypes =[
     "Color",
     "Direction",
     "Distance",
+    "Enumeration",
     "File",
     "FileIncluded",
     "Float",
@@ -104,6 +105,7 @@ propertyTypes =[
 nonLinkableTypes=[ #cannot be linked with setExpresion()
     "Bool",
     "Color",
+    "Enumeration",
     "File",
     "FileIncluded",
     "FloatList",
@@ -196,13 +198,13 @@ class DynamicDataCreateObjectCommandClass(object):
  
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        #doc.openTransaction("CreateObject")
+        doc.openTransaction("CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
         doc.recompute()
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
         doc.recompute()
         setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
-        #doc.commitTransaction()
+        doc.commitTransaction()
         a.touch()
         doc.recompute()
         Gui.Selection.clearSelection()
@@ -242,7 +244,7 @@ class MultiTextInput(QtGui.QDialog):
 
         layout = QtGui.QGridLayout()
         #layout.setColumnStretch(1, 1)
-
+        self.addAnotherProp = False
         self.label = QtGui.QLabel(self)
         self.spacer = QtGui.QLabel(" ")
         self.label2 = QtGui.QLabel(self)
@@ -280,8 +282,15 @@ class MultiTextInput(QtGui.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         buttons.setCenterButtons(True)
+        addAnother = QtGui.QPushButton("Add another",self)
+        buttons.addButton(addAnother, QtGui.QDialogButtonBox.ActionRole)
+        addAnother.clicked.connect(self.addAnotherProperty)
         layout.addWidget(buttons, 10, 0, 1, 5)
         self.setLayout(layout)
+
+    def addAnotherProperty(self):
+        self.addAnotherProp = True
+        self.accept()
 
     def on_value_changed(self): #commented out for now because it throws exceptions even inside try: except: block
         pass
@@ -393,8 +402,7 @@ class DynamicDataAddPropertyCommandClass(object):
             dlg = MultiTextInput()
             dlg.setWindowFlags(windowFlags)
             dlg.setWindowTitle("DynamicData")
-            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n\n\
-(Ctrl + OK = OK and Continue)\n\n")
+            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n\n\n\n")
            # obj = FreeCAD.ActiveDocument.ActiveObject
             vals=['']
             for ii in range(1,1000):
@@ -494,7 +502,14 @@ class DynamicDataAddPropertyCommandClass(object):
                     except:
                         FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
                 try:
-                    setattr(p,'dd'+self.propertyName,atr)
+                    if item == "Enumeration":
+                        list2 = split[3:]
+                        try:
+                            setattr(p,'dd'+self.propertyName, list2)
+                        except Exception:
+                            FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
+                    else:
+                        setattr(p,'dd'+self.propertyName,atr)
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
             elif hasVal and len(vals)>0:
@@ -519,7 +534,7 @@ class DynamicDataAddPropertyCommandClass(object):
         doc.commitTransaction()
         doc.recompute()
         modifiers = QtGui.QApplication.keyboardModifiers()
-        if modifiers == QtCore.Qt.ControlModifier: #Ctrl+OK = OK and Continue
+        if modifiers == QtCore.Qt.ControlModifier or dlg.addAnotherProp: #Ctrl+OK or Add another
             self.Activated()
         return
    

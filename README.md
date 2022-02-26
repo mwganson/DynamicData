@@ -56,6 +56,22 @@ For List property types, e.g. IntegerList or FloatList, you can separate the val
 or if using the expression engine:<br/>
 =list(3;5;9;12)<br/>
 <br/>
+For Enumeration types (new to v2.34) you enter the enumerations as a list:<br/>
+zero;one;two;three;four;five;six;seven <br/>
+  <br/>
+  Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by =dd.ddMyEnum is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.<br/>
+  <br/>
+  You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  For example, make an IntegerList called MyInts:<br/>
+  0;1;2;3;4;5;6;7<br/>
+  <br/>
+  Then in a spreadsheet =dd.ddMyInts[dd.ddMyEnum] would return the integer in MyInts that corresponds to the user selection in MyEnum.  For example, if the user has selected "zero" in the enumeration, then this cell in a spreadsheet would hold the value of 4.<br/>
+  <br/>
+  Make an enumeration MyEnum:<br/>
+  False;True<br/>
+  <br/>
+  Since this evaluates to 0 or 1 depending on user selection it could be used as a boolean:<br/>
+  =dd.ddMyEnum ? 5 : 7  (would yield a value of 5 if True, 7 if False)<br/>
+  <br/>
 
 ### Remove Property
 <img src="Resources/icons/RemoveProperty.svg" alt="icon"><br/>
@@ -140,6 +156,14 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2022.02.26 (version 2.36)<br/>
+** Add anothr button added to dialog
+* 2022.02.26 (version 2.35)<br/>
+** make object creation undoable
+* 2022.02.22 (version 2.34)<br/>
+** add support for Enumeration property types
+* 2022.02.22 (version 2.33)<br/>
+** fix error message when running tests without Gui up
 * 2021.07.25 (version 2.31)<br/>
 ** in adding new property and remove property dialogs Ctrl + OK = OK and Continue
 * 2021.05.31 (version 2.3)<br/>
