@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.02.22"
-__version__ = "2.34"
-version = 2.34
+__date__    = "2022.02.26"
+__version__ = "2.35"
+version = 2.35
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -222,13 +222,13 @@ class DynamicDataCreateObjectCommandClass(object):
  
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        #doc.openTransaction("CreateObject")
+        doc.openTransaction("CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
         doc.recompute()
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
         doc.recompute()
         setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
-        #doc.commitTransaction()
+        doc.commitTransaction()
         a.touch()
         doc.recompute()
         Gui.Selection.clearSelection()
