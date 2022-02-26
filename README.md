@@ -156,6 +156,8 @@ When you add a new property type you are presented with a list of property types
 
 
 #### Release notes:<br/>
+* 2022.02.26 (version 2.35)<br/>
+** make object creation undoable
 * 2022.02.22 (version 2.34)<br/>
 ** add support for Enumeration property types
 * 2022.02.22 (version 2.33)<br/>
