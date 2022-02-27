@@ -23,13 +23,10 @@
 #  
 ###################################################################################
 import dynamicdatawb_locator
-
 dynamicdataWBPath = os.path.dirname(dynamicdatawb_locator.__file__)
 global dynamicdataWB_icons_path
 dynamicdataWB_icons_path = os.path.join(dynamicdataWBPath,'Resources','icons')
-
 global main_dynamicdataWB_Icon
-
 main_dynamicdataWB_Icon = os.path.join(dynamicdataWB_icons_path , 'DynamicDataLogo.svg')
 
 #def myFunc(string):
