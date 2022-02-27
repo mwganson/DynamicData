@@ -22,9 +22,10 @@
 #  
 #  
 ###################################################################################
-
 import dynamicdatawb_locator
+
 dynamicdataWBPath = os.path.dirname(dynamicdatawb_locator.__file__)
+global dynamicdataWB_icons_path
 dynamicdataWB_icons_path = os.path.join(dynamicdataWBPath,'Resources','icons')
 
 global main_dynamicdataWB_Icon
@@ -53,6 +54,7 @@ class DynamicDataWorkbench(Workbench):
     Icon = main_dynamicdataWB_Icon #already defined in package.xml file
     
     def __init__(self):
+#        self.__class__.Icon = main_dynamicdataWB_Icon
         pass
 
     def Initialize(self):
@@ -63,6 +65,10 @@ class DynamicDataWorkbench(Workbench):
         self.appendMenu("&DynamicData",self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        if pg.GetBool("AddToFreeCADPreferences",True):
+            Gui.addPreferencePage(DynamicDataCmd.uiPath + "/dynamicdataprefs.ui", "DynamicData")
+            Gui.addIcon("preferences-dynamicdata",dynamicdataWB_icons_path + "/DynamicDataLogo.svg")
 
     def myCallbackFunction(self,result):
         if result == "True":

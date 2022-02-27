@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.02.26"
-__version__ = "2.37"
-version = 2.37
+__date__    = "2022.02.27"
+__version__ = "2.38"
+version = 2.38
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -156,12 +156,14 @@ class DynamicDataSettingsCommandClass(object):
             self.form.KeepToolbar.setChecked(self.pg.GetBool('KeepToolbar', True))
             self.form.SupportViewObjectProperties.setChecked(self.pg.GetBool('SupportViewObjectProperties', False))
             self.form.AddToActiveContainer.setChecked(self.pg.GetBool('AddToActiveContainer', False))
+            self.form.AddToFreeCADPreferences.setChecked(self.pg.GetBool("AddToFreeCADPreferences",True))
             self.form.mruLength.setValue(self.pg.GetInt('mruLength', 5))
 
         def closeEvent(self, event):
             self.pg.SetBool('KeepToolbar', self.form.KeepToolbar.isChecked())
             self.pg.SetBool('SupportViewObjectProperties', self.form.SupportViewObjectProperties.isChecked())
             self.pg.SetBool('AddToActiveContainer', self.form.AddToActiveContainer.isChecked())
+            self.pg.SetBool('AddToFreeCADPreferences',self.form.AddToFreeCADPreferences.isChecked())
             self.pg.SetInt('mruLength', self.form.mruLength.value())
             super(DynamicDataSettingsCommandClass.DynamicDataSettingsDlg, self).closeEvent(event)
 
