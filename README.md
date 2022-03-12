@@ -157,6 +157,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes:<br/>
+* 2022.03.12 (version 2.40)<br/>
+** update version information
 * 2022.03.12 (version 2.39)<br/>
 ** add new command: move to new group<br/>
 This also allows to rename groups by moving all properties from that group to a new group.<br/>

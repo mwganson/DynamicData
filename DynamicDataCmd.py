@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.02.27"
-__version__ = "2.38"
-version = 2.38
+__date__    = "2022.03.12"
+__version__ = "2.40"
+version = 2.40
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -150,7 +150,7 @@ class DynamicDataSettingsCommandClass(object):
             self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
             self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
             self.form = Gui.PySideUic.loadUi(uiPath + "/dynamicdataprefs.ui")
-            self.setWindowTitle(self.form.windowTitle())
+            self.setWindowTitle(self.form.windowTitle()+" v."+__version__)
             lay = QtGui.QVBoxLayout(self)
             lay.addWidget(self.form)
             self.setLayout(lay)
@@ -230,13 +230,9 @@ class DynamicDataCreateObjectCommandClass(object):
         return True
 
     def getHelp(self):
-        return ["Created with DynamicData (v"+str(version)+") workbench.",
+        return ["Created with DynamicData (v"+__version__+") workbench.",
                 "This is a simple container object built",
-                "for holding custom properties.  Worbench",
-                "installation is not required to use the",
-                "container object -- instead only for",
-                "adding / removing custom properties.",
-                "(But this can also be done via scripting.)"
+                "for holding custom properties."
 ]
 
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
