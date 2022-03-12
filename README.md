@@ -58,7 +58,7 @@ or if using the expression engine:<br/>
 <br/>
 For Enumeration types (new to v2.34) you enter the enumerations as a list:<br/>
 zero;one;two;three;four;five;six;seven <br/>
-  <br/>
+<br/>
   Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by =dd.ddMyEnum is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.<br/>
   <br/>
   You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  For example, make an IntegerList called MyInts:<br/>
@@ -121,42 +121,48 @@ Copy a property from one object to another or within the same dd object.  Proper
 <br/>
 One potential application for this feature is to make copies of placement properties.  These copies can then be used to easily set the original objects Placement property to any of the values held by any of the placement copies.  For example, your model might include a lever that can be in any of 3 positions, say forward, neutral, and reverse.  Move it to the forward position, and then make a copy of the placement.  Move it to the neutral position, and do the same, ditto for the reverse position.  Your dd object could contain 3 placement properties: ddForward, ddNeutral, and ddReverse.<br/>
 <br/>
-#### Copy a property from another object to a dd object<br/>
+### Copy a property from another object to a dd object<br/>
 <br/>
 In this example we will copy a placement property from a Sphere to a dd object.  Select the Sphere and the dd object in the tree view, and then click the Copy Property icon in the toolbar (or select via the menu).  1) select the Copy property from Sphere --> to dd (dd) option and click OK.  2) You will be presented with a list of the properties available to be copied from the Sphere object, select the Placement property and click OK.  3) Give the new property to be created a new name or just click OK to accept the default name chosen for you.  (Note: if the new name you give conflicts with an existing property name in the dd object you will be prompted again for a new name, so if you see this multiple times it means there is a name conflict.)<br/>
 <br/>
 <img src="Resources/media/copy_property_scr.png" alt="copy property example screenshot"><br/>
 <br/>
-#### Set a property value <br/>
+### Set a property value <br/>
 <br/>
 The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.<br/>
 <br/>
-
+### Move to new group <br/>
+<br/>
+Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.<br/>
 
 ### Settings
 <img src="Resources/icons/Settings.svg" alt="icon">
 Use this to change workbench settings.
 
-#### Keep Toolbar
+### Keep Toolbar
 Setting this to True (default is True) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.<br/>
 <br/>
 You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)<br/>
 <br/>
 There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
 <br/>
-#### Support ViewObject Properties
+### Support ViewObject Properties
 If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.<br/>
 <br/>
-#### Add to active container on creation
+### Add to active container on creation
 If this is True when you create a new dd object it will be added to the currently active container, if there is one active.  The container can be either a Part container or a Body (Part Design) container.  If you do not wish for the dd object to be in one of the containers you can always drag it out by dropping onto the document name in the tree view.  (But the opposite will not work for Part Design Body containers -- the dd object must be placed into the Body container upon creation of the dd object.)  Note: this does not change the scope of the dd object properties, which will always be global.<br/>
 
-#### Change length of most recently used type list
+### Change length of most recently used type list
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.<br/>
 <br/>
 
 
-#### Release notes:<br/>
-* 2022.02.27 (version 2.83)<br/>
+### Release notes:<br/>
+* 2022.03.12 (version 2.39)<br/>
+** add new command: move to new group<br/>
+This also allows to rename groups by moving all properties from that group to a new group.<br/>
+** improve selection of properties when removing properties, allowing from multiple selection.<br/>
+* 2022.02.27 (version 2.38)<br/>
 ** add settings dialog to FreeCAD preferences
 * 2022.02.26 (version 2.37)<br/>
 ** add settings dialog (thanks 0penBrain!)
