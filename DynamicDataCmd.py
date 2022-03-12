@@ -49,6 +49,7 @@ def initialize():
 
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
     Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
+    Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
     Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
@@ -642,6 +643,163 @@ class DynamicDataAddPropertyCommandClass(object):
 
 
 #Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
+########################################################################################
+#select objects dialog class
+
+class SelectObjects(QtGui.QDialog):
+    def __init__(self, objects, label=""):
+        QtGui.QDialog.__init__(self)
+        scrollContents = QtGui.QWidget()
+        scrollingLayout = QtGui.QVBoxLayout(self)
+        scrollContents.setLayout(scrollingLayout)
+        scrollArea = QtGui.QScrollArea()
+        scrollArea.setVerticalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOn)
+        scrollArea.setHorizontalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOff)
+        scrollArea.setWidgetResizable(True)
+        scrollArea.setWidget(scrollContents)
+
+        vBoxLayout = QtGui.QVBoxLayout(self)
+        vBoxLayout.addWidget(QtGui.QLabel(label))
+        self.all = QtGui.QCheckBox("All")
+        #self.all.setCheckState(QtCore.Qt.Checked) #set by caller
+        self.all.stateChanged.connect(self.allStateChanged)
+        vBoxLayout.addWidget(self.all)
+        vBoxLayout.addWidget(scrollArea)
+        self.setLayout(vBoxLayout)
+        buttons = QtGui.QDialogButtonBox(
+            QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
+            QtCore.Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.checkBoxes = []
+        self.selected = []
+        for ii,object in enumerate(objects):
+            self.checkBoxes.append(QtGui.QCheckBox(object))
+            self.checkBoxes[-1].setCheckState(self.all.checkState())
+            scrollingLayout.addWidget(self.checkBoxes[-1])
+        vBoxLayout.addWidget(buttons)
+
+    def allStateChanged(self, arg):
+        self.checkAll(self.all.checkState())
+
+    def checkAll(self, state):
+        for cb in self.checkBoxes:
+            cb.setCheckState(state)
+
+    def accept(self):
+        self.selected = []
+        for cb in self.checkBoxes:
+            if cb.checkState():
+                self.selected.append(cb.text())
+        super().accept()
+
+
+########################################################################################
+# Rename group
+
+
+class DynamicDataMoveToNewGroupCommandClass(object):
+    """Move properties to new group"""
+
+    def GetResources(self):
+        return {'Pixmap'  :"" ,
+            'MenuText': "Move to new &group" ,'Accel': "Ctrl+Shift+D,G",
+            'ToolTip' : "Move dynamic properties to new group.\n\
+This effectively renames a group if you move all properties.\n\
+Only works with dynamic properties"}
+
+    def getGroups(self,obj,skipList=[]):
+        props = [p for p in obj.PropertiesList if obj.getPropertyStatus(p) == [21]]
+        groups = []
+        for prop in props:
+            group = obj.getGroupOfProperty(prop)
+            if group and not group in groups and not group in skipList:
+                groups.append(group)
+        return groups
+
+    def isDynamic(self,obj,prop):
+        if prop == "DynamicData":
+            return False
+        isSo = False
+        try:
+            oldGroup = obj.getGroupOfProperty(prop)
+            obj.setGroupOfProperty(prop,"test")
+            obj.setGroupOfProperty(prop,oldGroup)
+            isSo = True
+        except:
+            isSo = False
+        return isSo
+
+    def getPropertiesOfGroup(self,obj,group):
+        props = [p for p in obj.PropertiesList if bool(obj.getGroupOfProperty(p) == group or group == "<All groups>") and self.isDynamic(obj,p)]
+        if props:
+            dlg = SelectObjects(props,"Select properties to move to new group")
+            dlg.all.setCheckState(QtCore.Qt.Checked)
+            ok = dlg.exec_()
+            if not ok:
+                return []
+        return dlg.selected
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        selection = Gui.Selection.getSelection()
+        if not selection:
+            return
+        obj = selection[0]
+        #remove the property
+        window = FreeCADGui.getMainWindow()
+        items = self.getGroups(obj)
+        if not items:
+            FreeCAD.Console.PrintError(f"DynamicData::Error -- no groups of {obj.Label} may be renamed\n")
+            return
+        if len(items)==0:
+            FreeCAD.Console.PrintMessage("DyanmicData: no properties.\n")
+            return
+        items.insert(0,"<All groups>")
+        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool.\n\n\
+This can be used to rename a group, by moving all properties to a new group.\n\
+Select source group to pick properties from, or all groups to pick from all.\n',items,0,False,windowFlags)
+        if not ok:
+            return
+        else:
+            props = self.getPropertiesOfGroup(obj,item)
+            if props:
+                toGroup = self.getGroups(obj,[item])
+                items2 = ["<New group>"] + toGroup
+                item2,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool\n\nSelect destination group\n',items2,0,False,windowFlags)
+                if not ok:
+                    return
+                if item2 == items2[0]:
+                    newName,ok = QtGui.QInputDialog.getText(window, "Group name","Enter a new name for this group:",text="DefaultGroup")
+                else:
+                    newName = item2
+                if not ok:
+                    return
+                doc.openTransaction("Move to new group")
+                for prop in props:
+                    try:
+                        obj.setGroupOfProperty(prop,newName)
+                        FreeCAD.Console.PrintMessage(f"Property {prop} move to group {newName}\n")
+                    except Exception as ex:
+                        FreeCAD.Console.PrintError(f"Cannot move {prop}, only dynamic properties are supported\n")
+                doc.commitTransaction()
+        FreeCADGui.Selection.removeSelection(obj)
+        FreeCADGui.Selection.addSelection(obj)
+        doc.recompute()
+        return
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelection()
+        if not selection:
+            return False
+        obj = selection[0]
+        if len(self.getGroups(obj))==0:
+            return False
+        return True
+
+#Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
 
 ########################################################################################
 # Remove custom dynamic property
@@ -656,12 +814,27 @@ class DynamicDataRemovePropertyCommandClass(object):
             'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList: 
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
+        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        if props:
+            dlg = SelectObjects(props,"Select dynamic properties to remove")
+            dlg.all.setCheckState(QtCore.Qt.Unchecked)
+            ok = dlg.exec_()
+            if not ok:
+                return []
+        return dlg.selected
+
+    def isDynamic(self,obj,prop):
+        if prop == "DynamicData":
+            return False
+        isSo = False
+        try:
+            oldGroup = obj.getGroupOfProperty(prop)
+            obj.setGroupOfProperty(prop,"test")
+            obj.setGroupOfProperty(prop,oldGroup)
+            isSo = True
+        except:
+            isSo = False
+        return isSo
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
@@ -673,28 +846,16 @@ class DynamicDataRemovePropertyCommandClass(object):
         window = QtGui.QApplication.activeWindow()
         items = self.getProperties(obj)
         if len(items)==0:
-            FreeCAD.Console.PrintMessage("DyanmicData: no properties to remove.  Add some properties first.\n")
             return
-        items.insert(0,"<Remove all properties>")
-        items.insert(0,"<Cancel>")
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Remove Property Tool\n\nSelect property to remove\n\n(Ctrl + OK = OK and Continue)\n',items,0,False,windowFlags)
-        if not ok:
-            return
-        if item==items[0]:
-            return
-        if item==items[1]:
-            doc.openTransaction("dd RemoveProperties")
-            for ii in range(2,len(items)):
-                obj.removeProperty(items[ii])
-            doc.commitTransaction()
-        else:
-            doc.openTransaction("dd RemoveProperty")
-            obj.removeProperty(item)
-            doc.commitTransaction()
-            modifiers = QtGui.QApplication.keyboardModifiers()
-            if modifiers == QtCore.Qt.ControlModifier: #ok and continue if ctrl+click on OK
-                doc.recompute()
-                self.Activated()
+        obj.Document.openTransaction("Remove properties")
+        for item in items:
+            try:
+                obj.removeProperty(item)
+            except Exception as ex:
+                FreeCAD.Console.PrintError(f"DynamicData::Exception cannot remove {item}\n{ex}")
+        obj.Document.commitTransaction()
+        FreeCADGui.Selection.removeSelection(obj)
+        FreeCADGui.Selection.addSelection(obj)
         doc.recompute()
         return
 
@@ -705,10 +866,6 @@ class DynamicDataRemovePropertyCommandClass(object):
         if not selection:
             return False
         obj = selection[0].Object
-        if len(self.getProperties(obj))==0:
-            return False
-        if not hasattr(selection[0].Object,"DynamicData"):
-            return False
         return True
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
