@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.03.13"
-__version__ = "2.41"
-version = 2.41
+__date__    = "2022.03.15"
+__version__ = "2.42"
+version = 2.42
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -54,6 +54,7 @@ def initialize():
     Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
     Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
+    Gui.addCommand("DynamicDataSetTooltip",DynamicDataSetTooltipCommandClass())
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
@@ -915,6 +916,87 @@ class DynamicDataRenamePropertyCommandClass(object):
         return True
 
 #Gui.addCommand("DynamicDataRenameProperty", DynamicDataRenamePropertyCommandClass())
+########################################################################################
+# Set the tooltip of a dynamic property
+
+class DynamicDataSetTooltipCommandClass(object):
+    """Set Tooltip Command"""
+    def __init__(self):
+        self.obj = None
+
+    def GetResources(self):
+        return {'Pixmap'  : '',
+            'MenuText': "Se&t Tooltip" ,'Accel': "Ctrl+Shift+D,T",
+            'ToolTip' : "Set the tooltip of a dynamic property"}
+
+    def getDynamicProperties(self, obj):
+        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        return props
+
+    def getProperty(self,obj):
+        props = self.getDynamicProperties(obj)
+        if props:
+            items = props
+            if len(items) == 1:
+                return items[0]
+            item, ok = QtGui.QInputDialog.getItem(FreeCADGui.getMainWindow(), "Set tooltip", "Select property to set tooltip for:", items, editable=False)
+            if not ok:
+                return []
+            return item
+        else:
+            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
+
+    def isDynamic(self, obj, prop):
+        if prop == "DynamicData":
+            return False
+        isSo = False
+        try:
+            oldGroup = obj.getGroupOfProperty(prop)
+            obj.setGroupOfProperty(prop, "test")
+            obj.setGroupOfProperty(prop, oldGroup)
+            isSo = True
+        except:
+            isSo = False
+        return isSo
+
+    def getNewTooltip(self, obj, prop):
+        """get from user new tooltip for this property"""
+        curTip = obj.getDocumentationOfProperty(prop)
+        newTip, ok = QtGui.QInputDialog.getText(FreeCADGui.getMainWindow(), "Set tooltip", f"Enter new tooltip for {prop}:", QtGui.QLineEdit.EchoMode.Normal, curTip)
+        if not ok:
+            return curTip
+        else:
+            return newTip
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        win = FreeCADGui.getMainWindow()
+        obj = self.obj
+        prop = self.getProperty(obj) #string name of property
+        if not prop:
+            return
+        docu = obj.getDocumentationOfProperty(prop)
+        newTip = self.getNewTooltip(obj, prop)
+        if newTip == docu:
+            return
+        obj.Document.openTransaction(f"Set tooltip of {prop}")
+        obj.setDocumentationOfProperty(prop, newTip)
+        obj.Document.commitTransaction()
+        FreeCADGui.Selection.removeSelection(obj)
+        FreeCADGui.Selection.addSelection(obj)
+        doc.recompute()
+        return
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelectionEx()
+        if not selection:
+            return False
+        self.obj = selection[0].Object
+        return True
+
+#Gui.addCommand("DynamicDataSetTooltip", DynamicDataSetTooltipCommandClass())
 
 
 ########################################################################################

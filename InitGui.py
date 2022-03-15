@@ -60,9 +60,9 @@ class DynamicDataWorkbench(Workbench):
         self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty", 
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
                     "DynamicDataImportAliases","DynamicDataCopyProperty",
-                    "DynamicDataRenameProperty",
+                    "DynamicDataRenameProperty","DynamicDataSetTooltip",
                     "DynamicDataMoveToNewGroup","DynamicDataSettings"] # A list of command names created in the line above
-        self.appendToolbar("DynamicData Commands",self.list[:-3]) # leave settings off toolbar
+        self.appendToolbar("DynamicData Commands",self.list[:-4]) # leave settings off toolbar
         self.appendMenu("&DynamicData",self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu
