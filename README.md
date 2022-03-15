@@ -130,6 +130,9 @@ In this example we will copy a placement property from a Sphere to a dd object. 
 <br/>
 The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.<br/>
 <br/>
+### Rename Property
+<br/>
+Rename a dynamic property.  The property must be dynamic, but need not be a DynamicData object.  FreeCAD does not natively support the renaming of properties, so the way this works is a new property of the same is created with the new name, and then the old property is deleted.  An attempt is made to move all dependency links from the old property to the new, but it is conceivable something might go astray during this process, so it is advised to ensure all the links were properly reconnected to the new property.  You can use Undo to undo this operation.
 ### Move to new group 
 <br/>
 Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.<br/>
@@ -157,6 +160,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes:<br/>
+* 2022.03.13 (version 2.41)<br/>
+** add rename property command
 * 2022.03.12 (version 2.40)<br/>
 ** update version information
 * 2022.03.12 (version 2.39)<br/>
