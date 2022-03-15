@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.03.12"
-__version__ = "2.40"
-version = 2.40
+__date__    = "2022.03.13"
+__version__ = "2.41"
+version = 2.41
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -53,6 +53,7 @@ def initialize():
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
     Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
+    Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
@@ -795,7 +796,126 @@ Select source group to pick properties from, or all groups to pick from all.\n',
             return False
         return True
 
-#Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
+########################################################################################
+# Rename a custom dynamic property
+
+class DynamicDataRenamePropertyCommandClass(object):
+    """Rename Property Command"""
+    def __init__(self):
+        self.obj = None
+
+    def GetResources(self):
+        return {'Pixmap'  : '',
+            'MenuText': "Re&name Property" ,'Accel': "Ctrl+Shift+D,N",
+            'ToolTip' : "Rename a dynamic property"}
+
+    def getDynamicProperties(self, obj):
+        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        return props
+
+    def getProperty(self,obj):
+        props = self.getDynamicProperties(obj)
+        if props:
+            items = props
+            if len(items) == 1:
+                return items[0]
+            item, ok = QtGui.QInputDialog.getItem(FreeCADGui.getMainWindow(), "Rename", "Select property to rename:", items, editable=False)
+            if not ok:
+                return []
+            return item
+        else:
+            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
+
+    def isDynamic(self, obj, prop):
+        if prop == "DynamicData":
+            return False
+        isSo = False
+        try:
+            oldGroup = obj.getGroupOfProperty(prop)
+            obj.setGroupOfProperty(prop, "test")
+            obj.setGroupOfProperty(prop, oldGroup)
+            isSo = True
+        except:
+            isSo = False
+        return isSo
+
+    def getOutExpr(self, obj, prop):
+        """get the expression set for this property, if any"""
+        #expr will be a list of tuples[(propname, expression)]
+        expressions = obj.ExpressionEngine
+        expr = ""
+        for expression in expressions:
+            if prop == expression[0]:
+                expr = expression[1]
+        return expr
+
+    def getNewPropertyName(self, obj, prop):
+        """get from user new name for this property, ensure no conflict"""
+        already = [p for p in obj.PropertiesList] #already have these property names
+        newName, ok = QtGui.QInputDialog.getText(FreeCADGui.getMainWindow(), "Rename", f"Enter new name for {prop}:", QtGui.QLineEdit.EchoMode.Normal, prop)
+        if not ok:
+            return ""
+        while ok and newName in already:
+            newName, ok = QtGui.QInputDialog.getText(FreeCADGui.getMainWindow(), "Rename", f"Property already exists.  Enter new name for {prop}:", QtGui.QLineEdit.EchoMode.Normal, prop)
+        return newName if ok else ""
+
+    def getInExprs(self, obj, prop):
+        """get the incoming expressions bound to this property
+           returns a list of tuples in the form: [(object, propertyname, expression),]
+        """
+        inExprs = []
+        inobjs = [o for o in obj.InList]
+        for inobj in inobjs:
+            for expr in inobj.ExpressionEngine:
+                if prop in expr[1]:
+                    inExprs.append(tuple([inobj, expr[0], expr[1]]))
+        return inExprs
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        win = FreeCADGui.getMainWindow()
+        obj = self.obj
+        prop = self.getProperty(obj) #string name of property
+        if not prop:
+            return
+        outExpr = self.getOutExpr(obj, prop)
+        if not outExpr:
+            propval = getattr(obj, prop)
+        newName = self.getNewPropertyName(obj, prop)
+        if not newName:
+            return
+        if not "dd" in newName[:2] or bool(newName[2:3] < "A" or newName[2:3] > "Z"):
+            FreeCAD.Console.PrintWarning("Not all dd commands will function properly if you don't follow the dd naming convention of ddUppercase\n")
+        inExprs = self.getInExprs(obj, prop)
+        typeId = obj.getTypeIdOfProperty(prop)
+        docu = obj.getDocumentationOfProperty(prop)
+        group = obj.getGroupOfProperty(prop)
+        obj.Document.openTransaction(f"Rename {prop}")
+        obj.addProperty(typeId, newName, group, docu)
+        if outExpr:
+            obj.setExpression(newName, outExpr)
+        else:
+            setattr(obj, newName, propval)
+        for inExpr in inExprs:
+            inExpr[0].setExpression(inExpr[1], inExpr[2].replace(prop,newName))
+        obj.removeProperty(prop)
+        obj.Document.commitTransaction()
+        FreeCADGui.Selection.removeSelection(obj)
+        FreeCADGui.Selection.addSelection(obj)
+        doc.recompute()
+        return
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelectionEx()
+        if not selection:
+            return False
+        self.obj = selection[0].Object
+        return True
+
+#Gui.addCommand("DynamicDataRenameProperty", DynamicDataRenamePropertyCommandClass())
+
 
 ########################################################################################
 # Remove custom dynamic property
