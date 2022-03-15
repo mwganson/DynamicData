@@ -133,6 +133,10 @@ The process for this is substantially the same as for copying a property except 
 ### Rename Property
 <br/>
 Rename a dynamic property.  The property must be dynamic, but need not be a DynamicData object.  FreeCAD does not natively support the renaming of properties, so the way this works is a new property of the same is created with the new name, and then the old property is deleted.  An attempt is made to move all dependency links from the old property to the new, but it is conceivable something might go astray during this process, so it is advised to ensure all the links were properly reconnected to the new property.  You can use Undo to undo this operation.
+
+### Set Tooltip
+<br/>
+Change the tooltip of a dynamic property.
 ### Move to new group 
 <br/>
 Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.<br/>
@@ -160,6 +164,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes:<br/>
+* 2022.03.15 (version 2.42)<br/>
+** add set tooltip feature
 * 2022.03.13 (version 2.41)<br/>
 ** add rename property command
 * 2022.03.12 (version 2.40)<br/>
