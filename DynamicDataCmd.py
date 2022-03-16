@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.03.15"
-__version__ = "2.44"
-version = 2.44
+__date__    = "2022.03.16"
+__version__ = "2.45"
+version = 2.45
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -36,7 +36,9 @@ mostRecentTypesLength = 5 #will be updated from parameters
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
 
-import FreeCAD, FreeCADGui, Part, os, math, re
+import FreeCAD, FreeCADGui, os, math, re
+App = FreeCAD
+Gui = FreeCADGui
 __dir__ = os.path.dirname(__file__)
 iconPath = os.path.join( __dir__, 'Resources', 'icons' )
 uiPath = os.path.join( __dir__, 'Resources', 'ui' )
@@ -382,7 +384,7 @@ class DynamicDataAddPropertyCommandClass(object):
             return
         doc.openTransaction("dd Add Property")
         #add the property
-        window = QtGui.QApplication.activeWindow()
+        #window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
         recent = []
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
@@ -443,9 +445,9 @@ class DynamicDataAddPropertyCommandClass(object):
             if mostRecentTypes[ii]:
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
         if not ";" in dlg.nameEdit.text():
-            self.propertyName = dlg.nameEdit.text() + ";"
-                              + dlg.groupCombo.currentText() + ";"
-                              + dlg.tooltipEdit.text() + ";"
+            self.propertyName = dlg.nameEdit.text() + ";" \
+                              + dlg.groupCombo.currentText() + ";" \
+                              + dlg.tooltipEdit.text() + ";" \
                               + dlg.valueEdit.text()
         else:
             self.propertyName = dlg.nameEdit.text()
@@ -486,7 +488,8 @@ class DynamicDataAddPropertyCommandClass(object):
                     try:
                         if len(split[ii])>0:
                             vals.append(self.eval_expr(split[ii]))
-                    except:
+                    except Exception as ex:
+                        FreeCAD.Console.PrintError(f"dd: {ex}\n")
                         vals.append(split[ii])
         if hasattr(obj,'dd'+self.propertyName):
             FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
@@ -507,10 +510,10 @@ class DynamicDataAddPropertyCommandClass(object):
             try:
                 atr = self.eval_expr(val)
             except:
-                try:
-                    atr = val
-                except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                #try:
+                #    atr = val
+                #except:
+                FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
             try:
                 if item == "Enumeration":
                     list2 = split[3:]
@@ -630,7 +633,7 @@ class DynamicDataAddPropertyCommandClass(object):
                 else:
                     return func(float(opstring))
             else:
-                App.Console.PrintMessage('unsupported token: '+node.id+'\n')
+                App.Console.PrintError('ast evaluator: unsupported token: '+node.id+'\n')
         else:
             raise TypeError(node)
 
@@ -885,7 +888,7 @@ class DynamicDataRenamePropertyCommandClass(object):
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        win = FreeCADGui.getMainWindow()
+        #win = FreeCADGui.getMainWindow()
         obj = self.obj
         prop = self.getProperty(obj) #string name of property
         if not prop:
@@ -982,7 +985,6 @@ class DynamicDataSetTooltipCommandClass(object):
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        win = FreeCADGui.getMainWindow()
         obj = self.obj
         prop = self.getProperty(obj) #string name of property
         if not prop:
@@ -1076,7 +1078,6 @@ class DynamicDataRemovePropertyCommandClass(object):
         selection = Gui.Selection.getSelectionEx()
         if not selection:
             return False
-        obj = selection[0].Object
         return True
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
@@ -1226,7 +1227,6 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
     def IsActive(self):
         sheets=[]
         dd = None
-        doc = FreeCAD.ActiveDocument
         selection = Gui.Selection.getSelectionEx()
         if not selection:
             return
@@ -1334,12 +1334,12 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
                     FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Reference constraints skipped.\n')
                     continue
                 constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch})
-                try:
-                    pass
-                    #sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
-                except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
-                    constraints.pop() #remove the constraint that gave the error
+                #try:
+                #    pass
+                #    #sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
+                #except:
+                #    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
+                #    constraints.pop() #remove the constraint that gave the error
         if len(constraints)==0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
             return
@@ -1748,9 +1748,9 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             if prop in whiteList:
                 continue
             p = getattr(obj,prop)
-            strType = str(type(p))
-            types = self.getPropertyTypes()
-            typeFound = False;
+#            strType = str(type(p))
+#            types = self.getPropertyTypes()
+#            typeFound = False;
             typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
             if typeId in self.getPropertyTypes():
                 available.append({'type':typeId,'value':p,'name':prop})
@@ -1794,7 +1794,6 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
     def IsActive(self):
         other = None #other object to copy properties either to or from
         dd = None
-        doc = FreeCAD.ActiveDocument
         selection = Gui.Selection.getSelectionEx()
         if len(selection) == 1:
             return True #only can break parametric link with only 1 object selected
@@ -1804,8 +1803,6 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             obj = sel.Object
             if "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
                 dd = obj
-            else:
-                other = obj
         if not dd and not len(selection)==2:
             return False
         return True
