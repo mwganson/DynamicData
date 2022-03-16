@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2022.03.15"
-__version__ = "2.43"
-version = 2.43
+__version__ = "2.44"
+version = 2.44
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -242,12 +242,13 @@ class MultiTextInput(QtGui.QDialog):
         #layout.setColumnStretch(1, 1)
         self.addAnotherProp = False
         self.label = QtGui.QLabel(self)
-        self.spacer = QtGui.QLabel(" ")
+        self.propertyTypeLabel = QtGui.QLabel("Select App::Property type:")
+        self.listWidget = QtGui.QListWidget()
+        self.listWidget.currentItemChanged.connect(self.onListWidgetCurrentItemChanged)
         self.label2 = QtGui.QLabel(self)
         self.label2.setStyleSheet('color: red')
         self.nameLabel = QtGui.QLabel("Name: dd")
         self.nameEdit = QtGui.QLineEdit(self)
-        self.nameEdit.editingFinished.connect(self.on_edit_finished)
         self.nameEdit.textChanged.connect(self.on_text_changed)
         self.valueLabel = QtGui.QLabel("Value: ")
         self.valueEdit = QtGui.QLineEdit(self)
@@ -260,33 +261,37 @@ class MultiTextInput(QtGui.QDialog):
         self.tooltipEdit = QtGui.QLineEdit(self)
 
         layout.addWidget(self.label, 0, 0, 2, 5)
-        layout.addWidget(self.spacer, 3, 0, 1, 5)
-        layout.addWidget(self.nameLabel, 4, 0, 1, 1)
-        layout.addWidget(self.nameEdit, 4, 1, 1, 5)
-        layout.addWidget(self.valueLabel, 5, 0, 1, 1)
-        layout.addWidget(self.valueEdit, 5, 1, 1, 5)
-        layout.addWidget(self.groupLabel, 6, 0, 1, 1)
-        layout.addWidget(self.groupCombo, 6, 1 , 1, 5)
-        layout.addWidget(self.tooltipLabel, 7, 0, 1, 1)
-        layout.addWidget(self.tooltipPrependLabel, 7, 1, 1, 1)
-        layout.addWidget(self.tooltipEdit, 7, 2, 1, 4)
-        layout.addWidget(self.spacer, 8, 0, 1, 5)
-        layout.addWidget(self.label2, 9, 0, 1, 5)
-        buttons = QtGui.QDialogButtonBox(
+        layout.addWidget(self.propertyTypeLabel, 2, 0, 2, 6)
+        layout.addWidget(self.listWidget, 4, 0, 1, 6)
+        layout.addWidget(self.nameLabel, 5, 0, 1, 1)
+        layout.addWidget(self.nameEdit, 5, 1, 1, 5)
+        layout.addWidget(self.valueLabel, 6, 0, 1, 1)
+        layout.addWidget(self.valueEdit, 6, 1, 1, 5)
+        layout.addWidget(self.groupLabel, 7, 0, 1, 1)
+        layout.addWidget(self.groupCombo, 7, 1 , 1, 5)
+        layout.addWidget(self.tooltipLabel, 8, 0, 1, 1)
+        layout.addWidget(self.tooltipPrependLabel, 8, 1, 1, 1)
+        layout.addWidget(self.tooltipEdit, 8, 2, 1, 4)
+        layout.addWidget(self.label2, 10, 0, 1, 5)
+        self.buttons = QtGui.QDialogButtonBox(
             QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
             QtCore.Qt.Horizontal, self)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        buttons.setCenterButtons(True)
-        addAnother = QtGui.QPushButton("Add another",self)
-        buttons.addButton(addAnother, QtGui.QDialogButtonBox.ActionRole)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.buttons.setCenterButtons(True)
+        addAnother = QtGui.QPushButton("Apply", self)
+        self.buttons.addButton(addAnother, QtGui.QDialogButtonBox.ActionRole)
         addAnother.clicked.connect(self.addAnotherProperty)
-        layout.addWidget(buttons, 10, 0, 1, 5)
+        layout.addWidget(self.buttons, 11, 0, 1, 5)
         self.setLayout(layout)
 
     def addAnotherProperty(self):
         self.addAnotherProp = True
         self.accept()
+
+    def onListWidgetCurrentItemChanged(self,current,previous):
+        if previous and previous.text() in self.nameEdit.text():
+            self.nameEdit.setText(self.nameEdit.text().replace(previous.text(),current.text()))
 
     def on_value_changed(self): #commented out for now because it throws exceptions even inside try: except: block
         pass
@@ -302,6 +307,14 @@ class MultiTextInput(QtGui.QDialog):
         #    self.label2.setText(str(result))
 
     def on_text_changed(self):
+        cur = self.nameEdit.text()
+        if len(cur) == 1:
+            cur = cur.upper()
+        elif len(cur) > 1:
+            cur = cur[0].upper() + cur[1:]
+        else:
+            return
+        self.nameEdit.setText(cur)
         self.on_edit_finished()
 
     def on_edit_finished(self):
@@ -331,7 +344,7 @@ class MultiTextInput(QtGui.QDialog):
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
             propertyName = self.nameEdit.text()
-        obj = FreeCAD.ActiveDocument.ActiveObject
+        obj = FreeCADGui.Selection.getSelection()[0]
         if hasattr(obj,'dd'+propertyName):
             self.label2.setText('Property name already exists')
         else:
@@ -370,7 +383,6 @@ class DynamicDataAddPropertyCommandClass(object):
         window = QtGui.QApplication.activeWindow()
         items = self.getPropertyTypes()
         recent = []
-        separator = "-----"
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         mostRecentTypesLength = pg.GetInt('mruLength',5)
         for ii in range(mostRecentTypesLength-1,-1,-1):
@@ -378,154 +390,151 @@ class DynamicDataAddPropertyCommandClass(object):
                 recent.insert(0,mostRecentTypes[ii])
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
 
-        if len(recent) > 0:
-            recent += [separator]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Add Property Tool\n\nSelect Property Type',recent+items,0,False,windowFlags)
-        if not ok or item==separator:
-            return
+        dlg = MultiTextInput()
+        dlg.setWindowFlags(windowFlags)
+        dlg.setWindowTitle("DynamicData")
+        dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n")
+        items = recent+items
+        dlg.listWidget.addItems(items)
+        dlg.listWidget.setCurrentRow(0)
+        item = items[0]
+        vals=['']
+        for ii in range(1,1000):
+            vals.append(str(ii))
+        idx = 0
+        while hasattr(obj,'dd' + item + str(vals[idx])):
+            idx += 1
+        item + str(vals[idx])              
+        dlg.nameEdit.setText(item + vals[idx])
+
+        if hasattr(obj,'dd'+ item + vals[idx]):
+            dlg.label2.setText('Property name already exists')
         else:
-            if not item in mostRecentTypes:
-                mostRecentTypes.insert(0,item)
-            else:
-                mostRecentTypes.remove(item) #ensure it is at front of the list
-                mostRecentTypes.insert(0,item)
-            if len(mostRecentTypes)>mostRecentTypesLength:
-                mostRecentTypes = mostRecentTypes[:mostRecentTypesLength]
-            for ii in range(mostRecentTypesLength-1,-1,-1):
-                if mostRecentTypes[ii]:
-                    pg.SetString('mru'+str(ii), mostRecentTypes[ii])
+            dlg.label2.setText('')
+        dlg.nameEdit.selectAll()
+        if "List" in item:
+            dlg.valueLabel.setText("Values:")
+            dlg.label.setText("List values should be semicolon delimited, e.g. 1;2;3;7")
+        props = obj.PropertiesList
+        groups = []
+        groups.append(self.groupName)
+        for p in props:
+            cur_group = obj.getGroupOfProperty(p)
+            if len(cur_group) > 0 and not cur_group in groups:
+                groups.append(cur_group)
+        dlg.groupCombo.addItems(groups)
+        dlg.tooltipLabel.setText("Tooltip:")
+        dlg.tooltipPrependLabel.setText("["+item+"]")
 
-            dlg = MultiTextInput()
-            dlg.setWindowFlags(windowFlags)
-            dlg.setWindowTitle("DynamicData")
-            dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n\n\n\n")
-           # obj = FreeCAD.ActiveDocument.ActiveObject
-            vals=['']
-            for ii in range(1,1000):
-                vals.append(str(ii))
-            idx = 0
-            while hasattr(obj,'dd' + item + str(vals[idx])):
-                idx += 1
-            item + str(vals[idx])              
-            dlg.nameEdit.setText(item + vals[idx])
+        ok = dlg.exec_()
+        if not ok:
+            return
+        item = dlg.listWidget.currentItem().text()
+        if not item in mostRecentTypes:
+            mostRecentTypes.insert(0,item)
+        else:
+            mostRecentTypes.remove(item) #ensure it is at front of the list
+            mostRecentTypes.insert(0,item)
+        if len(mostRecentTypes)>mostRecentTypesLength:
+            mostRecentTypes = mostRecentTypes[:mostRecentTypesLength]
+        for ii in range(mostRecentTypesLength-1,-1,-1):
+            if mostRecentTypes[ii]:
+                pg.SetString('mru'+str(ii), mostRecentTypes[ii])
+        if not ";" in dlg.nameEdit.text():
+            self.propertyName = dlg.nameEdit.text()+";"+dlg.groupCombo.currentText()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
+        else:
+            self.propertyName = dlg.nameEdit.text()
+        if len(self.propertyName)==0:
+            self.propertyName=';;;' #use defaults
 
-            if hasattr(obj,'dd'+ item + vals[idx]):
-                dlg.label2.setText('Property name already exists')
-            else:
-                dlg.label2.setText('')
-            dlg.nameEdit.selectAll()
-            if "List" in item:
-                dlg.valueLabel.setText("Values:")
-                dlg.label.setText("List values should be semicolon delimited, e.g. 1;2;3;7")
-            props = obj.PropertiesList
-            groups = []
-            groups.append(self.groupName)
-            for p in props:
-                cur_group = obj.getGroupOfProperty(p)
-                if len(cur_group) > 0 and not cur_group in groups:
-                    groups.append(cur_group)
-            dlg.groupCombo.addItems(groups)
-            dlg.tooltipLabel.setText("Tooltip:")
-            dlg.tooltipPrependLabel.setText("["+item+"]")
-
-            ok = dlg.exec_()
-            if not ok:
-                return
-            if not ";" in dlg.nameEdit.text():
-                self.propertyName = dlg.nameEdit.text()+";"+dlg.groupCombo.currentText()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
-            else:
-                self.propertyName = dlg.nameEdit.text()
+        if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
+            self.propertyName = self.propertyName[2:] #strip dd temporarily
+        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
+        self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
+        self.tooltip='['+item+'] ' #e.g. [Float]
+        val=None
+        vals=[]
+        hasVal = False
+        listval = ''
+        if ';' in self.propertyName:
+            split = self.propertyName.split(';')
+            self.propertyName = split[0].replace(' ','_')
             if len(self.propertyName)==0:
-                self.propertyName=';;;' #use defaults
-
-            if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
-                self.propertyName = self.propertyName[2:] #strip dd temporarily
-            cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-            self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
-            self.tooltip='['+item+'] ' #e.g. [Float]
-            val=None
-            vals=[]
-            hasVal = False
-            listval = ''
-            if ';' in self.propertyName:
-                split = self.propertyName.split(';')
-                self.propertyName = split[0].replace(' ','_')
-                if len(self.propertyName)==0:
-                    self.propertyName = self.defaultPropertyName
-                if len(split)>1: #has a group name
-                    if len(split[1])>0: #allow for ;; empty string to mean use current group name
-                        self.groupName = split[1]
-                if len(split)>2: #has a tooltip
-                    if len(split[2])>0:
-                        self.tooltip = self.tooltip + split[2]
-                if len(split)>=4: #has a value
-                    if "=list(" in split[3]:
-                        listval = split[3]
-                        for ii in range(4, len(split)):
-                            listval += ';' + split[ii]
-                    val = split[3]
-                    if len(val)>0:
-                        hasVal = True
-                if len(split)>4 and 'List' in item: #multiple values for list type property
+                self.propertyName = self.defaultPropertyName
+            if len(split)>1: #has a group name
+                if len(split[1])>0: #allow for ;; empty string to mean use current group name
+                    self.groupName = split[1]
+            if len(split)>2: #has a tooltip
+                if len(split[2])>0:
+                    self.tooltip = self.tooltip + split[2]
+            if len(split)>=4: #has a value
+                if "=list(" in split[3]:
+                    listval = split[3]
+                    for ii in range(4, len(split)):
+                        listval += ';' + split[ii]
+                val = split[3]
+                if len(val)>0:
                     hasVal = True
-                    for ii in range(3,len(split)):
-                        try:
-                            if len(split[ii])>0:
-                                vals.append(self.eval_expr(split[ii]))
-                        except:
-                            vals.append(split[ii])
-            if hasattr(obj,'dd'+self.propertyName):
-                FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
-                return
-            p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
-            if hasVal and len(vals)==0:
-                if val[0] == "=":
+            if len(split)>4 and 'List' in item: #multiple values for list type property
+                hasVal = True
+                for ii in range(3,len(split)):
                     try:
-                        obj.setExpression('dd'+self.propertyName, val[1:])
-                        obj.touch()
-                        doc.recompute()
-                        doc.commitTransaction()
-                        return
+                        if len(split[ii])>0:
+                            vals.append(self.eval_expr(split[ii]))
                     except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
-                        doc.commitTransaction()
-                        return
+                        vals.append(split[ii])
+        if hasattr(obj,'dd'+self.propertyName):
+            FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
+            return
+        p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
+        if hasVal and len(vals)==0:
+            if val[0] == "=":
                 try:
-                    atr = self.eval_expr(val)
+                    obj.setExpression('dd'+self.propertyName, val[1:])
+                    obj.touch()
+                    doc.recompute()
+                    doc.commitTransaction()
+                    return
                 except:
+                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
+                    doc.commitTransaction()
+                    return
+            try:
+                atr = self.eval_expr(val)
+            except:
+                try:
+                    atr = val
+                except:
+                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+            try:
+                if item == "Enumeration":
+                    list2 = split[3:]
                     try:
-                        atr = val
-                    except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                        setattr(p,'dd'+self.propertyName, list2)
+                    except Exception:
+                        FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
+                else:
+                    setattr(p,'dd'+self.propertyName,atr)
+            except:
+                FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
+        elif hasVal and len(vals)>0:
+            if listval:
                 try:
-                    if item == "Enumeration":
-                        list2 = split[3:]
-                        try:
-                            setattr(p,'dd'+self.propertyName, list2)
-                        except Exception:
-                            FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
-                    else:
-                        setattr(p,'dd'+self.propertyName,atr)
+                    obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
+                    obj.touch()
+                    doc.recompute()
+                    doc.commitTransaction()
+                    return
                 except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
-            elif hasVal and len(vals)>0:
-                if listval:
-                    try:
-                        obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
-                        obj.touch()
-                        doc.recompute()
-                        doc.commitTransaction()
-                        return
-                    except:
-                        FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
-                        doc.commitTransaction()
-                        return
-                try:
-                    setattr(p,'dd'+self.propertyName,list(vals))
-                except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
-            obj.touch()
-            doc.recompute()
+                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
+                    doc.commitTransaction()
+                    return
+            try:
+                setattr(p,'dd'+self.propertyName,list(vals))
+            except:
+                FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
+        obj.touch()
+        doc.recompute()
 
         doc.commitTransaction()
         doc.recompute()
