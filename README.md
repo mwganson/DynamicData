@@ -20,19 +20,17 @@ Creates a new DynamicData container object.
 <img src="Resources/icons/AddProperty.svg" alt="icon">
 Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)<br/>
 <br/>
-Adding custom properties is a 2-step process.  First step is to select the property type from the drop down list.<br/>
+As of version 2.44, adding a property is all done from within a single dialog.<br/>
 <br/>
 <img src="Resources/media/add_property_scr.png" alt="add property screenshot">
 <br/>
-Second step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
+After selecting the property type, the next step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
 <br/>
 <b>Note: as of version 1.12 all tooltips now get [Type] prepended.  Example, if type is "Length" the tooltip would be something like "[Length] my tooltip".</b></br>
 <br/>
-<img src="Resources/media/add_property_scr2.png" alt="add property screenshot 2"><br/>
-<br/>
 Old style name;groupname;tooltip;value syntax is still supported in the Name field for those who wish to keep using it.<br/>
 <br/>
-All property names are prepended with "dd" automatically and the first letter is capitalized.  Thus, a name entered of "length" would be converted to "ddLength" and get displayed in the property view as "dd Length".  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "=dd.dd" (or click the expression engine "fx" icon and enter "dd.dd") to bring up a list of available custom properties: <br/>
+All property names are prepended with "dd" automatically and the first letter is capitalized.  (If you don't like this you can rename the property after it has been added, but it is recommended to follow the dd naming convention or else some functions in the workbench might not work properly, such as the copy property function.)  Thus, a name entered of "length" would be converted to "ddLength" and get displayed in the property view as "dd Length".  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "=dd.dd" (or click the expression engine "fx" icon and enter "dd.dd") to bring up a list of available custom properties: <br/>
 <br/>
 <img src="Resources/media/dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
 <br/>
