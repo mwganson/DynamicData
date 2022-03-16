@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2022.03.15"
-__version__ = "2.42"
-version = 2.42
+__version__ = "2.43"
+version = 2.43
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -205,13 +205,9 @@ class DynamicDataCreateObjectCommandClass(object):
         doc = FreeCAD.ActiveDocument
         doc.openTransaction("CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
-        doc.recompute()
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
-        doc.recompute()
         setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
         doc.commitTransaction()
-        a.touch()
-        doc.recompute()
         Gui.Selection.clearSelection()
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         if pg.GetBool('AddToActiveContainer',False):
@@ -221,7 +217,6 @@ class DynamicDataCreateObjectCommandClass(object):
                 body.Group += [a]
             elif part:
                 part.Group += [a]
-        doc.recompute()
         Gui.Selection.addSelection(a) #select so the user can immediately add a new property
         doc.recompute()
         return
