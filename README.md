@@ -181,7 +181,7 @@ This also allows to rename groups by moving all properties from that group to a 
 * 2022.02.26 (version 2.37)<br/>
 ** add settings dialog (thanks 0penBrain!)
 * 2022.02.26 (version 2.36)<br/>
-** Add anothr button added to dialog
+** Add another button added to dialog
 * 2022.02.26 (version 2.35)<br/>
 ** make object creation undoable
 * 2022.02.22 (version 2.34)<br/>
