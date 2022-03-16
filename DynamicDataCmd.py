@@ -2,25 +2,25 @@
 ###################################################################################
 #
 #  DynamicDataCmd.py
-#  
+#
 #  Copyright 2018-2019 Mark Ganson <TheMarkster> mwganson at gmail
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 ###################################################################################
 
 __title__   = "DynamicData"
@@ -171,18 +171,18 @@ class DynamicDataSettingsCommandClass(object):
             super(DynamicDataSettingsCommandClass.DynamicDataSettingsDlg, self).closeEvent(event)
 
     def __init__(self):
-        pass        
+        pass
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'Settings.svg') , # the name of an icon file available in the resources
+        return {'Pixmap'  : os.path.join( iconPath , 'Settings.svg'), # the name of an icon file available in the resources
+                'MenuText': "&Settings",
+                'Accel'   : "Ctrl+Shift+D,S",
+                'ToolTip' : "Workbench settings dialog"}
 
-            'MenuText': "&Settings" ,'Accel': "Ctrl+Shift+D,S",
-            'ToolTip' : "Workbench settings dialog"}
- 
     def Activated(self):
         dlg = self.DynamicDataSettingsDlg()
         dlg.open()
-   
+
     def IsActive(self):
         return True
 
@@ -197,10 +197,11 @@ class DynamicDataCreateObjectCommandClass(object):
     """Create Object command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.svg') ,
-            'MenuText': "&Create Object" ,'Accel': "Ctrl+Shift+D,C",
-            'ToolTip' : "Create the DynamicData object to contain the custom properties"}
- 
+        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.svg'),
+                'MenuText': "&Create Object",
+                'Accel'   : "Ctrl+Shift+D,C",
+                'ToolTip' : "Create the DynamicData object to contain the custom properties"}
+
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         doc.openTransaction("CreateObject")
@@ -220,7 +221,7 @@ class DynamicDataCreateObjectCommandClass(object):
         Gui.Selection.addSelection(a) #select so the user can immediately add a new property
         doc.recompute()
         return
-   
+
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
@@ -365,9 +366,10 @@ class DynamicDataAddPropertyCommandClass(object):
         return propertyTypes
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg') ,
-            'MenuText': "&Add Property" ,'Accel': "Ctrl+Shift+D,A",
-            'ToolTip' : "Add a custom property to the DynamicData object"}
+        return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg'),
+                'MenuText': "&Add Property",
+                'Accel'   : "Ctrl+Shift+D,A",
+                'ToolTip' : "Add a custom property to the DynamicData object"}
 
     def Activated(self):
         global mostRecentTypes
@@ -404,7 +406,7 @@ class DynamicDataAddPropertyCommandClass(object):
         idx = 0
         while hasattr(obj,'dd' + item + str(vals[idx])):
             idx += 1
-        item + str(vals[idx])              
+        item + str(vals[idx])
         dlg.nameEdit.setText(item + vals[idx])
 
         if hasattr(obj,'dd'+ item + vals[idx]):
@@ -441,7 +443,10 @@ class DynamicDataAddPropertyCommandClass(object):
             if mostRecentTypes[ii]:
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
         if not ";" in dlg.nameEdit.text():
-            self.propertyName = dlg.nameEdit.text()+";"+dlg.groupCombo.currentText()+";"+dlg.tooltipEdit.text()+";"+dlg.valueEdit.text()
+            self.propertyName = dlg.nameEdit.text() + ";"
+                              + dlg.groupCombo.currentText() + ";"
+                              + dlg.tooltipEdit.text() + ";"
+                              + dlg.valueEdit.text()
         else:
             self.propertyName = dlg.nameEdit.text()
         if len(self.propertyName)==0:
@@ -458,7 +463,7 @@ class DynamicDataAddPropertyCommandClass(object):
         listval = ''
         if ';' in self.propertyName:
             split = self.propertyName.split(';')
-            self.propertyName = split[0].replace(' ','_')
+            self.propertyName = split[0].replace(' ', '_')
             if len(self.propertyName)==0:
                 self.propertyName = self.defaultPropertyName
             if len(split)>1: #has a group name
@@ -542,7 +547,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if modifiers == QtCore.Qt.ControlModifier or dlg.addAnotherProp: #Ctrl+OK or Add another
             self.Activated()
         return
-   
+
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
@@ -610,7 +615,7 @@ class DynamicDataAddPropertyCommandClass(object):
                     return func(float(opstring)*math.pi/180.0)
                 elif opstring[-1:]==self.RADIANS_INDICATOR:
                     opstring = opstring[:-1]
-                    return func(float(opstring))  
+                    return func(float(opstring))
                 else:
                     return func(float(opstring))
             elif node.id[:4] in self.maths:
@@ -621,7 +626,7 @@ class DynamicDataAddPropertyCommandClass(object):
                     return func(float(opstring)*math.pi/180.0)
                 elif opstring[-1:]==self.RADIANS_INDICATOR:
                     opstring = opstring[:-1]
-                    return func(float(opstring)) 
+                    return func(float(opstring))
                 else:
                     return func(float(opstring))
             else:
@@ -704,9 +709,10 @@ class DynamicDataMoveToNewGroupCommandClass(object):
     """Move properties to new group"""
 
     def GetResources(self):
-        return {'Pixmap'  :"" ,
-            'MenuText': "Move to new &group" ,'Accel': "Ctrl+Shift+D,G",
-            'ToolTip' : "Move dynamic properties to new group.\n\
+        return {'Pixmap'  : "",
+                'MenuText': "Move to new &group",
+                'Accel'   : "Ctrl+Shift+D,G",
+                'ToolTip' : "Move dynamic properties to new group.\n\
 This effectively renames a group if you move all properties.\n\
 Only works with dynamic properties"}
 
@@ -811,8 +817,9 @@ class DynamicDataRenamePropertyCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : '',
-            'MenuText': "Re&name Property" ,'Accel': "Ctrl+Shift+D,N",
-            'ToolTip' : "Rename a dynamic property"}
+                'MenuText': "Re&name Property",
+                'Accel'   : "Ctrl+Shift+D,N",
+                'ToolTip' : "Rename a dynamic property"}
 
     def getDynamicProperties(self, obj):
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
@@ -930,8 +937,9 @@ class DynamicDataSetTooltipCommandClass(object):
 
     def GetResources(self):
         return {'Pixmap'  : '',
-            'MenuText': "Se&t Tooltip" ,'Accel': "Ctrl+Shift+D,T",
-            'ToolTip' : "Set the tooltip of a dynamic property"}
+                'MenuText': "Se&t Tooltip",
+                'Accel'   : "Ctrl+Shift+D,T",
+                'ToolTip' : "Set the tooltip of a dynamic property"}
 
     def getDynamicProperties(self, obj):
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
@@ -1011,9 +1019,10 @@ class DynamicDataRemovePropertyCommandClass(object):
     """Remove Property Command"""
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.svg') ,
-            'MenuText': "&Remove Property" ,'Accel': "Ctrl+Shift+D,R",
-            'ToolTip' : "Remove a custom property from the DynamicData object"}
+        return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.svg'),
+                'MenuText': "&Remove Property",
+                'Accel'   : "Ctrl+Shift+D,R",
+                'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
@@ -1082,16 +1091,16 @@ class DynamicDataImportAliasesCommandClass(object):
     def getProperties(self,obj):
         cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
         prop = []
-        for p in obj.PropertiesList: 
+        for p in obj.PropertiesList:
             if cell_regex.search(p):
                 prop.append(p)
         return prop
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg') ,
-            'MenuText': "&Import Aliases" ,
-            'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg'),
+                'MenuText': "&Import Aliases",
+                'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
 
     def Activated(self):
@@ -1168,7 +1177,7 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                 else:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping alias \"'+line[idx:idx2]+'\" because it ends in an underscore (_).\n')
 
-                
+
             for alias in aliases:
                 atr = getattr(sheet,alias)
                 if "Base.Quantity" in str(type(atr)):
@@ -1205,7 +1214,7 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
                 continue
 
-                    
+
         FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
         if len(aliases)==0:
@@ -1213,7 +1222,7 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
             return
 
         return
-   
+
     def IsActive(self):
         sheets=[]
         dd = None
@@ -1250,16 +1259,16 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
     def getProperties(self,obj):
         cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
         prop = []
-        for p in obj.PropertiesList: 
+        for p in obj.PropertiesList:
             if cell_regex.search(p):
                 prop.append(p)
         return prop
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg') ,
-            'MenuText': "&Import Named Constraints" ,
-            'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
+        return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
+                'MenuText': "&Import Named Constraints",
+                'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
 
 
     def Activated(self):
@@ -1353,7 +1362,7 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
         FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
         return
-   
+
     def IsActive(self):
         sketches=[]
         dd = None
@@ -1389,16 +1398,16 @@ class DynamicDataCopyPropertyCommandClass(object):
     def getProperties(self,obj):
         cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
         prop = []
-        for p in obj.PropertiesList: 
+        for p in obj.PropertiesList:
             if cell_regex.search(p):
                 prop.append(p)
         return prop
 
 
     def GetResources(self):
-        return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg') ,
-            'MenuText': "C&opy Property" ,
-            'ToolTip' : "Copy/Set property values between selected objects"}
+        return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg'),
+                'MenuText': "C&opy Property",
+                'ToolTip' : "Copy/Set property values between selected objects"}
 
 
     def Activated(self):
@@ -1486,7 +1495,7 @@ class DynamicDataCopyPropertyCommandClass(object):
 
         elif dd and dd2:
             modes = [ops[MODE_COPY_DD_TO_DD2], ops[MODE_COPY_DD2_TO_DD], ops[MODE_SET_DD_TO_DD2], ops[MODE_SET_DD2_TO_DD], ops[MODE_CANCEL]]
-                   
+
         if dd == dd2 and not other and not other2:
             modes=[ops[MODE_COPY_DD_TO_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_UNLINK_DD], ops[MODE_CANCEL]]
 
@@ -1625,7 +1634,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
 
         doc.recompute()
         return
-   
+
     def makeParametric(self,fromObj,fromProperty,toObj,toProperty,breakOnly=False):
         """create a parametric link using toObj.setExpression()
         fromProperty and toProperty are dict objects with keys:
@@ -1682,7 +1691,7 @@ Could be a property type mismatch\n\
 From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
 To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
             return
-        
+
         #handle placement types
         if fromProperty['type'] in 'Placement':
             try:
