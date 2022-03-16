@@ -164,6 +164,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes:<br/>
+* 2022.03.15 (version 2.44)<br/>
+** integrate property type selection into add property dialog
 * 2022.03.15 (version 2.43(<br/>
 ** cleanup some code, remove some unnecessary recomputes during container object creation.
 * 2022.03.15 (version 2.42)<br/>
