@@ -162,6 +162,13 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes:<br/>
+* 2022.04.08 (version 2.46)<br/>
+** do not require dd object be selected where there is only 1 dd object in the active document for these commands:<br/>
+add property<br/>
+remove property<br/>
+rename property<br/>
+edit tooltip<br/>
+move to new group<br/>
 * 2022.03.16 (version 2.45)<br/>
 ** various formatting fixes -- thanks luzpaz
 ** various issue of lgtm.com, unused variables, etc.
