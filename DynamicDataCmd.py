@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2022.03.16"
-__version__ = "2.45"
-version = 2.45
+__date__    = "2022.04.08"
+__version__ = "2.46"
+version = 2.46
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -238,9 +238,9 @@ class DynamicDataCreateObjectCommandClass(object):
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
 
 class MultiTextInput(QtGui.QDialog):
-    def __init__(self):
+    def __init__(self, obj):
         QtGui.QDialog.__init__(self)
-
+        self.obj = obj
         layout = QtGui.QGridLayout()
         #layout.setColumnStretch(1, 1)
         self.addAnotherProp = False
@@ -347,8 +347,7 @@ class MultiTextInput(QtGui.QDialog):
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
             propertyName = self.nameEdit.text()
-        obj = FreeCADGui.Selection.getSelection()[0]
-        if hasattr(obj,'dd'+propertyName):
+        if hasattr(self.obj,'dd'+propertyName):
             self.label2.setText('Property name already exists')
         else:
             self.label2.setText('')
@@ -363,6 +362,8 @@ class DynamicDataAddPropertyCommandClass(object):
     global mostRecentTypes
     global mostRecentTypesLength
 
+    def __init__(self):
+        self.obj = None
 
     def getPropertyTypes(self):
         return propertyTypes
@@ -378,7 +379,7 @@ class DynamicDataAddPropertyCommandClass(object):
         global mostRecentTypesLength
 
         doc = FreeCAD.ActiveDocument
-        obj = Gui.Selection.getSelectionEx()[0].Object
+        obj = self.obj
         if not 'FeaturePython' in str(obj.TypeId):
             FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
             return
@@ -394,7 +395,7 @@ class DynamicDataAddPropertyCommandClass(object):
                 recent.insert(0,mostRecentTypes[ii])
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
 
-        dlg = MultiTextInput()
+        dlg = MultiTextInput(obj)
         dlg.setWindowFlags(windowFlags)
         dlg.setWindowTitle("DynamicData")
         dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n")
@@ -554,13 +555,15 @@ class DynamicDataAddPropertyCommandClass(object):
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
-        selection = Gui.Selection.getSelectionEx()
-        if not selection:
-            return False
-        if not hasattr(selection[0].Object,"DynamicData"):
-            return False
-
-        return True
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+            self.obj = selection[0]
+            return True
+        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
+        if len(objs) == 1:
+            self.obj = objs[0]
+            return True
+        return False
 
     def __init__(self):
         #global mostRecentTypes
@@ -754,9 +757,7 @@ Only works with dynamic properties"}
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         selection = Gui.Selection.getSelection()
-        if not selection:
-            return
-        obj = selection[0]
+        obj = self.obj
         #remove the property
         window = FreeCADGui.getMainWindow()
         items = self.getGroups(obj)
@@ -794,8 +795,9 @@ Select source group to pick properties from, or all groups to pick from all.\n',
                     except Exception as ex:
                         FreeCAD.Console.PrintError(f"Cannot move {prop}, only dynamic properties are supported\n")
                 doc.commitTransaction()
-        FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(obj)
+        if obj in selection:
+            FreeCADGui.Selection.removeSelection(obj)
+            FreeCADGui.Selection.addSelection(obj)
         doc.recompute()
         return
 
@@ -803,13 +805,14 @@ Select source group to pick properties from, or all groups to pick from all.\n',
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if not selection:
-            return False
-        obj = selection[0]
-        if len(self.getGroups(obj))==0:
-            return False
-        return True
-
+        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+            self.obj = selection[0]
+            return True
+        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
+        if len(objs) == 1:
+            self.obj = objs[0]
+            return True
+        return False
 ########################################################################################
 # Rename a custom dynamic property
 
@@ -888,7 +891,6 @@ class DynamicDataRenamePropertyCommandClass(object):
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        #win = FreeCADGui.getMainWindow()
         obj = self.obj
         prop = self.getProperty(obj) #string name of property
         if not prop:
@@ -915,19 +917,24 @@ class DynamicDataRenamePropertyCommandClass(object):
             inExpr[0].setExpression(inExpr[1], inExpr[2].replace(prop,newName))
         obj.removeProperty(prop)
         obj.Document.commitTransaction()
-        FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(obj)
+        if obj in FreeCADGui.Selection.getSelection():
+            FreeCADGui.Selection.removeSelection(obj)
+            FreeCADGui.Selection.addSelection(obj)
         doc.recompute()
         return
 
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
-        selection = Gui.Selection.getSelectionEx()
-        if not selection:
-            return False
-        self.obj = selection[0].Object
-        return True
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+            self.obj = selection[0]
+            return True
+        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
+        if len(objs) == 1:
+            self.obj = objs[0]
+            return True
+        return False
 
 #Gui.addCommand("DynamicDataRenameProperty", DynamicDataRenamePropertyCommandClass())
 ########################################################################################
@@ -996,19 +1003,24 @@ class DynamicDataSetTooltipCommandClass(object):
         obj.Document.openTransaction(f"Set tooltip of {prop}")
         obj.setDocumentationOfProperty(prop, newTip)
         obj.Document.commitTransaction()
-        FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(obj)
+        if obj in FreeCADGui.Selection.getSelection():
+            FreeCADGui.Selection.removeSelection(obj)
+            FreeCADGui.Selection.addSelection(obj)
         doc.recompute()
         return
 
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
-        selection = Gui.Selection.getSelectionEx()
-        if not selection:
-            return False
-        self.obj = selection[0].Object
-        return True
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+            self.obj = selection[0]
+            return True
+        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
+        if len(objs) == 1:
+            self.obj = objs[0]
+            return True
+        return False
 
 #Gui.addCommand("DynamicDataSetTooltip", DynamicDataSetTooltipCommandClass())
 
@@ -1020,6 +1032,9 @@ class DynamicDataSetTooltipCommandClass(object):
 class DynamicDataRemovePropertyCommandClass(object):
     """Remove Property Command"""
 
+    def __init__(self):
+        self.obj = None
+
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'RemoveProperty.svg'),
                 'MenuText': "&Remove Property",
@@ -1028,13 +1043,14 @@ class DynamicDataRemovePropertyCommandClass(object):
 
     def getProperties(self,obj):
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        dlg = None
         if props:
             dlg = SelectObjects(props,"Select dynamic properties to remove")
             dlg.all.setCheckState(QtCore.Qt.Unchecked)
             ok = dlg.exec_()
             if not ok:
                 return []
-        return dlg.selected
+        return dlg.selected if dlg else []
 
     def isDynamic(self,obj,prop):
         if prop == "DynamicData":
@@ -1051,10 +1067,8 @@ class DynamicDataRemovePropertyCommandClass(object):
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        selection = Gui.Selection.getSelectionEx()
-        if not selection:
-            return
-        obj = selection[0].Object
+        selection = Gui.Selection.getSelection()
+        obj = self.obj
         #remove the property
         window = QtGui.QApplication.activeWindow()
         items = self.getProperties(obj)
@@ -1067,18 +1081,24 @@ class DynamicDataRemovePropertyCommandClass(object):
             except Exception as ex:
                 FreeCAD.Console.PrintError(f"DynamicData::Exception cannot remove {item}\n{ex}")
         obj.Document.commitTransaction()
-        FreeCADGui.Selection.removeSelection(obj)
-        FreeCADGui.Selection.addSelection(obj)
+        if obj in selection:
+            FreeCADGui.Selection.removeSelection(obj)
+            FreeCADGui.Selection.addSelection(obj)
         doc.recompute()
         return
 
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
-        selection = Gui.Selection.getSelectionEx()
-        if not selection:
-            return False
-        return True
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+            self.obj = selection[0]
+            return True
+        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
+        if len(objs) == 1:
+            self.obj = objs[0]
+            return True
+        return False
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
 
@@ -1214,7 +1234,6 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                 else:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
                 continue
-
 
         FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
