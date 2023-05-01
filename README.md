@@ -135,6 +135,7 @@ Rename a dynamic property.  The property must be dynamic, but need not be a Dyna
 ### Set Tooltip
 <br/>
 Change the tooltip of a dynamic property.
+
 ### Move to new group 
 <br/>
 Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.<br/>
