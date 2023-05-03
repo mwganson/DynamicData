@@ -1,9 +1,9 @@
 # DynamicData Workbench
-<img src="Resources/icons/DynamicDataLogo.svg" alt="icon">
+![icon](Resources/icons/DynamicDataLogo.svg)
 
 ## Installation
 
-Install via the Addon Manager in the Tools menu in FreeCAD version 0.17 and later.
+Install via the [Addon Manager](https://wiki.freecad.org/Std_AddonMgr) in the Tools menu in FreeCAD version 0.17 and later.
 
 ## Overview
 
@@ -13,88 +13,108 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 <img src="Resources/media/example.gif" alt="animated gif example">
 
 ### Create Object
-<img src="Resources/icons/CreateObject.svg" alt="icon">
+![CreateObject icon](Resources/icons/CreateObject.svg)
+
 Creates a new DynamicData container object.
 
 ### Add Property
-<img src="Resources/icons/AddProperty.svg" alt="icon">
-Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)<br/>
-<br/>
-As of version 2.44, adding a property is all done from within a single dialog.<br/>
-<br/>
-<img src="Resources/media/add_property_scr.png" alt="add property screenshot">
-<br/>
+![AddProperty icon](Resources/icons/AddProperty.svg)
+
+Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
+
+**Note:** As of version 2.44, adding a property is all done from within a single dialog.
+
+![add property screenshot](Resources/media/add_property_scr.png)
+
 After selecting the property type, the next step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
-<br/>
-<b>Note: as of version 1.12 all tooltips now get [Type] prepended.  Example, if type is "Length" the tooltip would be something like "[Length] my tooltip".</b></br>
-<br/>
-Old style name;groupname;tooltip;value syntax is still supported in the Name field for those who wish to keep using it.<br/>
-<br/>
-All property names are prepended with "dd" automatically and the first letter is capitalized.  (If you don't like this you can rename the property after it has been added, but it is recommended to follow the dd naming convention or else some functions in the workbench might not work properly, such as the copy property function.)  Thus, a name entered of "length" would be converted to "ddLength" and get displayed in the property view as "dd Length".  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter "=dd.dd" (or click the expression engine "fx" icon and enter "dd.dd") to bring up a list of available custom properties: <br/>
-<br/>
-<img src="Resources/media/dd_constraint_reference_scr.png" alt="dd constraint reference screenshot"><br/>
-<br/>
-DynamicData has its own built-in evaluator, which can be used when entering values.  The actual value that gets placed into the property is the evaluated amount.  New, beginning with version 2.0, you can now enter FreeCAD expressions into the value field.  To signify to DynamicData that your entry is to be evaluated as a FreeCAD expression, prepend and equals sign (=) to the value.  If initializing a list type, such as IntegerList or FloatList, use something like =list(3;2;1) to initialize them.  For a list of type VectorList you can use the create() function integrated into the expression engine, see example below.  Create() works for types vector, placement, and rotation.<br/>
-<br/>
-Note: even though your value will be evaluated by the FreeCAD expression engine, you don't get the benefit of being prompted with autocompletions when entering it into the value field.<br/>
-<br/>
-Some examples:<br/>
-<br/>
-=(7/8)*25.4<br/>
-=Cylinder.Radius*2<br/>
-=list(3;2;1)<br/>
-=list(create(<<vector>>; 2; 1; 2);create(<<vector>>; 0;0;0))<br/>
-3*5<br/>
-cos(pi)<br/>
-golden_ratio<br/>
-<br/>
-For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:<br/>
-<br/>
-3;5;9;12<br/>
-or if using the expression engine:<br/>
-=list(3;5;9;12)<br/>
-<br/>
-For Enumeration types (new to v2.34) you enter the enumerations as a list:<br/>
-zero;one;two;three;four;five;six;seven <br/>
-<br/>
-  Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by =dd.ddMyEnum is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.<br/>
-  <br/>
-  You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  For example, make an IntegerList called MyInts:<br/>
-  0;1;2;3;4;5;6;7<br/>
-  <br/>
-  Then in a spreadsheet =dd.ddMyInts[dd.ddMyEnum] would return the integer in MyInts that corresponds to the user selection in MyEnum.  For example, if the user has selected "zero" in the enumeration, then this cell in a spreadsheet would hold the value of 4.<br/>
-  <br/>
-  Make an enumeration MyEnum:<br/>
-  False;True<br/>
-  <br/>
-  Since this evaluates to 0 or 1 depending on user selection it could be used as a boolean:<br/>
-  =dd.ddMyEnum ? 5 : 7  (would yield a value of 5 if True, 7 if False)<br/>
-  <br/>
+
+**Note:** as of version 1.12 all tooltips now get `[Type]` prepended.  Example, if type is `Length` the tooltip would be something like `[Length] my tooltip`.  
+* `Old style name;groupname;tooltip;value` syntax is still supported in the `Name` field for those who wish to keep using it.
+
+All property names are prepended with `dd` automatically and the first letter is capitalized.  (If you don't like this you can rename the property after it has been added, but it is recommended to follow the dd naming convention or else some functions in the workbench might not work properly, such as the copy property function.)  Thus, a name entered of `length` would be converted to `ddLength` and get displayed in the property view as `dd Length`.  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter `=dd.dd` (or click the expression engine `fx` icon and enter `dd.dd`) to bring up a list of available custom properties.
+
+![dd constraint reference screenshot](Resources/media/dd_constraint_reference_scr.png)
+
+DynamicData has its own built-in evaluator, which can be used when entering values.  The actual value that gets placed into the property is the evaluated amount.  New, beginning with version 2.0, you can now enter FreeCAD expressions into the value field.  To signify to DynamicData that your entry is to be evaluated as a FreeCAD expression, prepend and equals sign (`=`) to the value.  If initializing a list type, such as IntegerList or FloatList, use something like `=list(3;2;1)` to initialize them.  For a list of type VectorList you can use the `create()` function integrated into the expression engine, see example below. `create()` works for types vector, placement, and rotation.  
+
+**Note:** even though your value will be evaluated by the FreeCAD expression engine, you don't get the benefit of being prompted with autocompletions when entering it into the value field.
+
+### Some examples
+
+```
+=(7/8)*25.4
+=Cylinder.Radius*2
+=list(3;2;1)
+=list(create(<<vector>>; 2; 1; 2);create(<<vector>>; 0;0;0))
+3*5
+cos(pi)
+golden_ratio
+```
+
+For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:  
+
+```
+3;5;9;12
+```
+
+or if using the expression engine:  
+
+```
+=list(3;5;9;12)
+```
+
+For Enumeration types (new to v2.34) you enter the enumerations as a list:  
+
+```
+zero;one;two;three;four;five;six;seven
+```
+
+Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by `=dd.ddMyEnum` is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.
+
+You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  For example, make an IntegerList called MyInts:
+
+```
+0;1;2;3;4;5;6;7
+```
+
+Then in a spreadsheet `=dd.ddMyInts[dd.ddMyEnum]` would return the integer in MyInts that corresponds to the user selection in MyEnum.  For example, if the user has selected "zero" in the enumeration, then this cell in a spreadsheet would hold the value of 4.
+
+Make an enumeration MyEnum:  
+
+```
+False;True
+```
+
+Since this evaluates to 0 or 1 depending on user selection it could be used as a boolean:
+
+`=dd.ddMyEnum ? 5 : 7` (would yield a value of 5 if True, 7 if False)
 
 ### Remove Property
-<img src="Resources/icons/RemoveProperty.svg" alt="icon"><br/>
-<br/>
-Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. <b>(Care must be taken when removing properties because this action cannot be undone.)</b><br/>
-<br/>
-<img src="Resources/media/remove_property_scr.png" alt="remove property screenshot"><br/>
-<br/>
+
+![RemoveProperty icon](Resources/icons/RemoveProperty.svg)
+
+Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. **Note:** Care must be taken when removing properties because this action cannot be undone.
+
+![remove property screenshot](Resources/media/remove_property_scr.png)
+
 ### Import Aliases
-<img src="Resources/icons/ImportAliases.svg" alt="icon"><br/>
-Use this to import aliases from selected spreadsheets as properties into selected dd object.</br>
-<br/>
-<b>Warning: selected spreadsheets will be modified.  The cells containing the aliases will reference
-the dd object property. </b><br />
-<br/>
-To prevent a cell containing an alias from being imported you should end the alias name with an underscore (_).  When the workbench code sees an alias name that ends with an underscore it will skip that alias and display a warning message in the report view, informing the user that this alias was skipped.  Similarly, spreadsheets with labels ending in the underscore will likewise be skipped.</br>
-<br/>
-To use this feature, select your dd object and one or more spreadsheets to be imported, then invoke the command either from the menu or the toolbar.  New properties of various types, e.g. "Length" will be added to the dd object for each alias found.  The property type depends on who FreeCAD has interpreted the type to be, which is based on the units used in the cell contents.  For example, "10.5 mm" would be seen as a "Length" property type while "45 deg" would be seen as an "Angle" property type, "5 mi/h" would be seen as a "Speed" type, etc.  Note: there could be some inconsistencies between the unit types recognized by the spreadsheet code and the property type names used in FreeCAD.  Please report any errors to me via Direct Message "TheMarkster" on the FreeCAD forum.  As an example of this type of mismatch, "Speed" types are identified as "Velocity" in the spreadsheet, so a minor fix is needed (already done in version 1.41) in the DynamicData source code to account for this naming inconsistency.<br/>
-<br/>
-Once you have imported the aliases you should still keep the spreadsheet because other FreeCAD objects, example sketch constraints, that were referencing the aliases before the import will still be referencing them.  Difference is now the spreadsheet references the dd object property.  Keep the spreadsheet, but only make modifications to the values in the dd property editor.  Otherwise, the changes made in the spreadsheet will break the connection to the dd object property.<br/>
-<br/>
-Another important consideration is the imports are done by value and not by reference.  In other words, suppose you have an aliased cell with a formula such as "=B1 * A2 - C3".  The import will be whatever value that formula evaluates to *at the time of the import*.  If you later modify the contents of B1, A2, or C3, those changes *do not* get propagated to the dd object property.  In other words, if B1 * A2 - C3 evalates to 15.23, then 15.23 is what gets imported.  I've hesitated to include this feature mostly because of this issue that could come up, but I've decided to let the user decide for himself whether to use this or not.<br/>
-<br/>
-This operation can be partially undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, but it will not remove the newly created properties from the dd object.  But while the properties remain they will no longer reference anything else in the document or be referenced by anything else in the document, so they will be harmless in that sense.  Still, it is recommended to save your document before using this feature.<br/>
-<br/>
+
+![ImportAliases icon](Resources/icons/ImportAliases.svg)
+
+Use this to import aliases from selected spreadsheets as properties into selected dd object.
+
+**Warning: selected spreadsheets will be modified.  The cells containing the aliases will reference
+the dd object property.**
+
+To prevent a cell containing an alias from being imported you should end the alias name with an underscore (`_`).  When the workbench code sees an alias name that ends with an underscore it will skip that alias and display a warning message in the report view, informing the user that this alias was skipped.  Similarly, spreadsheets with labels ending in the underscore will likewise be skipped.
+
+To use this feature, select your dd object and one or more spreadsheets to be imported, then invoke the command either from the menu or the toolbar.  New properties of various types, e.g. `Length` will be added to the dd object for each alias found.  The property type depends on who FreeCAD has interpreted the type to be, which is based on the units used in the cell contents.  For example, `10.5 mm` would be seen as a `Length` property type while `45 deg` would be seen as an `Angle` property type, `5 mi/h` would be seen as a `Speed` type, etc.  Note: there could be some inconsistencies between the unit types recognized by the spreadsheet code and the property type names used in FreeCAD.  Please report any errors to me via Direct Message "TheMarkster" on the FreeCAD forum.  As an example of this type of mismatch, "Speed" types are identified as "Velocity" in the spreadsheet, so a minor fix is needed (already done in version 1.41) in the DynamicData source code to account for this naming inconsistency.
+
+Once you have imported the aliases you should still keep the spreadsheet because other FreeCAD objects, example sketch constraints, that were referencing the aliases before the import will still be referencing them.  Difference is now the spreadsheet references the dd object property.  Keep the spreadsheet, but only make modifications to the values in the dd property editor.  Otherwise, the changes made in the spreadsheet will break the connection to the dd object property.
+
+Another important consideration is the imports are done by value and not by reference.  In other words, suppose you have an aliased cell with a formula such as `=B1 * A2 - C3`.  The import will be whatever value that formula evaluates to *at the time of the import*.  If you later modify the contents of B1, A2, or C3, those changes *do not* get propagated to the dd object property.  In other words, if `B1 * A2 - C3` evalates to 15.23, then 15.23 is what gets imported.  I've hesitated to include this feature mostly because of this issue that could come up, but I've decided to let the user decide for himself whether to use this or not.
+
+This operation can be partially undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, but it will not remove the newly created properties from the dd object.  But while the properties remain they will no longer reference anything else in the document or be referenced by anything else in the document, so they will be harmless in that sense.  Still, it is recommended to save your document before using this feature.
 
 ### Import Named Constraints
 <img src="Resources/icons/ImportNamedConstraints.svg" alt="icon"><br/>
