@@ -1,5 +1,7 @@
 # DynamicData Workbench
+
 ![icon](Resources/icons/DynamicDataLogo.svg)
+A [FreeCAD](https://freecad.org) workbench for creating and managing custom property container objects.
 
 ## Installation
 
@@ -10,14 +12,17 @@ Install via the [Addon Manager](https://wiki.freecad.org/Std_AddonMgr) in the To
 With this workbench you can create custom FeaturePython objects to serve as containers for custom properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.  (But without the workbench installed those other users will not be able to add/remove properties unless it is done via scripting.)
 
 ### Example Video:
-<img src="Resources/media/example.gif" alt="animated gif example">
+
+![animated gif example](Resources/media/example.gif)
 
 ### Create Object
+
 ![CreateObject icon](Resources/icons/CreateObject.svg)
 
 Creates a new DynamicData container object.
 
 ### Add Property
+
 ![AddProperty icon](Resources/icons/AddProperty.svg)
 
 Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
@@ -117,72 +122,86 @@ Another important consideration is the imports are done by value and not by refe
 This operation can be partially undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, but it will not remove the newly created properties from the dd object.  But while the properties remain they will no longer reference anything else in the document or be referenced by anything else in the document, so they will be harmless in that sense.  Still, it is recommended to save your document before using this feature.
 
 ### Import Named Constraints
-<img src="Resources/icons/ImportNamedConstraints.svg" alt="icon"><br/>
-Use this to import named constraints from selected sketches as properties into selected dd object.<br/>
-<br/>
-<b>Warning: selected sketches will be modified.  All named constraints will reference the dd object property.</b><br/>
-<br/>
-To prevent a named constraint from being imported, append an underscore to the constraint name.  For example, a radius constraint named "myRadius_" will be ignored.  Similarly sketches with labels ending in an underscore are also ignored, e.g. "Sketch_" cannot be imported.<br/>
-<br/>
-To use this feature, select your dd object and one or more sketches to be imported, then invoke the command either from the menu or the toolbar.  New properties of type "Length" will be added to the dd object for each named constraint found except "Angle" type will be used for "Angle" constraint types.<br/>
-<br/>
-<b>Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.</b>  For example, suppose you have a constraint named "radius" with an expression "Sketch.length*2" with a value of 2.75mm.  This would create a new property in the dd object named ddSketchRadius with a value of 2.75mm and the constraint is now set to "dd.ddSketchRadius".  The upshot of this is if you change the value of the Sketch.length constraint the ddSketchRadius property is NOT updated.  In such cases you should alter the value of the ddSketchRadius property so that it once again references that length property, presumably now called ddSketchLength.<br/>
-<br/>
-This operation can now be partially undone (as of version 1.40).  If you use FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, but the newly created dd property objects will remain.  The new properties will not reference anything else and will not be reference by anything else, but the Undo operation does not delete properties.  It is suggested to make a backup copy of your .FCStd file before using this feature.<br/>
-<br/>
+
+![ImportNamedConstraints icon](Resources/icons/ImportNamedConstraints.svg)
+
+Use this to import named constraints from selected sketches as properties into selected dd object.
+
+**Warning: selected sketches will be modified.  All named constraints will reference the dd object property.**
+
+To prevent a named constraint from being imported, append an underscore to the constraint name.  For example, a radius constraint named `myRadius_` will be ignored.  Similarly sketches with labels ending in an underscore are also ignored, e.g. `Sketch_` cannot be imported.
+
+To use this feature, select your dd object and one or more sketches to be imported, then invoke the command either from the menu or the toolbar.  New properties of type `Length` will be added to the dd object for each named constraint found except `Angle` type will be used for `Angle` constraint types.
+
+**Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.**  For example, suppose you have a constraint named `radius` with an expression `Sketch.length*2` with a value of 2.75mm.  This would create a new property in the dd object named `ddSketchRadius` with a value of 2.75mm and the constraint is now set to `dd.ddSketchRadius`.  The upshot of this is if you change the value of the `Sketch.length` constraint the `ddSketchRadius` property is NOT updated.  In such cases you should alter the value of the `ddSketchRadius` property so that it once again references that length property, presumably now called `ddSketchLength`.
+
+This operation can now be partially undone (as of version 1.40).  If you use FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, but the newly created dd property objects will remain.  The new properties will not reference anything else and will not be reference by anything else, but the Undo operation does not delete properties.  It is suggested to make a backup copy of your .FCStd file before using this feature.
+
 ### Copy Property
-<img src="Resources/icons/CopyProperty.svg" alt="icon"><br/>
-<br/>
-<b>New feature in version 1.5</b>: Now you can parametrically link a copied or set property. Then when the source property changes, the copy will parametrically change with it.  You can still choose the non-parametric copy when setting/copying.  The parametric link can also be broken later using the Set/Copy command.  For some property types breaking the parametric link is trivial enough to do it manually, but for other types, such as Placement, it can be very tedious to do it manually.<br/>
-<br/>
-Copy a property from one object to another or within the same dd object.  Properties can only be copied to a dd object, but the source can be a non-dd object or a dd object (including copies from within the same dd object).  Can also be used to set the value of an existing property rather than creating a new property.  To use, just select the object containing the original property to be copied and the dd object that will contain the new property, then click the Copy Property icon.  You will be guided through the process with a series of dialogs.<br/>
-<br/>
-One potential application for this feature is to make copies of placement properties.  These copies can then be used to easily set the original objects Placement property to any of the values held by any of the placement copies.  For example, your model might include a lever that can be in any of 3 positions, say forward, neutral, and reverse.  Move it to the forward position, and then make a copy of the placement.  Move it to the neutral position, and do the same, ditto for the reverse position.  Your dd object could contain 3 placement properties: ddForward, ddNeutral, and ddReverse.<br/>
-<br/>
+
+![CopyProperty icon](Resources/icons/CopyProperty.svg)
+
+**New feature in version 1.5**: Now you can parametrically link a copied or set property. Then when the source property changes, the copy will parametrically change with it.  You can still choose the non-parametric copy when setting/copying.  The parametric link can also be broken later using the Set/Copy command.  For some property types breaking the parametric link is trivial enough to do it manually, but for other types, such as Placement, it can be very tedious to do it manually.
+
+Copy a property from one object to another or within the same dd object.  Properties can only be copied to a dd object, but the source can be a non-dd object or a dd object (including copies from within the same dd object).  Can also be used to set the value of an existing property rather than creating a new property.  To use, just select the object containing the original property to be copied and the dd object that will contain the new property, then click the Copy Property icon.  You will be guided through the process with a series of dialogs.
+
+One potential application for this feature is to make copies of placement properties.  These copies can then be used to easily set the original objects Placement property to any of the values held by any of the placement copies.  For example, your model might include a lever that can be in any of 3 positions, say forward, neutral, and reverse.  Move it to the forward position, and then make a copy of the placement.  Move it to the neutral position, and do the same, ditto for the reverse position.  Your dd object could contain 3 placement properties: `ddForward`, `ddNeutral`, and `ddReverse`.
+
 ### Copy a property from another object to a dd object
-In this example we will copy a placement property from a Sphere to a dd object.  Select the Sphere and the dd object in the tree view, and then click the Copy Property icon in the toolbar (or select via the menu).  1) select the Copy property from Sphere --> to dd (dd) option and click OK.  2) You will be presented with a list of the properties available to be copied from the Sphere object, select the Placement property and click OK.  3) Give the new property to be created a new name or just click OK to accept the default name chosen for you.  (Note: if the new name you give conflicts with an existing property name in the dd object you will be prompted again for a new name, so if you see this multiple times it means there is a name conflict.)<br/>
-<br/>
-<img src="Resources/media/copy_property_scr.png" alt="copy property example screenshot"><br/>
-<br/>
+
+In this example we will copy a placement property from a Sphere to a dd object.  Select the Sphere and the dd object in the tree view, and then click the Copy Property icon in the toolbar (or select via the menu).  
+1. Select the Copy property from Sphere --> to dd (dd) option and click OK.  
+2. You will be presented with a list of the properties available to be copied from the Sphere object, select the Placement property and click OK.  
+3. Give the new property to be created a new name or just click OK to accept the default name chosen for you.  (Note: if the new name you give conflicts with an existing property name in the dd object you will be prompted again for a new name, so if you see this multiple times it means there is a name conflict.)
+
+![copy property example screenshot](Resources/media/copy_property_scr.png)
+
 ### Set a property value
-<br/>
-The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.<br/>
-<br/>
+
+The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.
+
 ### Rename Property
-<br/>
+
 Rename a dynamic property.  The property must be dynamic, but need not be a DynamicData object.  FreeCAD does not natively support the renaming of properties, so the way this works is a new property of the same is created with the new name, and then the old property is deleted.  An attempt is made to move all dependency links from the old property to the new, but it is conceivable something might go astray during this process, so it is advised to ensure all the links were properly reconnected to the new property.  You can use Undo to undo this operation.
 
 ### Set Tooltip
-<br/>
+
 Change the tooltip of a dynamic property.
 
 ### Move to new group 
-<br/>
-Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.<br/>
+
+Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.
 
 ### Settings
-<img src="Resources/icons/Settings.svg" alt="icon">
+
+![Settings icon](Resources/icons/Settings.svg)
+
 Use this to change workbench settings.
 
 ### Keep Toolbar
-Setting this to True (default is True) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.<br/>
-<br/>
-You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)<br/>
-<br/>
-There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.<br/>
-<br/>
+
+Setting this to True (default is `True`) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.
+
+You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)
+
+There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.
+
 ### Support ViewObject Properties
-If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.<br/>
-<br/>
+
+If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.
+
 ### Add to active container on creation
-If this is True when you create a new dd object it will be added to the currently active container, if there is one active.  The container can be either a Part container or a Body (Part Design) container.  If you do not wish for the dd object to be in one of the containers you can always drag it out by dropping onto the document name in the tree view.  (But the opposite will not work for Part Design Body containers -- the dd object must be placed into the Body container upon creation of the dd object.)  Note: this does not change the scope of the dd object properties, which will always be global.<br/>
+
+If this is True when you create a new dd object it will be added to the currently active container, if there is one active.  The container can be either a Part container or a Body (Part Design) container.  If you do not wish for the dd object to be in one of the containers you can always drag it out by dropping onto the document name in the tree view.  (But the opposite will not work for Part Design Body containers -- the dd object must be placed into the Body container upon creation of the dd object.)  Note: this does not change the scope of the dd object properties, which will always be global.
 
 ### Change length of most recently used type list
-When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.<br/>
-<br/>
+
+When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 
-### Release notes:<br/>
+
+### Release notes
+
 * 2022.04.08 (version 2.46)<br/>
 ** do not require dd object be selected where there is only 1 dd object in the active document for these commands:<br/>
 add property<br/>
@@ -319,5 +338,4 @@ This also allows to rename groups by moving all properties from that group to a 
 * 2018.09.24 (version 1.1)<br/> 
 ** Add 5 most recently used types to top of property type list, sort remainder.<br/>
 ** Display version information in DynamicData string property <br/>
-* v2018.09.19  2018.09.19:  Initial version<br/>
-
+* v2018.09.19  2018.09.19:  Initial version  
