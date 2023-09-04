@@ -69,7 +69,7 @@ class DynamicDataWorkbench(Workbench):
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         if pg.GetBool("AddToFreeCADPreferences",True):
             Gui.addPreferencePage(DynamicDataCmd.uiPath + "/dynamicdataprefs.ui", "DynamicData")
-            Gui.addIcon("preferences-dynamicdata",dynamicdataWB_icons_path + "/DynamicDataLogo.svg")
+            Gui.addIcon("preferences-dynamicdata",dynamicdataWB_icons_path + "/DynamicDataPreferencesLogo.svg")
 
     def myCallbackFunction(self,result):
         if result == "True":
