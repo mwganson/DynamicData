@@ -7,6 +7,8 @@ A [FreeCAD](https://freecad.org) workbench for creating and managing custom prop
 
 Install via the [Addon Manager](https://wiki.freecad.org/Std_AddonMgr) in the Tools menu in FreeCAD version 0.17 and later.
 
+You will also want to install this <a href="https://forum.freecad.org/viewtopic.php?t=31137&start=20#p707826">macro</a>, which allows to add new properties to the dd object while the sketch editor is open.
+
 ## Overview
 
 With this workbench you can create custom FeaturePython objects to serve as containers for custom properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.  (But without the workbench installed those other users will not be able to add/remove properties unless it is done via scripting.)
