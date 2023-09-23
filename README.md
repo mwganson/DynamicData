@@ -203,7 +203,9 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
-
+* 2023.09.22 (version 2.48)<br/>
+** add enumeration editor<br/>
+** fix bug in apply button handling in add property dialog<br/>
 * 2022.04.08 (version 2.46)<br/>
 ** do not require dd object be selected where there is only 1 dd object in the active document for these commands:<br/>
 add property<br/>
