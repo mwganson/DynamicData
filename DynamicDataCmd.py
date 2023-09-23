@@ -26,15 +26,15 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.09.04"
-__version__ = "2.47"
-version = 2.47
+__date__    = "2023.09.22"
+__version__ = "2.48"
+version = 2.48
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
 
 from FreeCAD import Gui
-from PySide import QtCore, QtGui
+from PySide import QtCore, QtGui, QtWidgets
 
 import FreeCAD, FreeCADGui, os, math, re
 App = FreeCAD
@@ -51,6 +51,7 @@ def initialize():
 
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
     Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
+    Gui.addCommand("DynamicDataEditEnumeration",DynamicDataEditEnumerationCommandClass())
     Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
     Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
@@ -234,6 +235,160 @@ class DynamicDataCreateObjectCommandClass(object):
                 "This is a simple container object built",
                 "for holding custom properties."
 ]
+
+#Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
+
+####################################################################################
+# Create the dynamic data container object
+
+
+
+class DynamicDataEditEnumerationCommandClass(object):
+    """Edit Enumeration command"""
+
+    class DynamicDataEnumerationDlg(QtGui.QDialog):
+        def __init__(self,dd,props):
+            super(DynamicDataEditEnumerationCommandClass.DynamicDataEnumerationDlg, self).__init__(Gui.getMainWindow())
+            self.dd = dd
+            self.ok = False
+            self.props = props
+            self.items = []
+            self.enumerations = {}
+            self.setupEnumerations()
+            self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
+            self.setWindowTitle(f"DynamicData v{__version__} Enumeration Editor")
+            lay = QtGui.QVBoxLayout(self)
+            self.setLayout(lay)
+            self.propertiesLabel = QtWidgets.QLabel("Enumeration Properties:")
+            self.propertiesListBox = QtWidgets.QListWidget(self)
+
+            for prop in self.props:
+                item = QtWidgets.QListWidgetItem(prop)
+                self.items.append(item)
+                self.propertiesListBox.addItem(item)
+
+            self.propertiesListBox.setSelectionMode(QtWidgets.QListWidget.SingleSelection)
+            self.propertiesListBox.itemClicked.connect(self.handlePropertiesListBoxItemClicked)
+            if self.items:
+                self.propertiesListBox.setCurrentItem(self.items[0])
+            lay.addWidget(self.propertiesLabel)
+            lay.addWidget(self.propertiesListBox)
+            self.textEditLabel = QtWidgets.QLabel("Edit the selected property by typing here:")
+            lay.addWidget(self.textEditLabel)
+
+            self.textEdit = QtWidgets.QPlainTextEdit()
+            self.textEdit.textChanged.connect(self.textChanged)
+            lay.addWidget(self.textEdit)
+            self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),\
+                QtCore.Qt.Horizontal, self)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+            lay.addWidget(self.buttons)
+            self.setupTextEdit()
+
+        def handlePropertiesListBoxItemClicked(self, item):
+            """a new enumeration property was selected, so set the QPlainTextEdit"""
+            self.updateTextEdit()
+
+        def textChanged(self):
+            """The QPlainTextEdit changed, so update enums"""
+            self.updateEnumerations()
+
+        def setupEnumerations(self):
+            """setup enums from the dd object enumerations"""
+            for prop in self.props:
+                if not prop in self.enumerations:
+                    self.enumerations[prop] = self.dd.getEnumerationsOfProperty(prop)
+
+        def updateEnumerations(self):
+            """update enums from QPlainTextEdit"""
+            prop = self.getCurrentProp()
+            self.enumerations[prop] = self.getTextEditStrings()
+
+        def getCurrentProp(self):
+            return self.props[self.propertiesListBox.currentRow()]
+
+        def setupTextEdit(self):
+            """puts the text into the QPlainTextEdit from the dd object enumeration properties"""
+            if self.props:
+                prop = self.props[self.propertiesListBox.currentRow()]
+                enums = self.dd.getEnumerationsOfProperty(prop)
+                textString = "\n".join(enums)
+                self.textEdit.setPlainText(textString)
+
+        def updateTextEdit(self):
+            """update the QPlainTextEdit from enums"""
+            prop = self.props[self.propertiesListBox.currentRow()]
+            enums = self.enumerations[prop]
+            textString = "\n".join(enums)
+            self.textEdit.setPlainText(textString)
+
+        def getTextEditStrings(self):
+            """return the text edit contents as a list of strings"""
+            txt = self.textEdit.toPlainText()
+            split_text = txt.split("\n")
+            return split_text
+
+        def accept(self):
+            self.ok = True
+            super().accept()
+
+        def reject(self):
+            super().reject()
+
+
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'DynamicDataEditEnumerations.svg'),
+                'MenuText': "&Edit Enumerations",
+                'Accel'   : "Ctrl+Shift+D,E",
+                'ToolTip' : "Edit properties of type Enumeration in selected object"}
+
+    def __init__(self):
+        self.props = []
+        self.obj = None
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        if not self.props:
+            FreeCAD.Console.PrintError("DynamicData: Error, no property of type \
+Enumeration to edit.  Create one first, and then try again.\n")
+            return
+
+        dlg = self.DynamicDataEnumerationDlg(self.obj, self.props) #the dd object
+        dlg.props = self.props
+        dlg.exec_()
+        if dlg.ok:
+            doc.openTransaction("Edit Enumeration")
+            self.setEnumerations(dlg.enumerations)
+            doc.commitTransaction()
+        doc.recompute()
+        return
+
+    def setEnumerations(self, enum_dict):
+        """set the properties of type Enumeration of the dd object from the dictionary enum_dict"""
+        dd = self.obj
+        for k,v in enum_dict.items():
+            setattr(dd,k,v)
+
+    def getEnumerations(self, dd):
+        """get the properties of type Enumeration in the selected object
+           return the list of such properties or [] if none.  We don't verify
+           this is a dd object because we will support all objects, but we will
+           ignore some known enumeration properties, such as MapMode"""
+
+        ignored = ["MapMode"]
+        self.props = [prop for prop in dd.PropertiesList if bool (not prop in ignored and "App::PropertyEnumeration" in dd.getTypeIdOfProperty(prop))]
+        return self.props
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and self.getEnumerations(selection[0]):
+            self.obj = selection[0]
+            return True
+        return False
+
 
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
 
@@ -494,6 +649,7 @@ class DynamicDataAddPropertyCommandClass(object):
                         vals.append(split[ii])
         if hasattr(obj,'dd'+self.propertyName):
             FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
+            self.checkAddAnother(dlg)
             return
         p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
         if hasVal and len(vals)==0:
@@ -503,10 +659,12 @@ class DynamicDataAddPropertyCommandClass(object):
                     obj.touch()
                     doc.recompute()
                     doc.commitTransaction()
+                    self.checkAddAnother(dlg)
                     return
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
                     doc.commitTransaction()
+                    self.checkAddAnother(dlg)
                     return
             try:
                 atr = self.eval_expr(val)
@@ -533,10 +691,12 @@ class DynamicDataAddPropertyCommandClass(object):
                     obj.touch()
                     doc.recompute()
                     doc.commitTransaction()
+                    self.checkAddAnother(dlg)
                     return
                 except:
                     FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
                     doc.commitTransaction()
+                    self.checkAddAnother(dlg)
                     return
             try:
                 setattr(p,'dd'+self.propertyName,list(vals))
@@ -547,10 +707,13 @@ class DynamicDataAddPropertyCommandClass(object):
 
         doc.commitTransaction()
         doc.recompute()
+        self.checkAddAnother(dlg)
+        return
+
+    def checkAddAnother(self,dlg):
         modifiers = QtGui.QApplication.keyboardModifiers()
         if modifiers == QtCore.Qt.ControlModifier or dlg.addAnotherProp: #Ctrl+OK or Add another
             self.Activated()
-        return
 
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
