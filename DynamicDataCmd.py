@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2023.09.24"
-__version__ = "2.50"
-version = 2.50
+__version__ = "2.51"
+version = 2.51
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -274,6 +274,7 @@ all the properties go into.")
             self.enumCount = QtWidgets.QSpinBox()
             self.enumCount.setMinimum(2)
             self.enumCount.setMaximum(100)
+            self.enumCount.setSingleStep(1)
             self.enumCount.setValue(self.configuration["enumCount"])
             self.enumCount.valueChanged.connect(self.updateDict)
             self.enumCount.setToolTip( \
@@ -287,6 +288,7 @@ be 3.")
             self.variableCount = QtWidgets.QSpinBox()
             self.variableCount.setMinimum(2)
             self.variableCount.setMaximum(100)
+            self.variableCount.setSingleStep(1)
             self.variableCount.setValue(self.configuration["variableCount"])
             self.variableCount.valueChanged.connect(self.updateDict)
             self.variableCount.setToolTip( \
@@ -503,16 +505,20 @@ you can use Undo to revert all your changes to the selected object.
             numCols = len(self.configuration["enums"])
             enums = self.enumCount.value()
             variables = self.variableCount.value()
-            if numCols < enums + 1:
+
+            while numCols < enums + 1:
                 #need to add a new column, so for each row we add one
                 for row in range(numRows+1):
                     lineEdit = self.getLineEditFromConfiguration(f"{row}_{numCols}")
                     self.addToGrid(lineEdit, row, numCols)
-            elif numRows < variables + 1:
+                numCols = len(self.configuration["enums"])
+
+            while numRows < variables + 1:
                 #need to a new row, so for each column we add one
                 for col in range(numCols):
                     lineEdit = self.getLineEditFromConfiguration(f"{numRows+1}_{col}")
                     self.addToGrid(lineEdit, numRows+1, col)
+                numRows = len(self.configuration["variables"])
 
         def getRowValues(self,row):
             """get the line edit values in row as a list"""
