@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2023.09.24"
-__version__ = "2.51"
-version = 2.51
+__version__ = "2.52"
+version = 2.52
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -558,54 +558,57 @@ you can use Undo to revert all your changes to the selected object.
                 if hasattr(dd,f"{var}List"):
                     try:
                         dd.removeProperty(f"{var}List")
+                        FreeCAD.Console.PrintMessage(f"Removed property {var}List\n")
                     except:
                         FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}List\n")
                 if not hasattr(dd,f"{var}List"):
                     dd.addProperty("App::PropertyFloatList",f"{var}List",f"{name}Lists",f"List property for {var}")
+                    FreeCAD.Console.PrintMessage(f"Added property {var}List\n")
                 setattr(dd,f"{var}List", self.getRowValues(row))
                 if hasattr(dd,var):
                     try:
                         dd.removeProperty(var)
+                        FreeCAD.Console.PrintMessage(f"Removed property {var}\n")
                     except:
                         FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}\n")
                 if not hasattr(dd,var):
                     dd.addProperty("App::PropertyFloat",var,name,"Property to link to")
+                    FreeCAD.Console.PrintMessage(f"Added property {var}\n")
                 dd.setExpression(var,f"{dd.Label}.<<{dd.Label}>>.{var}List[<<{dd.Label}>>.{name}-1]")
 
         def getConfigurationFromObject(self):
             dd = self.dd
             ignored = ["MapMode"]
             props = [prop for prop in dd.PropertiesList if "Enumeration" in dd.getTypeIdOfProperty(prop) and prop not in ignored]
-            if len(props) == 1:
-                self.configuration["name"] = props[0]
-                self.configuration["enums"] = dd.getEnumerationsOfProperty(props[0])
-                vars = [prop for prop in dd.PropertiesList if hasattr(dd,f"{prop}List")]
-                #lists = [prop for prop in dd.PropertiesList if hasattr(dd,prop[:-4])] #drop List from end of property name
-                self.configuration["variables"] = vars
-                self.configuration["lineEdits"] = {}
-                self.configuration["enumCount"] = len(self.configuration["enums"])-1
-                self.configuration["variableCount"] = len(vars)
-                return True
-            elif len(props) > 1:
+
+            if len(props) >= 1:
                 default_item = 0
-                prop, ok = QtGui.QInputDialog.getItem(self, "Multiple enumerations found", "Choose an enumeration:", props, default_item, editable=False)
-                if not ok:
+                props = ["New configuration"] + props
+                prop, ok = QtGui.QInputDialog.getItem(self, "Multiple enumerations found", \
+                                                      "Choose an enumeration or press Cancel for a new default configuration:",\
+                                                       props, default_item, editable=False)
+                if not ok or prop == props[0]:
                     self.makeDefaultConfiguration()
                     return False
                 else:
-                    self.configuration["name"] = prop
-                    self.configuration["enums"] = dd.getEnumerationsOfProperty(prop)
-                    vars = [prop2 for prop2 in dd.PropertiesList if hasattr(dd,f"{prop2}List")]
-                    #lists = [prop for prop in dd.PropertiesList if hasattr(dd,prop[:-4])] #drop List from end of property name
-                    self.configuration["variables"] = vars
-                    self.configuration["lineEdits"] = {}
-                    self.configuration["enumCount"] = len(self.configuration["enums"])-1
-                    self.configuration["variableCount"] = len(vars)
+                    self.importConfiguration(prop)
                     return True
 
             else: #no existing enumerations
                 self.makeDefaultConfiguration()
                 return False
+
+        def importConfiguration(self,prop):
+            """imports the configuration from the object where prop is the name of the enumeration"""
+            self.configuration["name"] = prop
+            self.configuration["enums"] = self.dd.getEnumerationsOfProperty(prop)
+            vars = [prop2 for prop2 in self.dd.PropertiesList if hasattr(self.dd,f"{prop2}List")]
+            #lists = [prop for prop in dd.PropertiesList if hasattr(dd,prop[:-4])] #drop List from end of property name
+            self.configuration["variables"] = vars
+            self.configuration["lineEdits"] = {}
+            self.configuration["enumCount"] = len(self.configuration["enums"])-1
+            self.configuration["variableCount"] = len(vars)
+
         def makeDefaultConfiguration(self):
             self.configuration["name"] = "Configuration"
             self.configuration["enumCount"] = 5
