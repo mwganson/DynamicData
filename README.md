@@ -103,6 +103,15 @@ to select the enumeration property to edit.  Editing is just a matter of typing 
 
 ![edit enumerations screenshot](Resources/media/edit_enumerations_scr.png)
 
+### Create/Edit Configuration
+![Create/Edit Configuration icon](Resources/icons/DynamicDataCreateConfiguration.svg)
+
+Use this tool to create a configuration.  A configuration is a set of properties that are controlled by a single enumeration property.  The screenshot below shows the 
+configuration editor dialog in v2.50.
+
+![Create/edit configuration screenshot](Resources/media/create_configuration_scr.png)
+
+
 
 ### Remove Property
 
