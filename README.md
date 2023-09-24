@@ -203,6 +203,13 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.09.24 (version 2.50)<br/>
+** make configuration editor scrollable<br/>
+** add selector dialog if multiple enumerations found in selected object <br/>
+** fill empty cells in configuration editor with value from first enum in that row or 0.0 if that cell is also empty <br/>
+** default values will now be from first enum when "select size" or similar is shown in enumeration property <br/>
+** put removing properties in try: except: block<br/>
+** do not try to add if property already exists and could not be removed during update of configuration<br/>
 * 2023.09.23 (version 2.49)<br/>
 ** add configuration creation/editing<br/>
 ** use settings icon for settings dialog
