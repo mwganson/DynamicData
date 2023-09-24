@@ -95,6 +95,13 @@ False;True
 Since this evaluates to 0 or 1 depending on user selection it could be used as a boolean:
 
 `=dd.ddMyEnum ? 5 : 7` (would yield a value of 5 if True, 7 if False)
+### Edit Enumerations
+![Edit Enumerations icon](Resources/icons/DynamicDataEditEnumerations.svg)
+
+Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog 
+to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does not at this time provide an editor for these property types, but you can edit them with DynamicData.
+
+
 
 ### Remove Property
 
