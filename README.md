@@ -230,6 +230,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.09.24 (version 2.52)<br/>
+** add new configuration option when opening the configuration editor on an object with one or more existing enumeration properties
 * 2023.09.24 (version 2.51)<br/>
 ** fix small bug in configuration editor dialog when adding more than a single extra row or column to the grid
 * 2023.09.24 (version 2.50)<br/>
