@@ -111,7 +111,17 @@ configuration editor dialog in v2.50.
 
 ![Create/edit configuration screenshot](Resources/media/create_configuration_scr.png)
 
+The configuration name is the name of the enumeration property and also the name of the group that the properties that get created will go into.  Another group with this same name, but with "List" added to it is created, and in that group will be put the List properties needed for the configuration.
 
+The enum count is the number of enums in the configuration, a value constrained to be between 2 and 100, inclusive.  In the screenshot the enums are: Extra Small, Small, Medium, Large, and Extra Large.  These strings (and the Select size string) will be in the enumeration property.  As an example, when you select Small as the enum in the configuration, then Height = 6.0, Length = 5.0, and Radius = 7.0.  You're able to change all 3 to this preset configuration all in one go merely by selecting small in the enumeration property.
+
+The variable count is the number of variables.  In the screenshot we have 3: Height, Length, and Radius.  You can have as few as 2 and as many as 100.  For each variable you get 2 new properties: variable name and variable name List.  Example, in the screenshot above you would get a Height property and a HeightList property.  Height will hold the current value as determined by the enum selected in the enumeration property as indexed into the HeightList property.  All variables at this time are type Float and all lists are of type FloatList.  Note: You can still bind another integer or boolean property to a float property and it will work just fine.  For integer binding you will get the rounded value and for boolean properties you get False for 0 and True for all other values.
+
+When you press OK the configuration is created.  Any empty cells will get the value of the first cell in that row unless it is also empty, in which case the empty cells get 0.0.
+
+When Select size (or whatever text you edit that to become) is the selection in the enumeration property, all of the values will generally be the first enum.  In the above example, when Select size is visible as the selected enum, then the variables will all take the Extra Small values.  This is because there is a special hidden column at the end of the List properties that gets filled with that first value in each row.  You can later edit these manually by editing the List properties if you want different defaults.  The new values will be retained if you edit the configuration, but not if you edit the enum count, in which those manually entered values will be lost and reset to the Extra Small values, in this case.
+
+Toggle the Show help checkbox to see some additional information while the dialog is open.
 
 ### Remove Property
 
