@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.09.22"
-__version__ = "2.48"
-version = 2.48
+__date__    = "2023.09.23"
+__version__ = "2.49"
+version = 2.49
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -51,9 +51,10 @@ def initialize():
 
     Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
     Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
-    Gui.addCommand("DynamicDataEditEnumeration",DynamicDataEditEnumerationCommandClass())
-    Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
     Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
+    Gui.addCommand("DynamicDataEditEnumeration",DynamicDataEditEnumerationCommandClass())
+    Gui.addCommand("DynamicDataCreateConfiguration", DynamicDataCreateConfigurationCommandClass())
+    Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
     Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
     Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
     Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
@@ -156,6 +157,7 @@ class DynamicDataSettingsCommandClass(object):
             self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
             self.form = Gui.PySideUic.loadUi(uiPath + "/dynamicdataprefs.ui")
             self.setWindowTitle(self.form.windowTitle()+" v."+__version__)
+            self.setWindowIcon(QtGui.QIcon("Resources/icons/Settings.svg"))
             lay = QtGui.QVBoxLayout(self)
             lay.addWidget(self.form)
             self.setLayout(lay)
@@ -239,9 +241,376 @@ class DynamicDataCreateObjectCommandClass(object):
 #Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
 
 ####################################################################################
-# Create the dynamic data container object
+# Create or edit an existing configuration
+
+class DynamicDataCreateConfigurationCommandClass(object):
+    """Create or edit a configuration command"""
+    class DynamicDataConfigurationDlg(QtGui.QDialog):
+        def __init__(self,dd):
+            super(DynamicDataCreateConfigurationCommandClass.DynamicDataConfigurationDlg, self).__init__(Gui.getMainWindow())
+            self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
+            self.setWindowTitle(f"DynamicData v{__version__} Configuration Editor")
+            self.setWindowIcon(QtGui.QIcon("Resources/icons/DynamicDataCreateConfiguration.svg"))
+            self.dd = dd
+            self.ok = False
+            self.configuration = {}
+            hasConfig = self.getConfigurationFromObject()
+            lay = QtGui.QVBoxLayout(self)
+            self.setLayout(lay)
+            self.nameRow = QtWidgets.QHBoxLayout()
+            lay.addLayout(self.nameRow)
+            self.configurationNameLabel = QtWidgets.QLabel("Configuration name:")
+            self.nameRow.addWidget(self.configurationNameLabel)
+            self.configurationName = QtWidgets.QLineEdit()
+            self.configurationName.setToolTip(\
+"Configuration name will be the name given to \n\
+the Enumeration property created and to the Group \n\
+all the properties go into.")
+            self.configurationName.setText(self.configuration["name"])
+            self.configurationName.selectAll()
+            self.configurationName.textChanged.connect(self.updateDict)
+            self.nameRow.addWidget(self.configurationName)
+            self.enumCountLabel = QtWidgets.QLabel("Enum count:")
+            self.enumCount = QtWidgets.QSpinBox()
+            self.enumCount.setMinimum(2)
+            self.enumCount.setMaximum(100)
+            self.enumCount.setValue(self.configuration["enumCount"])
+            self.enumCount.valueChanged.connect(self.updateDict)
+            self.enumCount.setToolTip( \
+"This is the number of configuration options you \n\
+will have, for example: small, medium, large would \n\
+be 3.")
+            self.nameRow.addWidget(self.enumCountLabel)
+            self.nameRow.addWidget(self.enumCount)
+            self.variableCountLabel = QtWidgets.QLabel("Variable count:")
+            self.nameRow.addWidget(self.variableCountLabel)
+            self.variableCount = QtWidgets.QSpinBox()
+            self.variableCount.setMinimum(2)
+            self.variableCount.setMaximum(100)
+            self.variableCount.setValue(self.configuration["variableCount"])
+            self.variableCount.valueChanged.connect(self.updateDict)
+            self.variableCount.setToolTip( \
+"This is the number of variables you will have \n\
+in the configuration.  For example, if you want \n\
+Height, Width, and Length, enter 3 here.")
+            self.nameRow.addWidget(self.variableCount)
+
+            self.gridLayout = QtWidgets.QGridLayout()
+            lay.addLayout(self.gridLayout)
+            self.setupGrid()
+            self.buttonLayout = QtWidgets.QHBoxLayout()
+            lay.addLayout(self.buttonLayout)
+            self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),\
+                QtCore.Qt.Horizontal, self)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+            self.helpCheckBox = QtWidgets.QCheckBox("Show help")
+            self.helpCheckBox.setChecked(False)
+            self.helpCheckBox.clicked.connect(self.showHelp)
+            self.buttonLayout.addWidget(self.helpCheckBox)
+            self.buttonLayout.addWidget(self.buttons)
+            self.helpLabel = QtWidgets.QLabel("Help goes here.")
+            self.setupHelpText()
+            self.scroll_area = QtWidgets.QScrollArea()
+            lay.addWidget(self.scroll_area)
+            self.scroll_area.setWidget(self.helpLabel)
+            self.scroll_area.setVisible(False)
+
+            if hasConfig:
+                self.fillUpLineEdits()
+
+        def setupHelpText(self):
+            txt = """\
+A configuration is a set of properties that work together to allow you to set multiple
+properties by selecting the configuration you want in an enumeration property.  The
+enumeration property is at the heart of the configuration.  The Configuration name: field
+will be the name of this enumeration property.  It will also be the name of the group that
+the variable properties go into and the name of another group + the word "Lists" that the
+list properties will go into.
+
+For example, if the name of the configuration is "Configuration" then you will have a group
+named "Configuration" and inside that group an Enumeration property also named "Configuration".
+Plus, you will have another group named "Configuration Lists" and inside that group will be a
+number of FloatList properties, one for each variable you have.  If you have these 3 variables:
+"Height", "Width", and "Length", then in the Configuration group you will have 3 Float properties
+of the same name and in the Configration List group there will be "Height List", "Width List",
+and "Length List", all FloatList types.
+
+We have 3 different property types: 1) the enumeration property that serves as the configuration
+selector; 2) the variable properties (whose names are in the left column, e.g. Height, or Radius);
+and 3) the list properties that hold the values the variable properties index into based on which
+configuration has been selected.  All variable properties are of type Float and all list properties
+are of type FloatList.  (You can replace them with Integer or String property types if you like
+after building the configuration by deleting them and adding new properties with the same name,
+but if you use the configuration editor to edit the configuration later they will be replaced
+again with Float and FloatList types.)
+
+Enum count is how many enums we have in this configuration.  The default is 5, which are "Extra
+Small", "Small", "Medium", "Large", and "Extra Large".  "Select size" is not really an enum, but
+it will go into the enumeration as a default message to the user.  Edit this so it makes sense
+for the enums you are using.  Edit all of these enums by changing their text.  You can remove some
+by reducing the Enum count, which can be anywhere from 2 to 100.  You must have at least 2 enums
+in the configuration.  Note: when you reduct Enum count or Variable count you lose those rows or
+columns, including any data contained in the cells, even if you increase the count afterwards.
+When you increase the count you get another row or column with generic names like Variable5 or
+Enum7.
+
+Enter the values in the cells that you want for each enum and variable.  In the example default
+configuration you have Height, for example.  If you want the Height for the Extra Small enum to
+be 2, enter 2 in the cell that aligns with Height and Extra Small.  Any cells left blank will be
+filled with 0.0 in the associated HeightList property, this example.
+
+Note: when the "Select size" enum is selected in the enumeration property all of the variable
+values will be 0.0, which might or might not break your model.  If it does, just select one of
+the other enums.
+
+Variable count is how many variables to have in the configuration.  By default we have 3.  These are:
+"Height", "Length", and "Radius".  This are likely not to be the names you will want for your
+configuration.  They are just there as placeholders to serve as examples in the default configuration.
+You can add more or remove some by changing the Variable count value.
+
+If you click Cancel your changes will be discarded.  If you click OK your configuration will be added
+to the selected object.  ANY EXISTING PROPERTIES of the same names WILL BE REPLACED.  But have no fear,
+you can use Undo to revert all your changes to the selected object.
+
+"""
+            self.helpLabel.setText(txt)
+
+        def showHelp(self):
+            self.scroll_area.setVisible(self.helpCheckBox.isChecked())
+
+        def getLineEditFromConfiguration(self, objName):
+            """get the line edit objName from dictionary if it exists, else created it"""
+            lineEdit = None
+            for name,obj in self.configuration["lineEdits"].items():
+                if name == objName:
+                    lineEdit = obj
+                    break
+            if not lineEdit:
+                lineEdit = QtWidgets.QLineEdit()
+                lineEdit.setObjectName(objName)
+            self.configuration["lineEdits"][objName] = lineEdit
+            return lineEdit
+
+        def addToGrid(self, lineEdit, row, col):
+            """add the LineEdit to the grid at row, col"""
+            def trigger(objName):
+                self.lineEditTextChanged(objName)
+            self.gridLayout.addWidget(lineEdit, row, col)
+            label = ""
+            if row == 0:
+                try:
+                    label = self.configuration["enums"][col]
+                except:
+                    label = f"Enum{col}"
+                    self.configuration["enums"].append(f"Enum{col}")
+            elif col == 0:
+                try:
+                    label = self.configuration["variables"][row-1]
+                except:
+                    self.configuration["variables"].append(f"Variable{row}")
+                    label = f"Variable{row}"
+            lineEdit.setText(label)
+            lineEdit.textChanged.connect(lambda text,name=lineEdit.objectName(): trigger(name))
+            self.gridLayout.addWidget(lineEdit,row,col)
+            self.update()
+            FreeCADGui.updateGui()
+
+        def removeFromGrid(self, le):
+            """remove the line edit from the grid and from the dictionary"""
+
+            if le.objectName() in self.configuration["lineEdits"].keys():
+                val = self.configuration["lineEdits"].pop(le.objectName())
+            row,col = self.getRowColFromObjectName(le.objectName())
+            widget = self.gridLayout.itemAtPosition(row,col)
+            if widget:
+                widget.widget().deleteLater()
+            self.update()
+            FreeCADGui.updateGui()
+
+        def setupGrid(self):
+            """setup the grid based on the values in self.configuration dictionary"""
+            for row in range(self.configuration["variableCount"]+1):
+                for col in range(self.configuration["enumCount"]+1):
+                    lineEdit = self.getLineEditFromConfiguration(f"{row}_{col}")
+                    self.addToGrid(lineEdit, row, col)
+
+        def lineEditTextChanged(self, lineEditObjectName):
+            lineEdit = self.getLineEditFromConfiguration(lineEditObjectName)
+            row,col = self.getRowColFromObjectName(lineEditObjectName)
+            if row == 0:
+                self.configuration["enums"][col] = lineEdit.text()
+            elif col == 0:
+                self.configuration["variables"][row-1] = lineEdit.text()
+
+        def getRowColFromObjectName(self, objName):
+            """returns a tuple (row,col) gotten from the line edit object name
+               which is always in the form of row_col"""
+            row,col = objName.split("_")
+            row = int(row)
+            col = int(col)
+            return (row,col)
+
+        def isOutOfBounds(self, lineEdit):
+            """check if this line edit object needs to be removed from the grid
+               by comparing its row,col to enum count and variable count"""
+            ret = False
+            row,col = self.getRowColFromObjectName(lineEdit.objectName())
+            enums = self.enumCount.value()
+            variables = self.variableCount.value()
+            if col  > enums:
+                ret = True
+            if row  > variables:
+                ret = True
+            return ret
+
+        def updateDict(self):
+            """called only when the enum count or variable count changes
+               in which cases we need to update the grid of line edits
+               updates the dictionary (self.configuration) based on values in form"""
+            self.configuration["name"] = self.configurationName.text()
+            self.configuration["enumCount"] = self.enumCount.value()
+            self.configuration["variableCount"] = self.variableCount.value()
+
+            lineEditsToRemove = [le for le in self.configuration["lineEdits"].values() if self.isOutOfBounds(le)]
+            for le in lineEditsToRemove:
+                row,col = self.getRowColFromObjectName(le.objectName())
+                if row == 0:
+                    self.configuration["enums"].pop()
+                if col == 0:
+                    self.configuration["variables"].pop()
+                self.removeFromGrid(le)
+            if lineEditsToRemove:
+                return
+            # now we need to see if we need to add any rows or columns
+            numRows = len(self.configuration["variables"])
+            numCols = len(self.configuration["enums"])
+            enums = self.enumCount.value()
+            variables = self.variableCount.value()
+            if numCols < enums + 1:
+                #need to add a new column, so for each row we add one
+                for row in range(numRows+1):
+                    lineEdit = self.getLineEditFromConfiguration(f"{row}_{numCols}")
+                    self.addToGrid(lineEdit, row, numCols)
+            elif numRows < variables + 1:
+                #need to a new row, so for each column we add one
+                for col in range(numCols):
+                    lineEdit = self.getLineEditFromConfiguration(f"{numRows+1}_{col}")
+                    self.addToGrid(lineEdit, numRows+1, col)
+
+        def getRowValues(self,row):
+            """get the line edit values in row as a list"""
+            ret = []
+            for col,enum in enumerate(self.configuration["enums"]):
+                objName = f"{row+1}_{col+1}"
+                lineEdit = self.getLineEditFromConfiguration(objName)
+                val = 0
+                try:
+                    val = float(lineEdit.text())
+                except:
+                    if lineEdit.text():
+                        FreeCAD.Console.PrintWarning(f"Couldn't convert to float: {lineEdit.text()} row,col = {row},{col}\n")
+                ret.append(val)
+            return ret
+
+        def setConfiguration(self):
+            """setup the configuration"""
+            dd = self.dd
+            name = self.configuration["name"]
+            if hasattr(dd,name):
+                dd.removeProperty(name)
+            dd.addProperty("App::PropertyEnumeration",name,name,"Configuration enumeration")
+            setattr(dd,name,self.configuration["enums"])
+            for row,var in enumerate(self.configuration["variables"]):
+                if hasattr(dd,f"{var}List"):
+                    dd.removeProperty(f"{var}List")
+                dd.addProperty("App::PropertyFloatList",f"{var}List",f"{name}Lists",f"List property for {var}")
+                setattr(dd,f"{var}List", self.getRowValues(row))
+                if hasattr(dd,var):
+                    dd.removeProperty(var)
+                dd.addProperty("App::PropertyFloat",var,name,"Property to link to")
+                dd.setExpression(var,f"{dd.Label}.<<{dd.Label}>>.{var}List[<<{dd.Label}>>.{name}-1]")
+
+        def getConfigurationFromObject(self):
+            dd = self.dd
+            props = [prop for prop in dd.PropertiesList if "Enumeration" in dd.getTypeIdOfProperty(prop)]
+            if len(props) == 1:
+                self.configuration["name"] = props[0]
+                self.configuration["enums"] = dd.getEnumerationsOfProperty(props[0])
+                vars = [prop for prop in dd.PropertiesList if hasattr(dd,f"{prop}List")]
+                #lists = [prop for prop in dd.PropertiesList if hasattr(dd,prop[:-4])] #drop List from end of property name
+                self.configuration["variables"] = vars
+                self.configuration["lineEdits"] = {}
+                self.configuration["enumCount"] = len(self.configuration["enums"])-1
+                self.configuration["variableCount"] = len(vars)
+                return True
+            else:
+                self.configuration["name"] = "Configuration"
+                self.configuration["enumCount"] = 5
+                self.configuration["variableCount"] = 3
+                self.configuration["enums"] = ["Select size","Extra Small","Small","Medium",\
+                                            "Large","Extra Large"]
+                self.configuration["variables"] = ["Length", "Height", "Radius"]
+                self.configuration["lineEdits"] = {}
+                return False
+
+        def fillUpLineEdits(self):
+            """called from __init__() only if dd object has a configuration already,
+            so we are going to fill in the Line Edits from that data"""
+            #look for List properties
+            for var in self.configuration["variables"]:
+                lists = [prop for prop in self.dd.PropertiesList if prop == f"{var}List"]
+                for ls in lists:
+                    values = getattr(self.dd, ls) #e.g. HeightList = [10,20,30], now values = [10,20,30]
+                    row = self.configuration["variables"].index(var)
+                    for col,val in enumerate(values):
+                        lineEdit = self.getLineEditFromConfiguration(f"{row+1}_{col+1}")
+                        lineEdit.setText(str(round(val,6)))
+
+        def accept(self):
+            self.ok = True
+            self.dd.Document.openTransaction("Create/Edit Configuration")
+            self.setConfiguration()
+            self.dd.Document.commitTransaction()
+            super().accept()
+
+        def reject(self):
+            super().reject()
 
 
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'DynamicDataCreateConfiguration.svg'),
+                'MenuText': "Create/Edit Con&figuration",
+                'Accel'   : "Ctrl+Shift+D,F",
+                'ToolTip' : "Create or edit an existing configuration in the selected object"}
+
+    def __init__(self):
+        self.props = []
+        self.obj = None
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        dlg = self.DynamicDataConfigurationDlg(self.obj) #self.obj is the selected object
+        dlg.props = self.props
+        dlg.exec_()
+        doc.recompute()
+        return
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1:
+            self.obj = selection[0]
+            return True
+        return False
+
+
+#Gui.addCommand("DynamicDataCreateConfiguration", DynamicDataCreateConfigurationCommandClass())
+
+
+####################################################################################
+# Edit an existing Enumeration property
 
 class DynamicDataEditEnumerationCommandClass(object):
     """Edit Enumeration command"""
@@ -390,7 +759,10 @@ Enumeration to edit.  Create one first, and then try again.\n")
         return False
 
 
-#Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
+#Gui.addCommand("DynamicDataEditEnumeration", DynamicDataEditEnumerationCommandClass())
+
+####################################################################################
+# dialog for adding new property
 
 class MultiTextInput(QtGui.QDialog):
     def __init__(self, obj):

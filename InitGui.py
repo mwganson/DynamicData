@@ -58,7 +58,7 @@ class DynamicDataWorkbench(Workbench):
         """This function is executed when FreeCAD starts"""
         import DynamicDataCmd #needed files for FreeCAD commands
         self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty",
-                    "DynamicDataEditEnumeration",
+                    "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
                     "DynamicDataImportAliases","DynamicDataCopyProperty",
                     "DynamicDataRenameProperty","DynamicDataSetTooltip",
