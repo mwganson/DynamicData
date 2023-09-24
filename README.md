@@ -203,6 +203,9 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.09.23 (version 2.49)<br/>
+** add configuration creation/editing<br/>
+** use settings icon for settings dialog
 * 2023.09.22 (version 2.48)<br/>
 ** add enumeration editor<br/>
 ** fix bug in apply button handling in add property dialog<br/>
