@@ -101,6 +101,7 @@ Since this evaluates to 0 or 1 depending on user selection it could be used as a
 Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog 
 to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does not at this time provide an editor for these property types, but you can edit them with DynamicData.
 
+![edit enumerations screenshot](Resources/media/edit_enumerations_scr.png)
 
 
 ### Remove Property
