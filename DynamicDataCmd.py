@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.09.23"
-__version__ = "2.49"
-version = 2.49
+__date__    = "2023.09.24"
+__version__ = "2.50"
+version = 2.50
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -295,8 +295,14 @@ in the configuration.  For example, if you want \n\
 Height, Width, and Length, enter 3 here.")
             self.nameRow.addWidget(self.variableCount)
 
+            self.grid_scroller = QtWidgets.QScrollArea()
             self.gridLayout = QtWidgets.QGridLayout()
-            lay.addLayout(self.gridLayout)
+            lay.addWidget(self.grid_scroller)
+            #lay.addLayout(self.gridLayout)
+            self.gridWidget= QtWidgets.QWidget()
+            self.gridWidget.setLayout(self.gridLayout)
+            self.grid_scroller.setWidget(self.gridWidget)
+            self.grid_scroller.setWidgetResizable(True)
             self.setupGrid()
             self.buttonLayout = QtWidgets.QHBoxLayout()
             lay.addLayout(self.buttonLayout)
@@ -358,11 +364,21 @@ Enum7.
 Enter the values in the cells that you want for each enum and variable.  In the example default
 configuration you have Height, for example.  If you want the Height for the Extra Small enum to
 be 2, enter 2 in the cell that aligns with Height and Extra Small.  Any cells left blank will be
-filled with 0.0 in the associated HeightList property, this example.
+filled with the value from the first cell in that row, or 0.0 if it is also blank.
 
 Note: when the "Select size" enum is selected in the enumeration property all of the variable
-values will be 0.0, which might or might not break your model.  If it does, just select one of
-the other enums.
+values will be the value from the first enum, so that it won't break your model until you can
+select one of the enums.  Select size is actually an additional extra set of values added to the
+ends of the List properties.  You can manually edit these later if you want different defaults.
+Your manually edited defaults will not be changed by the editor unless you also change the
+number of enums during the edit.
+
+You may apply a configuration to an existing object, such as a Part::Cylinder, and if your variable
+names are the same as existing properties, those properties will be incorporated into the configuration.
+
+You may have multiple configurations in the same object, but if you do so you should ensure none of
+the variable are the same or else there will be a conflict and the new properties will overwrite the
+existing ones.  It is recommended to only have 1 configuration per object.
 
 Variable count is how many variables to have in the configuration.  By default we have 3.  These are:
 "Height", "Length", and "Radius".  This are likely not to be the names you will want for your
@@ -510,6 +526,13 @@ you can use Undo to revert all your changes to the selected object.
                 except:
                     if lineEdit.text():
                         FreeCAD.Console.PrintWarning(f"Couldn't convert to float: {lineEdit.text()} row,col = {row},{col}\n")
+                    else:
+                        #take value from first cell in row and use that for default
+                        firstCell = self.getLineEditFromConfiguration(f"{row+1}_{1}")
+                        try:
+                            val = float(firstCell.text())
+                        except:
+                            val = 0
                 ret.append(val)
             return ret
 
@@ -518,22 +541,35 @@ you can use Undo to revert all your changes to the selected object.
             dd = self.dd
             name = self.configuration["name"]
             if hasattr(dd,name):
-                dd.removeProperty(name)
-            dd.addProperty("App::PropertyEnumeration",name,name,"Configuration enumeration")
+                try:
+                    dd.removeProperty(name)
+                except:
+                    FreeCAD.Console.PrintWarning(f"Unable to remove property: {name}\n")
+            if not hasattr(dd,name):
+                dd.addProperty("App::PropertyEnumeration",name,name,"Configuration enumeration")
             setattr(dd,name,self.configuration["enums"])
             for row,var in enumerate(self.configuration["variables"]):
                 if hasattr(dd,f"{var}List"):
-                    dd.removeProperty(f"{var}List")
-                dd.addProperty("App::PropertyFloatList",f"{var}List",f"{name}Lists",f"List property for {var}")
+                    try:
+                        dd.removeProperty(f"{var}List")
+                    except:
+                        FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}List\n")
+                if not hasattr(dd,f"{var}List"):
+                    dd.addProperty("App::PropertyFloatList",f"{var}List",f"{name}Lists",f"List property for {var}")
                 setattr(dd,f"{var}List", self.getRowValues(row))
                 if hasattr(dd,var):
-                    dd.removeProperty(var)
-                dd.addProperty("App::PropertyFloat",var,name,"Property to link to")
+                    try:
+                        dd.removeProperty(var)
+                    except:
+                        FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}\n")
+                if not hasattr(dd,var):
+                    dd.addProperty("App::PropertyFloat",var,name,"Property to link to")
                 dd.setExpression(var,f"{dd.Label}.<<{dd.Label}>>.{var}List[<<{dd.Label}>>.{name}-1]")
 
         def getConfigurationFromObject(self):
             dd = self.dd
-            props = [prop for prop in dd.PropertiesList if "Enumeration" in dd.getTypeIdOfProperty(prop)]
+            ignored = ["MapMode"]
+            props = [prop for prop in dd.PropertiesList if "Enumeration" in dd.getTypeIdOfProperty(prop) and prop not in ignored]
             if len(props) == 1:
                 self.configuration["name"] = props[0]
                 self.configuration["enums"] = dd.getEnumerationsOfProperty(props[0])
@@ -544,15 +580,34 @@ you can use Undo to revert all your changes to the selected object.
                 self.configuration["enumCount"] = len(self.configuration["enums"])-1
                 self.configuration["variableCount"] = len(vars)
                 return True
-            else:
-                self.configuration["name"] = "Configuration"
-                self.configuration["enumCount"] = 5
-                self.configuration["variableCount"] = 3
-                self.configuration["enums"] = ["Select size","Extra Small","Small","Medium",\
-                                            "Large","Extra Large"]
-                self.configuration["variables"] = ["Length", "Height", "Radius"]
-                self.configuration["lineEdits"] = {}
+            elif len(props) > 1:
+                default_item = 0
+                prop, ok = QtGui.QInputDialog.getItem(self, "Multiple enumerations found", "Choose an enumeration:", props, default_item, editable=False)
+                if not ok:
+                    self.makeDefaultConfiguration()
+                    return False
+                else:
+                    self.configuration["name"] = prop
+                    self.configuration["enums"] = dd.getEnumerationsOfProperty(prop)
+                    vars = [prop2 for prop2 in dd.PropertiesList if hasattr(dd,f"{prop2}List")]
+                    #lists = [prop for prop in dd.PropertiesList if hasattr(dd,prop[:-4])] #drop List from end of property name
+                    self.configuration["variables"] = vars
+                    self.configuration["lineEdits"] = {}
+                    self.configuration["enumCount"] = len(self.configuration["enums"])-1
+                    self.configuration["variableCount"] = len(vars)
+                    return True
+
+            else: #no existing enumerations
+                self.makeDefaultConfiguration()
                 return False
+        def makeDefaultConfiguration(self):
+            self.configuration["name"] = "Configuration"
+            self.configuration["enumCount"] = 5
+            self.configuration["variableCount"] = 3
+            self.configuration["enums"] = ["Select size","Extra Small","Small","Medium",\
+                                        "Large","Extra Large"]
+            self.configuration["variables"] = ["Length", "Height", "Radius"]
+            self.configuration["lineEdits"] = {}
 
         def fillUpLineEdits(self):
             """called from __init__() only if dd object has a configuration already,
