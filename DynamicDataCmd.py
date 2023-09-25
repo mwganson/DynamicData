@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.09.24"
-__version__ = "2.52"
-version = 2.52
+__date__    = "2023.09.25"
+__version__ = "2.53"
+version = 2.53
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -249,10 +249,10 @@ class DynamicDataCreateConfigurationCommandClass(object):
         def __init__(self,dd):
             super(DynamicDataCreateConfigurationCommandClass.DynamicDataConfigurationDlg, self).__init__(Gui.getMainWindow())
             self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
+            self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
             self.setWindowTitle(f"DynamicData v{__version__} Configuration Editor")
             self.setWindowIcon(QtGui.QIcon("Resources/icons/DynamicDataCreateConfiguration.svg"))
             self.dd = dd
-            self.ok = False
             self.configuration = {}
             hasConfig = self.getConfigurationFromObject()
             lay = QtGui.QVBoxLayout(self)
@@ -577,6 +577,7 @@ you can use Undo to revert all your changes to the selected object.
                 dd.setExpression(var,f"{dd.Label}.<<{dd.Label}>>.{var}List[<<{dd.Label}>>.{name}-1]")
 
         def getConfigurationFromObject(self):
+            """return True if we imported one from an object, else False if this is a new configuration"""
             dd = self.dd
             ignored = ["MapMode"]
             props = [prop for prop in dd.PropertiesList if "Enumeration" in dd.getTypeIdOfProperty(prop) and prop not in ignored]
@@ -584,8 +585,8 @@ you can use Undo to revert all your changes to the selected object.
             if len(props) >= 1:
                 default_item = 0
                 props = ["New configuration"] + props
-                prop, ok = QtGui.QInputDialog.getItem(self, "Multiple enumerations found", \
-                                                      "Choose an enumeration or press Cancel for a new default configuration:",\
+                prop, ok = QtGui.QInputDialog.getItem(self, "Select configuration", \
+                                                      "Choose an enumeration to edit or create a new one\n (Cancel for a new default configuration)",\
                                                        props, default_item, editable=False)
                 if not ok or prop == props[0]:
                     self.makeDefaultConfiguration()
@@ -632,7 +633,6 @@ you can use Undo to revert all your changes to the selected object.
                         lineEdit.setText(str(round(val,6)))
 
         def accept(self):
-            self.ok = True
             self.dd.Document.openTransaction("Create/Edit Configuration")
             self.setConfiguration()
             self.dd.Document.commitTransaction()
