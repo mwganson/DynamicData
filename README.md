@@ -230,6 +230,10 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.09.25 (version 2.53)<br/>
+** ensure configuration editor dialog is deleted on closing<br/>
+** remove unnecessary variable (self.ok) since we don't check it after dialog closes <br/>
+** reword configuration selection qinputdialog from multiple found to select configuration <br/> 
 * 2023.09.24 (version 2.52)<br/>
 ** add new configuration option when opening the configuration editor on an object with one or more existing enumeration properties
 * 2023.09.24 (version 2.51)<br/>
