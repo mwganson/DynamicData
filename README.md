@@ -230,6 +230,10 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.11.13 (version 2.54)<br/>
+** fix bug in configuration dialog where too many rows were being created <br/>
+** set tab order correctly in configuration dialog, allow ctrl + tab to skip to next row<br/>
+** fix compatibility issue with older versions of FreeCAD
 * 2023.09.25 (version 2.53)<br/>
 ** ensure configuration editor dialog is deleted on closing<br/>
 ** remove unnecessary variable (self.ok) since we don't check it after dialog closes <br/>
