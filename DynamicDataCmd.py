@@ -26,15 +26,15 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.09.25"
-__version__ = "2.53"
-version = 2.53
+__date__    = "2023.11.12"
+__version__ = "2.54"
+version = 2.54
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
 
 from FreeCAD import Gui
-from PySide import QtCore, QtGui, QtWidgets
+from PySide import QtCore, QtGui
 
 import FreeCAD, FreeCADGui, os, math, re
 App = FreeCAD
@@ -254,14 +254,15 @@ class DynamicDataCreateConfigurationCommandClass(object):
             self.setWindowIcon(QtGui.QIcon("Resources/icons/DynamicDataCreateConfiguration.svg"))
             self.dd = dd
             self.configuration = {}
+            self.curLineEdit = None #used only in event filter and handleCtrlTab()
             hasConfig = self.getConfigurationFromObject()
             lay = QtGui.QVBoxLayout(self)
             self.setLayout(lay)
-            self.nameRow = QtWidgets.QHBoxLayout()
+            self.nameRow = QtGui.QHBoxLayout()
             lay.addLayout(self.nameRow)
-            self.configurationNameLabel = QtWidgets.QLabel("Configuration name:")
+            self.configurationNameLabel = QtGui.QLabel("Configuration name:")
             self.nameRow.addWidget(self.configurationNameLabel)
-            self.configurationName = QtWidgets.QLineEdit()
+            self.configurationName = QtGui.QLineEdit()
             self.configurationName.setToolTip(\
 "Configuration name will be the name given to \n\
 the Enumeration property created and to the Group \n\
@@ -270,8 +271,8 @@ all the properties go into.")
             self.configurationName.selectAll()
             self.configurationName.textChanged.connect(self.updateDict)
             self.nameRow.addWidget(self.configurationName)
-            self.enumCountLabel = QtWidgets.QLabel("Enum count:")
-            self.enumCount = QtWidgets.QSpinBox()
+            self.enumCountLabel = QtGui.QLabel("Enum count:")
+            self.enumCount = QtGui.QSpinBox()
             self.enumCount.setMinimum(2)
             self.enumCount.setMaximum(100)
             self.enumCount.setSingleStep(1)
@@ -283,9 +284,9 @@ will have, for example: small, medium, large would \n\
 be 3.")
             self.nameRow.addWidget(self.enumCountLabel)
             self.nameRow.addWidget(self.enumCount)
-            self.variableCountLabel = QtWidgets.QLabel("Variable count:")
+            self.variableCountLabel = QtGui.QLabel("Variable count:")
             self.nameRow.addWidget(self.variableCountLabel)
-            self.variableCount = QtWidgets.QSpinBox()
+            self.variableCount = QtGui.QSpinBox()
             self.variableCount.setMinimum(2)
             self.variableCount.setMaximum(100)
             self.variableCount.setSingleStep(1)
@@ -297,29 +298,29 @@ in the configuration.  For example, if you want \n\
 Height, Width, and Length, enter 3 here.")
             self.nameRow.addWidget(self.variableCount)
 
-            self.grid_scroller = QtWidgets.QScrollArea()
-            self.gridLayout = QtWidgets.QGridLayout()
+            self.grid_scroller = QtGui.QScrollArea()
+            self.gridLayout = QtGui.QGridLayout()
             lay.addWidget(self.grid_scroller)
             #lay.addLayout(self.gridLayout)
-            self.gridWidget= QtWidgets.QWidget()
+            self.gridWidget= QtGui.QWidget()
             self.gridWidget.setLayout(self.gridLayout)
             self.grid_scroller.setWidget(self.gridWidget)
             self.grid_scroller.setWidgetResizable(True)
             self.setupGrid()
-            self.buttonLayout = QtWidgets.QHBoxLayout()
+            self.buttonLayout = QtGui.QHBoxLayout()
             lay.addLayout(self.buttonLayout)
             self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),\
                 QtCore.Qt.Horizontal, self)
             self.buttons.accepted.connect(self.accept)
             self.buttons.rejected.connect(self.reject)
-            self.helpCheckBox = QtWidgets.QCheckBox("Show help")
+            self.helpCheckBox = QtGui.QCheckBox("Show help")
             self.helpCheckBox.setChecked(False)
             self.helpCheckBox.clicked.connect(self.showHelp)
             self.buttonLayout.addWidget(self.helpCheckBox)
             self.buttonLayout.addWidget(self.buttons)
-            self.helpLabel = QtWidgets.QLabel("Help goes here.")
+            self.helpLabel = QtGui.QLabel("Help goes here.")
             self.setupHelpText()
-            self.scroll_area = QtWidgets.QScrollArea()
+            self.scroll_area = QtGui.QScrollArea()
             lay.addWidget(self.scroll_area)
             self.scroll_area.setWidget(self.helpLabel)
             self.scroll_area.setVisible(False)
@@ -397,16 +398,44 @@ you can use Undo to revert all your changes to the selected object.
         def showHelp(self):
             self.scroll_area.setVisible(self.helpCheckBox.isChecked())
 
-        def getLineEditFromConfiguration(self, objName):
+        def eventFilter(self, obj, event):
+            if event.type() == QtGui.QKeyEvent.KeyPress:
+                if bool(event.modifiers() & QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Tab):
+                    self.curLineEdit = obj
+                    self.handleCtrlTab(False)
+                    return True  # Event handled
+
+                elif bool(event.modifiers() & QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Backtab):
+                    self.curLineEdit = obj
+                    self.handleCtrlTab(True)
+                    return True  # Event handled
+
+            return super().eventFilter(obj, event)
+
+        def handleCtrlTab(self, bShift = False):
+            row,col = self.getRowColFromObjectName(self.curLineEdit.objectName())
+            objName = f"{row + 1}_{col}" if not bShift else f"{row - 1}_{col}"
+            next = self.getLineEditFromConfiguration(objName, bCreate = False)
+            if not next:
+                return
+            else:
+                next.setFocus()
+
+
+        def getLineEditFromConfiguration(self, objName, bCreate = True):
             """get the line edit objName from dictionary if it exists, else created it"""
             lineEdit = None
             for name,obj in self.configuration["lineEdits"].items():
                 if name == objName:
                     lineEdit = obj
                     break
-            if not lineEdit:
-                lineEdit = QtWidgets.QLineEdit()
+            if not lineEdit and bCreate:
+                lineEdit = QtGui.QLineEdit()
                 lineEdit.setObjectName(objName)
+                lineEdit.installEventFilter(self)
+                lineEdit.setToolTip("Tab -> next column\nCtrl+Tab -> next row\nCtrl+Shift+Tab ->previous row\nShift+Tab -> previous column")
+            elif not bCreate and not lineEdit:
+                return None
             self.configuration["lineEdits"][objName] = lineEdit
             return lineEdit
 
@@ -433,6 +462,27 @@ you can use Undo to revert all your changes to the selected object.
             self.gridLayout.addWidget(lineEdit,row,col)
             self.update()
             FreeCADGui.updateGui()
+
+        def updateTabOrders(self):
+            """update the tab orders when adding/removing lineEdit to/from grid"""
+            def custom_sort(s):
+                # Split the string into parts
+                parts = s.split('_')
+
+                # Convert the parts to integers
+                x = int(parts[0])
+                y = int(parts[1])
+
+                # Combine them using a formula
+                return x * 100 + y
+
+            names = {}
+            for name,obj in self.configuration["lineEdits"].items():
+                names[name] = obj.objectName()
+            names = sorted(names, key=custom_sort)
+            edits = [self.configuration["lineEdits"][name] for name in names]
+            for ii in range(len(edits)-1):
+                self.setTabOrder(edits[ii], edits[ii+1])
 
         def removeFromGrid(self, le):
             """remove the line edit from the grid and from the dictionary"""
@@ -472,15 +522,14 @@ you can use Undo to revert all your changes to the selected object.
         def isOutOfBounds(self, lineEdit):
             """check if this line edit object needs to be removed from the grid
                by comparing its row,col to enum count and variable count"""
-            ret = False
             row,col = self.getRowColFromObjectName(lineEdit.objectName())
             enums = self.enumCount.value()
             variables = self.variableCount.value()
             if col  > enums:
-                ret = True
+                return True
             if row  > variables:
-                ret = True
-            return ret
+                return True
+            return False
 
         def updateDict(self):
             """called only when the enum count or variable count changes
@@ -498,8 +547,8 @@ you can use Undo to revert all your changes to the selected object.
                 if col == 0:
                     self.configuration["variables"].pop()
                 self.removeFromGrid(le)
-            if lineEditsToRemove:
-                return
+            # if lineEditsToRemove:
+            #     return
             # now we need to see if we need to add any rows or columns
             numRows = len(self.configuration["variables"])
             numCols = len(self.configuration["enums"])
@@ -513,12 +562,13 @@ you can use Undo to revert all your changes to the selected object.
                     self.addToGrid(lineEdit, row, numCols)
                 numCols = len(self.configuration["enums"])
 
-            while numRows < variables + 1:
+            while numRows < variables:
                 #need to a new row, so for each column we add one
                 for col in range(numCols):
                     lineEdit = self.getLineEditFromConfiguration(f"{numRows+1}_{col}")
                     self.addToGrid(lineEdit, numRows+1, col)
                 numRows = len(self.configuration["variables"])
+            self.updateTabOrders()
 
         def getRowValues(self,row):
             """get the line edit values in row as a list"""
@@ -692,24 +742,24 @@ class DynamicDataEditEnumerationCommandClass(object):
             self.setWindowTitle(f"DynamicData v{__version__} Enumeration Editor")
             lay = QtGui.QVBoxLayout(self)
             self.setLayout(lay)
-            self.propertiesLabel = QtWidgets.QLabel("Enumeration Properties:")
-            self.propertiesListBox = QtWidgets.QListWidget(self)
+            self.propertiesLabel = QtGui.QLabel("Enumeration Properties:")
+            self.propertiesListBox = QtGui.QListWidget(self)
 
             for prop in self.props:
-                item = QtWidgets.QListWidgetItem(prop)
+                item = QtGui.QListWidgetItem(prop)
                 self.items.append(item)
                 self.propertiesListBox.addItem(item)
 
-            self.propertiesListBox.setSelectionMode(QtWidgets.QListWidget.SingleSelection)
+            self.propertiesListBox.setSelectionMode(QtGui.QListWidget.SingleSelection)
             self.propertiesListBox.itemClicked.connect(self.handlePropertiesListBoxItemClicked)
             if self.items:
                 self.propertiesListBox.setCurrentItem(self.items[0])
             lay.addWidget(self.propertiesLabel)
             lay.addWidget(self.propertiesListBox)
-            self.textEditLabel = QtWidgets.QLabel("Edit the selected property by typing here:")
+            self.textEditLabel = QtGui.QLabel("Edit the selected property by typing here:")
             lay.addWidget(self.textEditLabel)
 
-            self.textEdit = QtWidgets.QPlainTextEdit()
+            self.textEdit = QtGui.QPlainTextEdit()
             self.textEdit.textChanged.connect(self.textChanged)
             lay.addWidget(self.textEdit)
             self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),\
