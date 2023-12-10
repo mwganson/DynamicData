@@ -143,7 +143,7 @@ xyzTypes = [#x,y,z elements must be linked separately
 #######################################################################################
 # Keep Toolbar active even after leaving workbench
 
-class DynamicDataSettingsCommandClass(object):
+class DynamicDataSettingsCommandClass:
     """Settings, currently only whether to keep toolbar after leaving workbench"""
     global mostRecentTypes
 
@@ -198,7 +198,7 @@ class DynamicDataSettingsCommandClass(object):
 ####################################################################################
 # Create the dynamic data container object
 
-class DynamicDataCreateObjectCommandClass(object):
+class DynamicDataCreateObjectCommandClass:
     """Create Object command"""
 
     def GetResources(self):
@@ -254,7 +254,7 @@ class DynamicDataCreateObjectCommandClass(object):
 ####################################################################################
 # Create or edit an existing configuration
 
-class DynamicDataCreateConfigurationCommandClass(object):
+class DynamicDataCreateConfigurationCommandClass:
     """Create or edit a configuration command"""
     class DynamicDataConfigurationDlg(QtGui.QDialog):
         def __init__(self,dd):
@@ -738,7 +738,7 @@ you can use Undo to revert all your changes to the selected object.
 ####################################################################################
 # Edit an existing Enumeration property
 
-class DynamicDataEditEnumerationCommandClass(object):
+class DynamicDataEditEnumerationCommandClass:
     """Edit Enumeration command"""
 
     class DynamicDataEnumerationDlg(QtGui.QDialog):
@@ -1014,7 +1014,7 @@ class MultiTextInput(QtGui.QDialog):
 # Add a dynamic property to the object
 
 
-class DynamicDataAddPropertyCommandClass(object):
+class DynamicDataAddPropertyCommandClass:
     """Add Property Command"""
     global mostRecentTypes
     global mostRecentTypesLength
