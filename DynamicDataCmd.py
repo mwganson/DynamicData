@@ -895,6 +895,7 @@ class MultiTextInput(QtGui.QDialog):
     def __init__(self, obj):
         QtGui.QDialog.__init__(self)
         self.obj = obj
+        propertyPrefix = obj.getPropertyByName('PropertyPrefix')
         layout = QtGui.QGridLayout()
         #layout.setColumnStretch(1, 1)
         self.addAnotherProp = False
@@ -904,7 +905,7 @@ class MultiTextInput(QtGui.QDialog):
         self.listWidget.currentItemChanged.connect(self.onListWidgetCurrentItemChanged)
         self.label2 = QtGui.QLabel(self)
         self.label2.setStyleSheet('color: red')
-        self.nameLabel = QtGui.QLabel("Name: dd")
+        self.nameLabel = QtGui.QLabel(f"Name:{' ' if propertyPrefix else ''}{propertyPrefix}")
         self.nameEdit = QtGui.QLineEdit(self)
         self.nameEdit.textChanged.connect(self.on_text_changed)
         self.valueLabel = QtGui.QLabel("Value: ")
@@ -1001,7 +1002,8 @@ class MultiTextInput(QtGui.QDialog):
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
             propertyName = self.nameEdit.text()
-        if hasattr(self.obj,'dd'+propertyName):
+        propertyPrefix = self.obj.getPropertyByName('PropertyPrefix')
+        if hasattr(self.obj, f'{propertyPrefix}{propertyName}'):
             self.label2.setText('Property name already exists')
         else:
             self.label2.setText('')
@@ -1037,6 +1039,7 @@ class DynamicDataAddPropertyCommandClass(object):
         if not 'FeaturePython' in str(obj.TypeId):
             FreeCAD.Console.PrintError('DynamicData: Cannot add property to non-FeaturePython objects.\n')
             return
+        propertyPrefix = obj.getPropertyByName('PropertyPrefix')
         doc.openTransaction("dd Add Property")
         #add the property
         #window = QtGui.QApplication.activeWindow()
@@ -1061,12 +1064,12 @@ class DynamicDataAddPropertyCommandClass(object):
         for ii in range(1,1000):
             vals.append(str(ii))
         idx = 0
-        while hasattr(obj,'dd' + item + str(vals[idx])):
+        while hasattr(obj, f'{propertyPrefix}{item}{vals[idx]}'):
             idx += 1
         item + str(vals[idx])
         dlg.nameEdit.setText(item + vals[idx])
 
-        if hasattr(obj,'dd'+ item + vals[idx]):
+        if hasattr(obj, f'{propertyPrefix}{item}{vals[idx]}'):
             dlg.label2.setText('Property name already exists')
         else:
             dlg.label2.setText('')
@@ -1109,8 +1112,9 @@ class DynamicDataAddPropertyCommandClass(object):
         if len(self.propertyName)==0:
             self.propertyName=';;;' #use defaults
 
-        if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
-            self.propertyName = self.propertyName[2:] #strip dd temporarily
+        if self.propertyName.startswith(propertyPrefix):
+            #strip property prefix temporarily
+            self.propertyName = self.propertyName[len(propertyPrefix):]
         cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
         self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
         self.tooltip='['+item+'] ' #e.g. [Float]
@@ -1146,15 +1150,15 @@ class DynamicDataAddPropertyCommandClass(object):
                     except Exception as ex:
                         FreeCAD.Console.PrintError(f"DynamicData: {ex}\n")
                         vals.append(split[ii])
-        if hasattr(obj,'dd'+self.propertyName):
+        if hasattr(obj, f'{propertyPrefix}{self.propertyName}'):
             FreeCAD.Console.PrintError(f'DynamicData: Unable to add property: {propertyPrefix}{self.propertyName} because it already exists.\n')
             self.checkAddAnother(dlg)
             return
-        p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
+        p = obj.addProperty('App::Property'+item,f'{propertyPrefix}{self.propertyName}',str(self.groupName),self.tooltip)
         if hasVal and len(vals)==0:
             if val[0] == "=":
                 try:
-                    obj.setExpression('dd'+self.propertyName, val[1:])
+                    obj.setExpression(f'{propertyPrefix}{self.propertyName}', val[1:])
                     obj.touch()
                     doc.recompute()
                     doc.commitTransaction()
@@ -1176,17 +1180,17 @@ class DynamicDataAddPropertyCommandClass(object):
                 if item == "Enumeration":
                     list2 = split[3:]
                     try:
-                        setattr(p,'dd'+self.propertyName, list2)
+                        setattr(p,f'{propertyPrefix}{self.propertyName}', list2)
                     except Exception:
                         FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set list enumeration: {list}\n')
                 else:
-                    setattr(p,'dd'+self.propertyName,atr)
+                    setattr(p,f'{propertyPrefix}{self.propertyName}',atr)
             except:
                 FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set attribute: {val}\n')
         elif hasVal and len(vals)>0:
             if listval:
                 try:
-                    obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
+                    obj.setExpression(f'{propertyPrefix}{self.propertyName}', listval[1:]) #[1:] strips the "="
                     obj.touch()
                     doc.recompute()
                     doc.commitTransaction()
@@ -1198,7 +1202,7 @@ class DynamicDataAddPropertyCommandClass(object):
                     self.checkAddAnother(dlg)
                     return
             try:
-                setattr(p,'dd'+self.propertyName,list(vals))
+                setattr(p,f'{propertyPrefix}{self.propertyName}',list(vals))
             except:
                 FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set list attribute: {vals}\n')
         obj.touch()
@@ -1547,6 +1551,7 @@ class DynamicDataRenamePropertyCommandClass(_DynamicDataPropertyCommandClass):
         doc = FreeCAD.ActiveDocument
         obj = self.obj
         prop = self.getProperty(obj) #string name of property
+        propertyPrefix = obj.getPropertyByName('PropertyPrefix')
         if not prop:
             return
         outExpr = self.getOutExpr(obj, prop)
@@ -1555,7 +1560,8 @@ class DynamicDataRenamePropertyCommandClass(_DynamicDataPropertyCommandClass):
         newName = self.getNewPropertyName(obj, prop)
         if not newName:
             return
-        if not "dd" in newName[:2] or bool(newName[2:3] < "A" or newName[2:3] > "Z"):
+# FIXME: Check for CamelCase needed?
+        if not newName.startswith(propertyPrefix) or bool(newName[2:3] < "A" or newName[2:3] > "Z"):
             FreeCAD.Console.PrintWarning(f"DynamicData: Not all DynamicData commands will function properly if you don't follow the DynamicData naming convention of {propertyPrefix}Uppercase\n")
         inExprs = self.getInExprs(obj, prop)
         typeId = obj.getTypeIdOfProperty(prop)
@@ -1801,6 +1807,7 @@ The new properties will remain after the undo, but they will no longer reference
 You should save your document before proceeding.\n',items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return
+        propertyPrefix = dd.getPropertyByName('PropertyPrefix')
         doc.openTransaction("dd Import Aliases") #setup undo
         aliases=[]
         for sheet in sheets:
@@ -1843,12 +1850,12 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     FreeCAD.Console.PrintError(f'DynamicData: please report: unknown property type error importing alias from spreadsheet ({type(atr)})\n')
                     continue
 
-                name = 'dd'+sheet.Label+'_'+cap(alias)
+                name = f'{propertyPrefix}{sheet.Label}_{cap(alias)}'
                 if not hasattr(dd,name): #avoid adding the same property again
                     dd.addProperty('App::Property'+propertyType,name,'Imported from: '+sheet.Label, propertyType)
                     setattr(dd,name,userString)
-                    sheet.set(alias,str('='+dd.Label+'.'+name))
                     FreeCAD.Console.PrintMessage(f'DynamicData: adding property: {name} to DynamicData object, resetting spreadsheet: {sheet.Label}.{alias} to point to {dd.Label}.{name}\n')
+                    sheet.set(alias,f'={dd.Label}.{name}')
                 else:
                     FreeCAD.Console.PrintWarning(f'DynamicData: skipping existing property: {name}\n')
                 continue
@@ -1952,6 +1959,7 @@ will still be there, but they won\'t be linked to anything. \n\
 You should save your document before proceeding\n',items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return
+        propertyPrefix = dd.getPropertyByName('PropertyPrefix')
         FreeCAD.ActiveDocument.openTransaction("dd Import Constraints") #setup undo
         constraints=[]
         for sketch in sketches:
@@ -1981,13 +1989,13 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
             if con['constraintType']=='Angle':
                 propertyType="Angle"
                 value *= (180.0/math.pi)
-            name = 'dd'+con['sketchLabel']+cap(con['constraintName'])
+            name = f"{propertyPrefix}{con['sketchLabel']}{cap(con['constraintName'])}"
             if not hasattr(dd,name): #avoid adding the same property again
                 dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
                 setattr(dd,name,value)
                 FreeCAD.Console.PrintMessage(f'DynamicData: adding property: {name} to DynamicData object\n')
                 sketch = con['sketch']
-                sketch.setExpression('Constraints.'+con['constraintName'], dd.Label+'.dd'+sketch.Label+cap(con['constraintName']))
+                sketch.setExpression(f"Constraints.{con['constraintName']}", f"{dd.Label}.{propertyPrefix}{sketch.Label}{cap(con['constraintName'])}")
             else:
                 FreeCAD.Console.PrintWarning(f'DynamicData: skipping existing property:{name}\n')
         FreeCAD.ActiveDocument.commitTransaction()
@@ -2150,30 +2158,32 @@ class DynamicDataCopyPropertyCommandClass(_DynamicDataPropertyCommandClass):
             properties = self.getProperty(fromObj,allowMultiple=True)
             if not properties:
                 return #user canceled
+            fromPropertyPrefix = fromObj.getPropertyByName('PropertyPrefix')
+            toPropertyPrefix = toObj.getPropertyByName('PropertyPrefix')
             fromProperty = properties[0]
             for property in properties:
                 cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
                 name = property['name']
-                if 'dd' in name[:2] or 'Dd' in name[:2]:
-                    name = name[2:]
-                name = 'dd'+cap(name)
+                if name.startswith(fromPropertyPrefix):
+                    name = name[len(fromPropertyPrefix):]
+                name = f'{toPropertyPrefix}{cap(name)}'
                 propertyType = property['type']
                 if not propertyType:
                     return #user canceled
                 name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name, flags=windowFlags)
-                if 'dd' in name[:2] or 'Dd' in name[:2]:
-                    name = name[2:]
+                if name.startswith(toPropertyPrefix):
+                    name = name[len(toPropertyPrefix):]
                 if not ok:
                     return
-                name = 'dd'+cap(name)
+                name = f'{toPropertyPrefix}{cap(name)}'
                 while hasattr(toObj,name):
                     name,ok=QtGui.QInputDialog.getText(window,'DynamicData','A property with that name already exists.  \n\
 Enter the name for the new property\n',text=name, flags=windowFlags)
                     if not ok:
                         return
-                    if 'dd' in name[:2] or 'Dd' in name[:2]:
-                        name = name[2:]
-                    name = 'dd'+cap(name)
+                    if name.startswith(toPropertyPrefix):
+                        name = name[len(toPropertyPrefix):]
+                    name = f'{toPropertyPrefix}{cap(name)}'
                 doc.openTransaction("dd CopyProperty")
                 try:
                     toObj.addProperty('App::Property'+propertyType.replace('(ViewObject)',''), name,'Copied from: '+fromObj.Label,'['+propertyType+']')
