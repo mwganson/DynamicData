@@ -1772,8 +1772,8 @@ class DynamicDataImportAliasesCommandClass(object):
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg'),
                 'MenuText': "&Import Aliases",
-                'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
+                'ToolTip' : "Import aliases from selected spreadsheet(s) into selected DynamicData object"}
 
     def Activated(self):
 
@@ -1938,8 +1938,8 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
                 'MenuText': "&Import Named Constraints",
-                'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
 
+                'ToolTip' : "Import named constraints from selected sketch(es) into selected DynamicData object"}
 
     def Activated(self):
         sketches=[]
