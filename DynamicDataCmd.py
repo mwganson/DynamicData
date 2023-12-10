@@ -212,6 +212,17 @@ class DynamicDataCreateObjectCommandClass(object):
         doc.openTransaction("dd CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
+        version = tuple(int(i) for i in FreeCAD.Version()[:2])
+        # `FreeCAD.Version() returns e.g.
+        #   ['0', '21', '1',
+        #   '33694 (Git)', 'https://github.com/FreeCAD/FreeCAD',
+        #   '2023/08/31 02:32:05', '(HEAD detached at 0.21.1)',
+        #   'f6708547a9bb3f71a4aaade12109f511a72c207c']
+        if version < (0, 22):
+            propertyPrefix = 'dd'
+        else:
+            propertyPrefix = ''
+        a.addProperty('App::PropertyString', 'PropertyPrefix').PropertyPrefix = propertyPrefix
         setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
         doc.commitTransaction()
         Gui.Selection.clearSelection()
