@@ -672,12 +672,13 @@ you can use Undo to revert all your changes to the selected object.
             self.configuration["variableCount"] = len(vars)
 
         def makeDefaultConfiguration(self):
+            propertyPrefix = self.dd.getPropertyByName('PropertyPrefix')
             self.configuration["name"] = "Configuration"
             self.configuration["enumCount"] = 5
             self.configuration["variableCount"] = 3
             self.configuration["enums"] = ["Select size","Extra Small","Small","Medium",\
                                         "Large","Extra Large"]
-            self.configuration["variables"] = ["Length", "Height", "Radius"]
+            self.configuration["variables"] = [f'{propertyPrefix}Length', f'{propertyPrefix}Height', f'{propertyPrefix}Radius']
             self.configuration["lineEdits"] = {}
 
         def fillUpLineEdits(self):
