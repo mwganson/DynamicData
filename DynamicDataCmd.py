@@ -209,7 +209,7 @@ class DynamicDataCreateObjectCommandClass(object):
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        doc.openTransaction("CreateObject")
+        doc.openTransaction("dd CreateObject")
         a = doc.addObject("App::FeaturePython","dd")
         a.addProperty("App::PropertyStringList","DynamicData").DynamicData=self.getHelp()
         setattr(a.ViewObject,'DisplayMode',['0']) #avoid enumeration -1 warning
@@ -841,7 +841,7 @@ Enumeration to edit.  Create one first, and then try again.\n")
         dlg.props = self.props
         dlg.exec_()
         if dlg.ok:
-            doc.openTransaction("Edit Enumeration")
+            doc.openTransaction("dd Edit Enumeration")
             self.setEnumerations(dlg.enumerations)
             doc.commitTransaction()
         doc.recompute()
@@ -1436,7 +1436,7 @@ Select source group to pick properties from, or all groups to pick from all.\n',
                     newName = item2
                 if not ok:
                     return
-                doc.openTransaction("Move to new group")
+                doc.openTransaction("dd Move to new group")
                 for prop in props:
                     try:
                         obj.setGroupOfProperty(prop,newName)
@@ -1832,7 +1832,7 @@ The new properties will remain after the undo, but they will no longer reference
 You should save your document before proceeding.\n',items,0,False,windowFlags)
         if not ok or item==items[-1]:
             return
-        FreeCAD.ActiveDocument.openTransaction("dd Import Aliases") #setup undo
+        doc.openTransaction("dd Import Aliases") #setup undo
         aliases=[]
         for sheet in sheets:
             for line in sheet.cells.Content.splitlines():
