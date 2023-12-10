@@ -1502,7 +1502,6 @@ class DynamicDataRenamePropertyCommandClass(_DynamicDataPropertyCommandClass):
                 'Accel'   : "Ctrl+Shift+D,N",
                 'ToolTip' : "Rename a dynamic property"}
 
-
     def getProperty(self,obj):
         props = self._getDynamicProperties(obj)
         if props:
@@ -1611,7 +1610,6 @@ class DynamicDataSetTooltipCommandClass(_DynamicDataPropertyCommandClass):
                 'MenuText': "Se&t Tooltip",
                 'Accel'   : "Ctrl+Shift+D,T",
                 'ToolTip' : "Set the tooltip of a dynamic property"}
-
 
     def getProperty(self,obj):
         props = self._getDynamicProperties(obj)
@@ -1749,12 +1747,9 @@ class DynamicDataImportAliasesCommandClass(_DynamicDataPropertyCommandClass):
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg'),
                 'MenuText': "&Import Aliases",
-
                 'ToolTip' : "Import aliases from selected spreadsheet(s) into selected DynamicData object"}
 
     def Activated(self):
-
-
         sheets=[]
         dd = None
         doc = FreeCAD.ActiveDocument
@@ -1910,7 +1905,6 @@ class DynamicDataImportNamedConstraintsCommandClass(_DynamicDataPropertyCommandC
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
                 'MenuText': "&Import Named Constraints",
-
                 'ToolTip' : "Import named constraints from selected sketch(es) into selected DynamicData object"}
 
     def Activated(self):
@@ -2045,7 +2039,6 @@ class DynamicDataCopyPropertyCommandClass(_DynamicDataPropertyCommandClass):
         return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg'),
                 'MenuText': "C&opy Property",
                 'ToolTip' : "Copy/Set property values between selected objects"}
-
 
     def Activated(self):
         breakOnly = False #only break existing parametric link if True
