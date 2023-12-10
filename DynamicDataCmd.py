@@ -581,7 +581,7 @@ you can use Undo to revert all your changes to the selected object.
                     val = float(lineEdit.text())
                 except:
                     if lineEdit.text():
-                        FreeCAD.Console.PrintWarning(f"Couldn't convert to float: {lineEdit.text()} row,col = {row},{col}\n")
+                        FreeCAD.Console.PrintWarning(f"DynamicData: Couldn't convert to float: {lineEdit.text()} row,col = {row},{col}\n")
                     else:
                         #take value from first cell in row and use that for default
                         firstCell = self.getLineEditFromConfiguration(f"{row+1}_{1}")
@@ -600,7 +600,7 @@ you can use Undo to revert all your changes to the selected object.
                 try:
                     dd.removeProperty(name)
                 except:
-                    FreeCAD.Console.PrintWarning(f"Unable to remove property: {name}\n")
+                    FreeCAD.Console.PrintWarning(f'DynamicData: Unable to remove property: {name}\n')
             if not hasattr(dd,name):
                 dd.addProperty("App::PropertyEnumeration",name,name,"Configuration enumeration")
             setattr(dd,name,self.configuration["enums"])
@@ -608,22 +608,22 @@ you can use Undo to revert all your changes to the selected object.
                 if hasattr(dd,f"{var}List"):
                     try:
                         dd.removeProperty(f"{var}List")
-                        FreeCAD.Console.PrintMessage(f"Removed property {var}List\n")
+                        FreeCAD.Console.PrintMessage(f'DynamicData: Removed property {var}List\n')
                     except:
-                        FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}List\n")
+                        FreeCAD.Console.PrintWarning(f'DynamicData: Unable to remove property: {var}List\n')
                 if not hasattr(dd,f"{var}List"):
                     dd.addProperty("App::PropertyFloatList",f"{var}List",f"{name}Lists",f"List property for {var}")
-                    FreeCAD.Console.PrintMessage(f"Added property {var}List\n")
+                    FreeCAD.Console.PrintMessage(f'DynamicData: Added property {var}List\n')
                 setattr(dd,f"{var}List", self.getRowValues(row))
                 if hasattr(dd,var):
                     try:
                         dd.removeProperty(var)
-                        FreeCAD.Console.PrintMessage(f"Removed property {var}\n")
+                        FreeCAD.Console.PrintMessage(f'DynamicData: Removed property {var}\n')
                     except:
-                        FreeCAD.Console.PrintWarning(f"Unable to remove property: {var}\n")
+                        FreeCAD.Console.PrintWarning(f'DynamicData: Unable to remove property: {var}\n')
                 if not hasattr(dd,var):
                     dd.addProperty("App::PropertyFloat",var,name,"Property to link to")
-                    FreeCAD.Console.PrintMessage(f"Added property {var}\n")
+                    FreeCAD.Console.PrintMessage(f'DynamicData: Added property {var}\n')
                 dd.setExpression(var,f"{dd.Label}.<<{dd.Label}>>.{var}List[<<{dd.Label}>>.{name}-1]")
 
         def getConfigurationFromObject(self):
@@ -833,8 +833,10 @@ class DynamicDataEditEnumerationCommandClass(object):
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         if not self.props:
-            FreeCAD.Console.PrintError("DynamicData: Error, no property of type \
-Enumeration to edit.  Create one first, and then try again.\n")
+            FreeCAD.Console.PrintError(
+                'DynamicData: '
+                'Error, no property of type Enumeration to edit.  '
+                'Create one first, and then try again.\n')
             return
 
         dlg = self.DynamicDataEnumerationDlg(self.obj, self.props) #the dd object
@@ -1022,7 +1024,7 @@ class DynamicDataAddPropertyCommandClass(object):
         doc = FreeCAD.ActiveDocument
         obj = self.obj
         if not 'FeaturePython' in str(obj.TypeId):
-            FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
+            FreeCAD.Console.PrintError('DynamicData: Cannot add property to non-FeaturePython objects.\n')
             return
         doc.openTransaction("dd Add Property")
         #add the property
@@ -1131,10 +1133,10 @@ class DynamicDataAddPropertyCommandClass(object):
                         if len(split[ii])>0:
                             vals.append(self.eval_expr(split[ii]))
                     except Exception as ex:
-                        FreeCAD.Console.PrintError(f"dd: {ex}\n")
+                        FreeCAD.Console.PrintError(f"DynamicData: {ex}\n")
                         vals.append(split[ii])
         if hasattr(obj,'dd'+self.propertyName):
-            FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
+            FreeCAD.Console.PrintError(f'DynamicData: Unable to add property: {propertyPrefix}{self.propertyName} because it already exists.\n')
             self.checkAddAnother(dlg)
             return
         p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
@@ -1148,7 +1150,7 @@ class DynamicDataAddPropertyCommandClass(object):
                     self.checkAddAnother(dlg)
                     return
                 except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set expression: {val[1:]}\n')
                     doc.commitTransaction()
                     self.checkAddAnother(dlg)
                     return
@@ -1158,18 +1160,18 @@ class DynamicDataAddPropertyCommandClass(object):
                 #try:
                 #    atr = val
                 #except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
+                FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set value: {val}\n')
             try:
                 if item == "Enumeration":
                     list2 = split[3:]
                     try:
                         setattr(p,'dd'+self.propertyName, list2)
                     except Exception:
-                        FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
+                        FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set list enumeration: {list}\n')
                 else:
                     setattr(p,'dd'+self.propertyName,atr)
             except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
+                FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set attribute: {val}\n')
         elif hasVal and len(vals)>0:
             if listval:
                 try:
@@ -1180,14 +1182,14 @@ class DynamicDataAddPropertyCommandClass(object):
                     self.checkAddAnother(dlg)
                     return
                 except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set expression: {listval[1:]}\n')
                     doc.commitTransaction()
                     self.checkAddAnother(dlg)
                     return
             try:
                 setattr(p,'dd'+self.propertyName,list(vals))
             except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
+                FreeCAD.Console.PrintWarning(f'DynamicData: Unable to set list attribute: {vals}\n')
         obj.touch()
         doc.recompute()
 
@@ -1285,7 +1287,7 @@ class DynamicDataAddPropertyCommandClass(object):
                 else:
                     return func(float(opstring))
             else:
-                App.Console.PrintError('ast evaluator: unsupported token: '+node.id+'\n')
+                App.Console.PrintError(f'DynamicData: AST evaluator: unsupported token: {node.id}\n')
         else:
             raise TypeError(node)
 
@@ -1411,10 +1413,10 @@ Only works with dynamic properties"}
         window = FreeCADGui.getMainWindow()
         items = self.getGroups(obj)
         if not items:
-            FreeCAD.Console.PrintError(f"DynamicData::Error -- no groups of {obj.Label} may be renamed\n")
+            FreeCAD.Console.PrintError(f'DynamicData: Error -- no groups of {obj.Label} may be renamed\n')
             return
         if len(items)==0:
-            FreeCAD.Console.PrintMessage("DyanmicData: no properties.\n")
+            FreeCAD.Console.PrintMessage('DynamicData: No properties.\n')
             return
         items.insert(0,"<All groups>")
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool.\n\n\
@@ -1440,9 +1442,9 @@ Select source group to pick properties from, or all groups to pick from all.\n',
                 for prop in props:
                     try:
                         obj.setGroupOfProperty(prop,newName)
-                        FreeCAD.Console.PrintMessage(f"Property {prop} move to group {newName}\n")
+                        FreeCAD.Console.PrintMessage(f'DynamicData: Property {prop} move to group {newName}\n')
                     except Exception as ex:
-                        FreeCAD.Console.PrintError(f"Cannot move {prop}, only dynamic properties are supported\n")
+                        FreeCAD.Console.PrintError(f'DynamicData: Cannot move {prop}, only dynamic properties are supported\n')
                 doc.commitTransaction()
         if obj in selection:
             FreeCADGui.Selection.removeSelection(obj)
@@ -1491,7 +1493,6 @@ class DynamicDataRenamePropertyCommandClass(object):
                 return []
             return item
         else:
-            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
 
     def isDynamic(self, obj, prop):
         if prop == "DynamicData":
@@ -1505,6 +1506,7 @@ class DynamicDataRenamePropertyCommandClass(object):
         except:
             isSo = False
         return isSo
+            FreeCAD.Console.PrintError(f'DynamicData: {obj.Label} has no dynamic properties\n')
 
     def getOutExpr(self, obj, prop):
         """get the expression set for this property, if any"""
@@ -1551,7 +1553,7 @@ class DynamicDataRenamePropertyCommandClass(object):
         if not newName:
             return
         if not "dd" in newName[:2] or bool(newName[2:3] < "A" or newName[2:3] > "Z"):
-            FreeCAD.Console.PrintWarning("Not all dd commands will function properly if you don't follow the dd naming convention of ddUppercase\n")
+            FreeCAD.Console.PrintWarning(f"DynamicData: Not all DynamicData commands will function properly if you don't follow the DynamicData naming convention of {propertyPrefix}Uppercase\n")
         inExprs = self.getInExprs(obj, prop)
         typeId = obj.getTypeIdOfProperty(prop)
         docu = obj.getDocumentationOfProperty(prop)
@@ -1615,7 +1617,6 @@ class DynamicDataSetTooltipCommandClass(object):
                 return []
             return item
         else:
-            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
 
     def isDynamic(self, obj, prop):
         if prop == "DynamicData":
@@ -1629,6 +1630,7 @@ class DynamicDataSetTooltipCommandClass(object):
         except:
             isSo = False
         return isSo
+            FreeCAD.Console.PrintError(f'DynamicData: {obj.Label} has no dynamic properties\n')
 
     def getNewTooltip(self, obj, prop):
         """get from user new tooltip for this property"""
@@ -1728,7 +1730,7 @@ class DynamicDataRemovePropertyCommandClass(object):
             try:
                 obj.removeProperty(item)
             except Exception as ex:
-                FreeCAD.Console.PrintError(f"DynamicData::Exception cannot remove {item}\n{ex}")
+                FreeCAD.Console.PrintError(f'DynamicData::Exception cannot remove {item}\n{ex}')
         obj.Document.commitTransaction()
         if obj in selection:
             FreeCADGui.Selection.removeSelection(obj)
@@ -1791,15 +1793,15 @@ class DynamicDataImportAliasesCommandClass(object):
                 if not dd:
                     dd = obj
                 else:
-                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
+                    FreeCAD.Console.PrintMessage('DynamicData: Can only have one DynamicData object selected for this operation\n')
                     return
         if len(sheets)==0:
             #todo: handle no selected spreadsheets.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected spreadsheet(s)\n")
+            FreeCAD.Console.PrintMessage('DynamicData: No selected spreadsheet(s)\n')
             return
         if not dd:
             #todo: handle no dd object selected.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
+            FreeCAD.Console.PrintMessage('DynamicData: No selected dd object\n')
             return
 
         #sanity check
@@ -1845,7 +1847,7 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                 if not line[idx:idx2][-1]=="_": #skip aliases that end in an underscore
                     aliases.append(line[idx:idx2])
                 else:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping alias \"'+line[idx:idx2]+'\" because it ends in an underscore (_).\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: skipping alias "{line[idx:idx2]}" because it ends in an underscore (_).\n')
 
 
             for alias in aliases:
@@ -1871,17 +1873,17 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     propertyType='String'
                     userString=atr
                 else:
-                    FreeCAD.Console.PrintError('DynamicData: please report: unknown property type error importing alias from spreadsheet ('+str(type(atr))+')\n')
+                    FreeCAD.Console.PrintError(f'DynamicData: please report: unknown property type error importing alias from spreadsheet ({type(atr)})\n')
                     continue
 
                 name = 'dd'+sheet.Label+'_'+cap(alias)
                 if not hasattr(dd,name): #avoid adding the same property again
                     dd.addProperty('App::Property'+propertyType,name,'Imported from: '+sheet.Label, propertyType)
                     setattr(dd,name,userString)
-                    FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object, resetting spreadsheet: '+sheet.Label+'.'+alias+' to point to '+dd.Label+'.'+name+'\n')
                     sheet.set(alias,str('='+dd.Label+'.'+name))
+                    FreeCAD.Console.PrintMessage(f'DynamicData: adding property: {name} to DynamicData object, resetting spreadsheet: {sheet.Label}.{alias} to point to {dd.Label}.{name}\n')
                 else:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: skipping existing property: {name}\n')
                 continue
 
         FreeCAD.ActiveDocument.commitTransaction()
@@ -1955,15 +1957,15 @@ class DynamicDataImportNamedConstraintsCommandClass(object):
                 if not dd:
                     dd = obj
                 else:
-                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
+                    FreeCAD.Console.PrintMessage('DynamicData: Can only have one DynamicData object selected for this operation\n')
                     return
         if len(sketches)==0:
             #todo: handle no selected sketches.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected sketch(es)\n")
+            FreeCAD.Console.PrintMessage('DynamicData: No selected sketch(es)\n')
             return
         if not dd:
             #todo: handle no dd object selected.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
+            FreeCAD.Console.PrintMessage('DynamicData: No selected DynamicData object\n')
             return
 
         #sanity check
@@ -1996,17 +1998,17 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
                 if not con.Name or con.Name[-1:]=='_': #ignore constraint names ending in underscore
                     continue
                 if ' ' in con.Name:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Spaces invalid in constraint names.\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: skipping "{con.Name}" Spaces invalid in constraint names.\n')
                     continue
                 if not con.Driving:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Reference constraints skipped.\n')
+                    FreeCAD.Console.PrintWarning(f'DynamicData: skipping "{con.Name}" Reference constraints skipped.\n')
                     continue
                 constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch})
                 #try:
                 #    pass
                 #    #sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
                 #except:
-                #    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
+                #    FreeCAD.Console.PrintError(f'DynamicData: Exception setting expression for "{con.Name}" (skipping)\n')
                 #    constraints.pop() #remove the constraint that gave the error
         if len(constraints)==0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
@@ -2022,11 +2024,11 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
             if not hasattr(dd,name): #avoid adding the same property again
                 dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
                 setattr(dd,name,value)
-                FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object\n')
+                FreeCAD.Console.PrintMessage(f'DynamicData: adding property: {name} to DynamicData object\n')
                 sketch = con['sketch']
                 sketch.setExpression('Constraints.'+con['constraintName'], dd.Label+'.dd'+sketch.Label+cap(con['constraintName']))
             else:
-                FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+                FreeCAD.Console.PrintWarning(f'DynamicData: skipping existing property:{name}\n')
         FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
         return
@@ -2222,14 +2224,14 @@ Enter the name for the new property\n',text=name, flags=windowFlags)
                     toObj.addProperty('App::Property'+propertyType.replace('(ViewObject)',''), name,'Copied from: '+fromObj.Label,'['+propertyType+']')
                     toProperty = {'name':name,'type':propertyType,'value':property['value']}
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception trying to add property ('+property['name']+')\n')
+                    FreeCAD.Console.PrintError(f'DynamicData: Exception trying to add property ({property["name"]})\n')
                 try:
                     if propertyType=='String':
                         setattr(toObj,name,str(property['value']))
                     else:
                         setattr(toObj,name,property['value'])
                 except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception trying to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
+                    FreeCAD.Console.PrintError(f'DynamicData: Exception trying to set property value ({property["value"]})\nCould be a property type mismatch.\n')
                 doc.commitTransaction()
                 doc.recompute()
                 self.makeParametric(fromObj, fromProperty, toObj, toProperty)
@@ -2287,12 +2289,12 @@ Enter the name for the new property\n',text=name, flags=windowFlags)
                     else:
                         setattr(toObj,toProperty['name'],fromProperty['value'])
                 except:
-                    FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to set property value ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+                    FreeCAD.Console.PrintError(
+                        f'DynamicData: Exception trying to set property value ({fromProperty["value"]})\n'
+                        f'Could be a property type mismatch\n'
+                        f'\n'
+                        f'From Object: {fromObj.Label}, From Property: {fromProperty["name"]}, type: {fromProperty["type"]}\n'
+                        f'To Object: {toObj.Label}, To Property: {toProperty["name"]}, type: {toProperty["type"]}\n')
                 doc.commitTransaction()
                 doc.recompute()
                 self.makeParametric(fromObj, fromProperty, toObj, toProperty)
@@ -2352,12 +2354,12 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                     toObj.setExpression(toProperty['name']+'.y', None)
                     toObj.setExpression(toProperty['name']+'.z', None)
             except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+                FreeCAD.Console.PrintError(
+                    f'DynamicData: Exception trying to parametrically link ({fromProperty["value"]})\n'
+                    f'Could be a property type mismatch\n'
+                    f'\n'
+                    f'From Object: {fromObj.Label}, From Property: {fromProperty["name"]}, type: {fromProperty["type"]}\n'
+                    f'To Object: {toObj.Label}, To Property: {toProperty["name"]}, type: {toProperty["type"]}\n')
             return
 
         #handle placement types
@@ -2380,12 +2382,12 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                     toObj.setExpression(toProperty['name']+'.Rotation.Axis.y', None)
                     toObj.setExpression(toProperty['name']+'.Rotation.Axis.z', None)
             except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+                FreeCAD.Console.PrintError(
+                    f'DynamicData: Exception trying to parametrically link ({fromProperty["value"]})\n'
+                    f'Could be a property type mismatch\n'
+                    f'\n'
+                    f'From Object: {fromObj.Label}, From Property: {fromProperty["name"]}, type: {fromProperty["type"]}\n'
+                    f'To Object: {toObj.Label}, To Property: {toProperty["name"]}, type: {toProperty["type"]}\n')
             return
 
         #handle all other general types
@@ -2395,12 +2397,12 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             else: #break the link
                 toObj.setExpression(toProperty['name'], None)
         except:
-            FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            FreeCAD.Console.PrintError(
+                f'DynamicData: Exception trying to parametrically link ({fromProperty["value"]})\n'
+                f'Could be a property type mismatch\n'
+                f'\n'
+                f'From Object: {fromObj.Label}, From Property: {fromProperty["name"]}, type: {fromProperty["type"]}\n'
+                f'To Object: {toObj.Label}, To Property: {toProperty["name"]}, type: {toProperty["type"]}\n')
         return
 
     def getProperty(self,obj,msg='',allowMultiple=False,matchType=''):
