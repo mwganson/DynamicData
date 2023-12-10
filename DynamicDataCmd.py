@@ -1371,9 +1371,30 @@ class SelectObjects(QtGui.QDialog):
 
 ########################################################################################
 # Rename group
+class _DynamicDataPropertyCommandClass:
+
+    def _getProperties(self,obj):
+        propertyPrefix = obj.getPropertyByName('PropertyPrefix')
+        cell_regex = re.compile(f'^{propertyPrefix}.*$') #all we are interested in will begin with 'dd'
+        return [p for p in self._getDynamicProperties if cell_regex.search(p)]
+
+    def _getDynamicProperties(self, obj):
+        return [p for p in obj.PropertiesList if self._isDynamic(obj, p)]
+
+    def _isDynamic(self, obj, prop):
+        if prop in ('DynamicData', 'PropertyPrefix'):
+            return
+        oldGroup = obj.getGroupOfProperty(prop)
+        try:
+            obj.setGroupOfProperty(prop, 'test')
+            obj.setGroupOfProperty(prop, oldGroup)
+        except:
+            return False
+        else:
+            return True
 
 
-class DynamicDataMoveToNewGroupCommandClass(object):
+class DynamicDataMoveToNewGroupCommandClass(_DynamicDataPropertyCommandClass):
     """Move properties to new group"""
 
     def GetResources(self):
@@ -1393,21 +1414,8 @@ Only works with dynamic properties"}
                 groups.append(group)
         return groups
 
-    def isDynamic(self,obj,prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop,"test")
-            obj.setGroupOfProperty(prop,oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
-
     def getPropertiesOfGroup(self,obj,group):
-        props = [p for p in obj.PropertiesList if bool(obj.getGroupOfProperty(p) == group or group == "<All groups>") and self.isDynamic(obj,p)]
+        props = [p for p in self._getDynamicProperties(obj) if obj.getGroupOfProperty(p) == group or group == "<All groups>"]
         if props:
             dlg = SelectObjects(props,"Select properties to move to new group")
             dlg.all.setCheckState(QtCore.Qt.Checked)
@@ -1478,7 +1486,7 @@ Select source group to pick properties from, or all groups to pick from all.\n',
 ########################################################################################
 # Rename a custom dynamic property
 
-class DynamicDataRenamePropertyCommandClass(object):
+class DynamicDataRenamePropertyCommandClass(_DynamicDataPropertyCommandClass):
     """Rename Property Command"""
     def __init__(self):
         self.obj = None
@@ -1489,12 +1497,9 @@ class DynamicDataRenamePropertyCommandClass(object):
                 'Accel'   : "Ctrl+Shift+D,N",
                 'ToolTip' : "Rename a dynamic property"}
 
-    def getDynamicProperties(self, obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
-        return props
 
     def getProperty(self,obj):
-        props = self.getDynamicProperties(obj)
+        props = self._getDynamicProperties(obj)
         if props:
             items = props
             if len(items) == 1:
@@ -1504,19 +1509,6 @@ class DynamicDataRenamePropertyCommandClass(object):
                 return []
             return item
         else:
-
-    def isDynamic(self, obj, prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop, "test")
-            obj.setGroupOfProperty(prop, oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
             FreeCAD.Console.PrintError(f'DynamicData: {obj.Label} has no dynamic properties\n')
 
     def getOutExpr(self, obj, prop):
@@ -1602,7 +1594,7 @@ class DynamicDataRenamePropertyCommandClass(object):
 ########################################################################################
 # Set the tooltip of a dynamic property
 
-class DynamicDataSetTooltipCommandClass(object):
+class DynamicDataSetTooltipCommandClass(_DynamicDataPropertyCommandClass):
     """Set Tooltip Command"""
     def __init__(self):
         self.obj = None
@@ -1613,12 +1605,9 @@ class DynamicDataSetTooltipCommandClass(object):
                 'Accel'   : "Ctrl+Shift+D,T",
                 'ToolTip' : "Set the tooltip of a dynamic property"}
 
-    def getDynamicProperties(self, obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
-        return props
 
     def getProperty(self,obj):
-        props = self.getDynamicProperties(obj)
+        props = self._getDynamicProperties(obj)
         if props:
             items = props
             if len(items) == 1:
@@ -1628,19 +1617,6 @@ class DynamicDataSetTooltipCommandClass(object):
                 return []
             return item
         else:
-
-    def isDynamic(self, obj, prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop, "test")
-            obj.setGroupOfProperty(prop, oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
             FreeCAD.Console.PrintError(f'DynamicData: {obj.Label} has no dynamic properties\n')
 
     def getNewTooltip(self, obj, prop):
@@ -1690,8 +1666,7 @@ class DynamicDataSetTooltipCommandClass(object):
 ########################################################################################
 # Remove custom dynamic property
 
-
-class DynamicDataRemovePropertyCommandClass(object):
+class DynamicDataRemovePropertyCommandClass(_DynamicDataPropertyCommandClass):
     """Remove Property Command"""
 
     def __init__(self):
@@ -1704,7 +1679,7 @@ class DynamicDataRemovePropertyCommandClass(object):
                 'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        props = self._getDynamicProperties(obj)
         dlg = None
         if props:
             dlg = SelectObjects(props,"Select dynamic properties to remove")
@@ -1713,19 +1688,6 @@ class DynamicDataRemovePropertyCommandClass(object):
             if not ok:
                 return []
         return dlg.selected if dlg else []
-
-    def isDynamic(self,obj,prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop,"test")
-            obj.setGroupOfProperty(prop,oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
@@ -1768,17 +1730,11 @@ class DynamicDataRemovePropertyCommandClass(object):
 # Import aliases from spreadsheet
 
 
-class DynamicDataImportAliasesCommandClass(object):
+class DynamicDataImportAliasesCommandClass(_DynamicDataPropertyCommandClass):
     """Import Aliases Command"""
 
     def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
+        return self._getProperties(obj)
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg'),
@@ -1934,17 +1890,11 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
 # Import named constraints from sketch
 
 
-class DynamicDataImportNamedConstraintsCommandClass(object):
+class DynamicDataImportNamedConstraintsCommandClass(_DynamicDataPropertyCommandClass):
     """Import Named Constraints Command"""
 
     def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
+        return self._getProperties(obj)
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
@@ -2073,17 +2023,11 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
 # Copy Property To and/or From dd <--> other object
 
 
-class DynamicDataCopyPropertyCommandClass(object):
+class DynamicDataCopyPropertyCommandClass(_DynamicDataPropertyCommandClass):
     """Copy Property Command"""
 
     def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
+        return self._getProperties(obj)
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg'),
