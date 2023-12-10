@@ -1692,9 +1692,12 @@ class DynamicDataRemovePropertyCommandClass(_DynamicDataPropertyCommandClass):
             dlg = SelectObjects(props,"Select dynamic properties to remove")
             dlg.all.setCheckState(QtCore.Qt.Unchecked)
             ok = dlg.exec_()
-            if not ok:
+            if ok:
+                return dlg.selected
+            else:
                 return []
-        return dlg.selected if dlg else []
+        else:
+            return []
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
