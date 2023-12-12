@@ -3,7 +3,7 @@
 #
 #  DynamicDataCmd.py
 #
-#  Copyright 2018-2019 Mark Ganson <TheMarkster> mwganson at gmail
+#  Copyright 2018-2023 Mark Ganson <TheMarkster> mwganson at gmail
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.11.12"
-__version__ = "2.54"
-version = 2.54
+__date__    = "2023.12.12"
+__version__ = "2.55"
+version = 2.55
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -62,88 +62,203 @@ def initialize():
     Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
     Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
-propertyTypes =[
-    "Acceleration",
-    "Angle",
-    "Area",
-    "Bool",
-    "Color",
-    "Direction",
-    "Distance",
-    "Enumeration",
-    "File",
-    "FileIncluded",
-    "Float",
-    "FloatConstraint",
-    "FloatList",
-    "Font",
-    "Force",
-    "Integer",
-    "IntegerConstraint",
-    "IntegerList",
-    "Length",
-    "Link",
-    "LinkChild",
-    "LinkGlobal",
-    "LinkList",
-    "LinkListChild",
-    "LinkListGlobal",
-    "LinkSubList",
-#    "Material",
-    "MaterialList",
-    "Matrix",
-    "Path",
-    "Percent",
-    "Placement",
-    "PlacementLink",
-    "Position",
-    "Precision",
-    "Pressure",
-    "Quantity",
-    "QuantityConstraint",
-    "Speed",
-    "String",
-    "StringList",
-    "Vector",
-    "VectorList",
-    "VectorDistance",
-    "Volume"]
+class DynamicDataBaseCommandClass:
+    """Base class for all commands to provide some common code"""
+    #select objects dialog class
+    class SelectObjects(QtGui.QDialog):
+        def __init__(self, objects, label=""):
+            QtGui.QDialog.__init__(self)
+            scrollContents = QtGui.QWidget()
+            scrollingLayout = QtGui.QVBoxLayout(self)
+            scrollContents.setLayout(scrollingLayout)
+            scrollArea = QtGui.QScrollArea()
+            scrollArea.setVerticalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOn)
+            scrollArea.setHorizontalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOff)
+            scrollArea.setWidgetResizable(True)
+            scrollArea.setWidget(scrollContents)
+            self.signalsBlocked = False
 
-nonLinkableTypes=[ #cannot be linked with setExpresion()
-    "Bool",
-    "Color",
-    "Enumeration",
-    "File",
-    "FileIncluded",
-    "FloatList",
-    "Font",
-    "IntegerList",
-    "Link",
-    "LinkChild",
-    "LinkGlobal",
-    "LinkList",
-    "LinkListChild",
-    "LinkListGlobal",
-    "LinkSubList",
-    #"Material",
-    "MaterialList",
-    "Matrix",
-    "Path",
-    "PlacementLink",
-    "String",
-    "StringList",
-    "VectorList"]
+            vBoxLayout = QtGui.QVBoxLayout(self)
+            vBoxLayout.addWidget(QtGui.QLabel(label))
+            self.all = QtGui.QCheckBox("All")
+            self.all.stateChanged.connect(self.allStateChanged)
+            vBoxLayout.addWidget(self.all)
+            vBoxLayout.addWidget(scrollArea)
+            self.setLayout(vBoxLayout)
+            buttons = QtGui.QDialogButtonBox(
+                QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
+                QtCore.Qt.Horizontal, self)
+            buttons.accepted.connect(self.accept)
+            buttons.rejected.connect(self.reject)
+            self.checkBoxes = []
+            self.selected = []
+            for ii,object in enumerate(objects):
+                self.checkBoxes.append(QtGui.QCheckBox(object))
+                self.checkBoxes[-1].setCheckState(self.all.checkState())
+                self.checkBoxes[-1].stateChanged.connect(self.checkStateChanged)
+                scrollingLayout.addWidget(self.checkBoxes[-1])
+            vBoxLayout.addWidget(buttons)
 
-xyzTypes = [#x,y,z elements must be linked separately
-    "Direction",
-    "Position",
-    "Vector",
-    "VectorDistance"]
+        def checkStateChanged(self, arg):
+            if not arg:
+                self.signalsBlocked = True
+                self.all.setCheckState(QtCore.Qt.Unchecked)
+                self.signalsBlocked = False
+
+        def allStateChanged(self, arg):
+            if self.signalsBlocked:
+                return
+            self.checkAll(self.all.checkState())
+
+        def checkAll(self, state):
+            for cb in self.checkBoxes:
+                cb.setCheckState(state)
+
+        def accept(self):
+            self.selected = []
+            for cb in self.checkBoxes:
+                if cb.checkState():
+                    self.selected.append(cb.text())
+            super().accept()
+
+    @property
+    def PropertyTypes(self):
+         return [
+            "Acceleration",
+            "Angle",
+            "Area",
+            "Bool",
+            "Color",
+            "Direction",
+            "Distance",
+            "Enumeration",
+            "File",
+            "FileIncluded",
+            "Float",
+            "FloatConstraint",
+            "FloatList",
+            "Font",
+            "Force",
+            "Integer",
+            "IntegerConstraint",
+            "IntegerList",
+            "Length",
+            "Link",
+            "LinkChild",
+            "LinkGlobal",
+            "LinkList",
+            "LinkListChild",
+            "LinkListGlobal",
+            "LinkSubList",
+            "Material",
+            "MaterialList",
+            "Matrix",
+            "Path",
+            "Percent",
+            "Placement",
+            "PlacementLink",
+            "Position",
+            "Precision",
+            "Pressure",
+            "Quantity",
+            "QuantityConstraint",
+            "Rotation",
+            "Speed",
+            "String",
+            "StringList",
+            "Vector",
+            "VectorList",
+            "VectorDistance",
+            "Volume"]
+
+    @property
+    def NonLinkableTypes(self):
+        return [ #cannot be linked with setExpresion()
+            "Bool",
+            "Color",
+            "Enumeration",
+            "File",
+            "FileIncluded",
+            "FloatList",
+            "Font",
+            "IntegerList",
+            "Link",
+            "LinkChild",
+            "LinkGlobal",
+            "LinkList",
+            "LinkListChild",
+            "LinkListGlobal",
+            "LinkSubList",
+            "Material",
+            "MaterialList",
+            "Matrix",
+            "Path",
+            "PlacementLink",
+            "String",
+            "StringList",
+            "VectorList"]
+
+    @property
+    def VectorTypes(self):
+        return [#x,y,z elements must be linked separately
+            "Direction",
+            "Position",
+            "Vector",
+            "VectorDistance"]
+
+    def getSelectedObjects(self, objs, label="", checkAll=True):
+        """opens a dialog with objs (strings) in a checkboxed list, returns list of selected"""
+        if objs:
+            dlg = DynamicDataBaseCommandClass.SelectObjects(objs,label)
+            if checkAll:
+                dlg.all.setCheckState(QtCore.Qt.Checked)
+            else:
+                dlg.all.setCheckState(QtCore.Qt.Unchecked)
+            ok = dlg.exec_()
+            if not ok:
+                return []
+            return dlg.selected
+        return []
+
+    def getDynamicProperties(self, obj):
+        """get the list of the dynamic properties of obj"""
+        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        return props
+
+    def getGroups(self,obj,skipList=[]):
+        """get the groups of obj, skipping those in skipList"""
+        props = [p for p in obj.PropertiesList if obj.getPropertyStatus(p) == [21]]
+        groups = []
+        for prop in props:
+            group = obj.getGroupOfProperty(prop)
+            if group and not group in groups and not group in skipList:
+                groups.append(group)
+        return groups
+
+    def isDynamic(self,obj,prop):
+        """checks whether prop is a dynamic property and not a built-in property
+        of obj"""
+        if prop == "DynamicData":
+            return False
+        isSo = False
+        try:
+            oldGroup = obj.getGroupOfProperty(prop)
+            obj.setGroupOfProperty(prop,"test")
+            obj.setGroupOfProperty(prop,oldGroup)
+            isSo = True
+        except:
+            isSo = False
+        return isSo
+
+    def isDDObject(self, obj):
+        """checks if this is a DynamicData object"""
+        return hasattr(obj, "DynamicData")
+
 
 #######################################################################################
 # Keep Toolbar active even after leaving workbench
 
-class DynamicDataSettingsCommandClass(object):
+class DynamicDataSettingsCommandClass(DynamicDataBaseCommandClass):
     """Settings, currently only whether to keep toolbar after leaving workbench"""
     global mostRecentTypes
 
@@ -198,7 +313,7 @@ class DynamicDataSettingsCommandClass(object):
 ####################################################################################
 # Create the dynamic data container object
 
-class DynamicDataCreateObjectCommandClass(object):
+class DynamicDataCreateObjectCommandClass(DynamicDataBaseCommandClass):
     """Create Object command"""
 
     def GetResources(self):
@@ -243,7 +358,7 @@ class DynamicDataCreateObjectCommandClass(object):
 ####################################################################################
 # Create or edit an existing configuration
 
-class DynamicDataCreateConfigurationCommandClass(object):
+class DynamicDataCreateConfigurationCommandClass(DynamicDataBaseCommandClass):
     """Create or edit a configuration command"""
     class DynamicDataConfigurationDlg(QtGui.QDialog):
         def __init__(self,dd):
@@ -726,7 +841,7 @@ you can use Undo to revert all your changes to the selected object.
 ####################################################################################
 # Edit an existing Enumeration property
 
-class DynamicDataEditEnumerationCommandClass(object):
+class DynamicDataEditEnumerationCommandClass(DynamicDataBaseCommandClass):
     """Edit Enumeration command"""
 
     class DynamicDataEnumerationDlg(QtGui.QDialog):
@@ -998,16 +1113,13 @@ class MultiTextInput(QtGui.QDialog):
 # Add a dynamic property to the object
 
 
-class DynamicDataAddPropertyCommandClass(object):
+class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
     """Add Property Command"""
     global mostRecentTypes
     global mostRecentTypesLength
 
     def __init__(self):
         self.obj = None
-
-    def getPropertyTypes(self):
-        return propertyTypes
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg'),
@@ -1027,7 +1139,7 @@ class DynamicDataAddPropertyCommandClass(object):
         doc.openTransaction("dd Add Property")
         #add the property
         #window = QtGui.QApplication.activeWindow()
-        items = self.getPropertyTypes()
+        items = self.PropertyTypes
         recent = []
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         mostRecentTypesLength = pg.GetInt('mruLength',5)
@@ -1302,65 +1414,12 @@ class DynamicDataAddPropertyCommandClass(object):
         """
         return self.eval_this(ast.parse(expr, mode='eval').body)
 
-
-
 #Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
-########################################################################################
-#select objects dialog class
-
-class SelectObjects(QtGui.QDialog):
-    def __init__(self, objects, label=""):
-        QtGui.QDialog.__init__(self)
-        scrollContents = QtGui.QWidget()
-        scrollingLayout = QtGui.QVBoxLayout(self)
-        scrollContents.setLayout(scrollingLayout)
-        scrollArea = QtGui.QScrollArea()
-        scrollArea.setVerticalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOn)
-        scrollArea.setHorizontalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOff)
-        scrollArea.setWidgetResizable(True)
-        scrollArea.setWidget(scrollContents)
-
-        vBoxLayout = QtGui.QVBoxLayout(self)
-        vBoxLayout.addWidget(QtGui.QLabel(label))
-        self.all = QtGui.QCheckBox("All")
-        #self.all.setCheckState(QtCore.Qt.Checked) #set by caller
-        self.all.stateChanged.connect(self.allStateChanged)
-        vBoxLayout.addWidget(self.all)
-        vBoxLayout.addWidget(scrollArea)
-        self.setLayout(vBoxLayout)
-        buttons = QtGui.QDialogButtonBox(
-            QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
-            QtCore.Qt.Horizontal, self)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        self.checkBoxes = []
-        self.selected = []
-        for ii,object in enumerate(objects):
-            self.checkBoxes.append(QtGui.QCheckBox(object))
-            self.checkBoxes[-1].setCheckState(self.all.checkState())
-            scrollingLayout.addWidget(self.checkBoxes[-1])
-        vBoxLayout.addWidget(buttons)
-
-    def allStateChanged(self, arg):
-        self.checkAll(self.all.checkState())
-
-    def checkAll(self, state):
-        for cb in self.checkBoxes:
-            cb.setCheckState(state)
-
-    def accept(self):
-        self.selected = []
-        for cb in self.checkBoxes:
-            if cb.checkState():
-                self.selected.append(cb.text())
-        super().accept()
-
 
 ########################################################################################
 # Rename group
 
-
-class DynamicDataMoveToNewGroupCommandClass(object):
+class DynamicDataMoveToNewGroupCommandClass(DynamicDataBaseCommandClass):
     """Move properties to new group"""
 
     def GetResources(self):
@@ -1371,37 +1430,9 @@ class DynamicDataMoveToNewGroupCommandClass(object):
 This effectively renames a group if you move all properties.\n\
 Only works with dynamic properties"}
 
-    def getGroups(self,obj,skipList=[]):
-        props = [p for p in obj.PropertiesList if obj.getPropertyStatus(p) == [21]]
-        groups = []
-        for prop in props:
-            group = obj.getGroupOfProperty(prop)
-            if group and not group in groups and not group in skipList:
-                groups.append(group)
-        return groups
-
-    def isDynamic(self,obj,prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop,"test")
-            obj.setGroupOfProperty(prop,oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
-
     def getPropertiesOfGroup(self,obj,group):
         props = [p for p in obj.PropertiesList if bool(obj.getGroupOfProperty(p) == group or group == "<All groups>") and self.isDynamic(obj,p)]
-        if props:
-            dlg = SelectObjects(props,"Select properties to move to new group")
-            dlg.all.setCheckState(QtCore.Qt.Checked)
-            ok = dlg.exec_()
-            if not ok:
-                return []
-        return dlg.selected
+        return self.getSelectedObjects(props, "Select properties to move to new group", checkAll=True)
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
@@ -1465,7 +1496,7 @@ Select source group to pick properties from, or all groups to pick from all.\n',
 ########################################################################################
 # Rename a custom dynamic property
 
-class DynamicDataRenamePropertyCommandClass(object):
+class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
     """Rename Property Command"""
     def __init__(self):
         self.obj = None
@@ -1475,10 +1506,6 @@ class DynamicDataRenamePropertyCommandClass(object):
                 'MenuText': "Re&name Property",
                 'Accel'   : "Ctrl+Shift+D,N",
                 'ToolTip' : "Rename a dynamic property"}
-
-    def getDynamicProperties(self, obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
-        return props
 
     def getProperty(self,obj):
         props = self.getDynamicProperties(obj)
@@ -1491,20 +1518,7 @@ class DynamicDataRenamePropertyCommandClass(object):
                 return []
             return item
         else:
-            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
-
-    def isDynamic(self, obj, prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop, "test")
-            obj.setGroupOfProperty(prop, oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
+            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties to rename\n")
 
     def getOutExpr(self, obj, prop):
         """get the expression set for this property, if any"""
@@ -1589,7 +1603,7 @@ class DynamicDataRenamePropertyCommandClass(object):
 ########################################################################################
 # Set the tooltip of a dynamic property
 
-class DynamicDataSetTooltipCommandClass(object):
+class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
     """Set Tooltip Command"""
     def __init__(self):
         self.obj = None
@@ -1599,10 +1613,6 @@ class DynamicDataSetTooltipCommandClass(object):
                 'MenuText': "Se&t Tooltip",
                 'Accel'   : "Ctrl+Shift+D,T",
                 'ToolTip' : "Set the tooltip of a dynamic property"}
-
-    def getDynamicProperties(self, obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
-        return props
 
     def getProperty(self,obj):
         props = self.getDynamicProperties(obj)
@@ -1615,20 +1625,7 @@ class DynamicDataSetTooltipCommandClass(object):
                 return []
             return item
         else:
-            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties\n")
-
-    def isDynamic(self, obj, prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop, "test")
-            obj.setGroupOfProperty(prop, oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
+            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties whose tooltips may be set\n")
 
     def getNewTooltip(self, obj, prop):
         """get from user new tooltip for this property"""
@@ -1678,7 +1675,7 @@ class DynamicDataSetTooltipCommandClass(object):
 # Remove custom dynamic property
 
 
-class DynamicDataRemovePropertyCommandClass(object):
+class DynamicDataRemovePropertyCommandClass(DynamicDataBaseCommandClass):
     """Remove Property Command"""
 
     def __init__(self):
@@ -1692,27 +1689,7 @@ class DynamicDataRemovePropertyCommandClass(object):
 
     def getProperties(self,obj):
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
-        dlg = None
-        if props:
-            dlg = SelectObjects(props,"Select dynamic properties to remove")
-            dlg.all.setCheckState(QtCore.Qt.Unchecked)
-            ok = dlg.exec_()
-            if not ok:
-                return []
-        return dlg.selected if dlg else []
-
-    def isDynamic(self,obj,prop):
-        if prop == "DynamicData":
-            return False
-        isSo = False
-        try:
-            oldGroup = obj.getGroupOfProperty(prop)
-            obj.setGroupOfProperty(prop,"test")
-            obj.setGroupOfProperty(prop,oldGroup)
-            isSo = True
-        except:
-            isSo = False
-        return isSo
+        return self.getSelectedObjects(props, "Select dynamic properties to remove", checkAll=False)
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
@@ -1755,27 +1732,15 @@ class DynamicDataRemovePropertyCommandClass(object):
 # Import aliases from spreadsheet
 
 
-class DynamicDataImportAliasesCommandClass(object):
+class DynamicDataImportAliasesCommandClass(DynamicDataBaseCommandClass):
     """Import Aliases Command"""
-
-    def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportAliases.svg'),
                 'MenuText': "&Import Aliases",
                 'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
-
     def Activated(self):
-
-
         sheets=[]
         dd = None
         doc = FreeCAD.ActiveDocument
@@ -1921,17 +1886,8 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
 # Import named constraints from sketch
 
 
-class DynamicDataImportNamedConstraintsCommandClass(object):
+class DynamicDataImportNamedConstraintsCommandClass(DynamicDataBaseCommandClass):
     """Import Named Constraints Command"""
-
-    def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
@@ -2060,17 +2016,8 @@ You should save your document before proceeding\n',items,0,False,windowFlags)
 # Copy Property To and/or From dd <--> other object
 
 
-class DynamicDataCopyPropertyCommandClass(object):
+class DynamicDataCopyPropertyCommandClass(DynamicDataBaseCommandClass):
     """Copy Property Command"""
-
-    def getProperties(self,obj):
-        cell_regex = re.compile('^dd.*$') #all we are interested in will begin with 'dd'
-        prop = []
-        for p in obj.PropertiesList:
-            if cell_regex.search(p):
-                prop.append(p)
-        return prop
-
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg'),
@@ -2312,7 +2259,7 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         set operation is when existing property value was changed in toObj"""
 
         #User might not want to do this, but we check to see if we can do it before asking
-        if toProperty['type'] in nonLinkableTypes:
+        if toProperty['type'] in self.NonLinkableTypes:
             return
         #ViewObject does not have setExpression(), so do not try to parametrically link
         if '(ViewObject)' in fromProperty['type'] or '(ViewObject)' in toProperty['type']:
@@ -2340,8 +2287,8 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             fromProperty = toProperty
             toProperty = tmpProp
 
-        #handle xyzTypes first
-        if fromProperty['type'] in xyzTypes:
+        #handle vector types first
+        if fromProperty['type'] in self.VectorTypes:
             try:
                 if not breakLink:
                     toObj.setExpression(toProperty['name']+'.x',fromObj.Name+'.'+fromProperty['name']+'.x')
@@ -2388,6 +2335,29 @@ From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '
 To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
             return
 
+        #handle rotation types
+        if fromProperty['type'] in 'Rotation':
+            try:
+                if not breakLink:
+                    toObj.setExpression(toProperty['name']+'.Angle',fromObj.Name+'.'+fromProperty['name']+'.Angle')
+                    toObj.setExpression(toProperty['name']+'.Axis.x',fromObj.Name+'.'+fromProperty['name']+'.Axis.x')
+                    toObj.setExpression(toProperty['name']+'.Axis.y',fromObj.Name+'.'+fromProperty['name']+'.Axis.y')
+                    toObj.setExpression(toProperty['name']+'.Axis.z',fromObj.Name+'.'+fromProperty['name']+'.Axis.z')
+                else: #break parametric link
+                    toObj.setExpression(toProperty['name']+'.Angle', None)
+                    toObj.setExpression(toProperty['name']+'.Axis.x', None)
+                    toObj.setExpression(toProperty['name']+'.Axis.y', None)
+                    toObj.setExpression(toProperty['name']+'.Axis.z', None)
+            except:
+                FreeCAD.Console.PrintError(\
+'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
+Could be a property type mismatch\n\
+\n\
+From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
+To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
+            return
+
+
         #handle all other general types
         try:
             if not breakLink:
@@ -2417,10 +2387,10 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                 continue
             p = getattr(obj,prop)
 #            strType = str(type(p))
-#            types = self.getPropertyTypes()
+#            types = self.PropertyTypes
 #            typeFound = False;
             typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
-            if typeId in self.getPropertyTypes():
+            if typeId in self.PropertyTypes:
                 available.append({'type':typeId,'value':p,'name':prop})
         if supportViewObjectProperties:
             viewPropertiesList = obj.ViewObject.PropertiesList
@@ -2429,10 +2399,10 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
                     continue
                 vp = getattr(obj.ViewObject,vprop)
                 strType = str(type(vp))
-                types = self.getPropertyTypes()
+                types = self.PropertyTypes
                 typeFound = False;
                 typeId = obj.ViewObject.getTypeIdOfProperty(vprop)[13:] #strip "App::Property" from beginning
-                if typeId in self.getPropertyTypes():
+                if typeId in self.PropertyTypes:
                     available.append({'type':'(ViewObject)'+typeId,'value':vp,'name':vprop})
 
         items=[]
@@ -2474,9 +2444,6 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         if not dd and not len(selection)==2:
             return False
         return True
-
-    def getPropertyTypes(self):
-        return propertyTypes
 
 
 #Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
