@@ -230,6 +230,9 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.12.12 (version 2.55)<br/>
+** support Rotation property types
+** refactor some code, adding a base command class from which the other command classes can inherit common functions (thanks to sphh for the idea)
 * 2023.11.13 (version 2.54)<br/>
 ** fix bug in configuration dialog where too many rows were being created <br/>
 ** set tab order correctly in configuration dialog, allow ctrl + tab to skip to next row<br/>
