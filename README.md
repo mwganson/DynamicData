@@ -230,9 +230,16 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.12.12 (version 2.56)<br/>
+** revamp sketch and spreadsheet imports
+** now imported aliases and constraints keep original names and don't get ddIffied
+** other changes: remove property, set tooltip, move/rename groups support non-dd objects, such as from Assembly4 or Path workbenches
+** sketch and spreadsheet imports can also be done with non-dd objects since now all objects can have dynamic properties
+** roadmap going forward --> rewrite copy/set commands, --> remove dd prefix from add property command
 * 2023.12.12 (version 2.55)<br/>
 ** support Rotation property types
 ** refactor some code, adding a base command class from which the other command classes can inherit common functions (thanks to sphh for the idea)
+** support Material property type (but since FreeCAD lacks a default editor these types are hidden -- use Show All in context menu to see, edit via python if you can work out how to do it
 * 2023.11.13 (version 2.54)<br/>
 ** fix bug in configuration dialog where too many rows were being created <br/>
 ** set tab order correctly in configuration dialog, allow ctrl + tab to skip to next row<br/>
