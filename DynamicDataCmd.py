@@ -27,8 +27,8 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2023.12.12"
-__version__ = "2.55"
-version = 2.55
+__version__ = "2.56"
+version = 2.56
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -45,22 +45,6 @@ uiPath = os.path.join( __dir__, 'Resources', 'ui' )
 
 keepToolbar = True
 windowFlags = QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint
-
-
-def initialize():
-
-    Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
-    Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
-    Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
-    Gui.addCommand("DynamicDataEditEnumeration",DynamicDataEditEnumerationCommandClass())
-    Gui.addCommand("DynamicDataCreateConfiguration", DynamicDataCreateConfigurationCommandClass())
-    Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
-    Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
-    Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
-    Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
-    Gui.addCommand("DynamicDataSetTooltip",DynamicDataSetTooltipCommandClass())
-    Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
-    Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
 class DynamicDataBaseCommandClass:
     """Base class for all commands to provide some common code"""
@@ -253,6 +237,33 @@ class DynamicDataBaseCommandClass:
     def isDDObject(self, obj):
         """checks if this is a DynamicData object"""
         return hasattr(obj, "DynamicData")
+
+    def isValidName(self, name):
+        return name == self.fixName(name)
+
+    def fixName(self, name):
+        """fixes a name so it can be a valid property name"""
+        pattern = re.compile(r'^\d') #can't begin with a number
+        pattern2 = re.compile(r'[^0-9a-zA-Z]') #no non-alphanumerics
+        REPLACEMENTS = {
+            " ": "_",
+            ".": "_",
+            "ä": "ae",
+            "ö": "oe",
+            "ü": "ue",
+            "Ä": "Ae",
+            "Ö": "Oe",
+            "Ü": "Ue",
+            "ß": "ss",
+            "'": ""
+        }
+        new_name = name
+        for k,v in REPLACEMENTS.items():
+            new_name = new_name.replace(k, v)
+        if pattern.match(new_name):
+            new_name = f"_{new_name}"
+        new_name = re.sub(pattern2, '_', new_name) #replace with _'s
+        return new_name
 
 
 #######################################################################################
@@ -1435,14 +1446,13 @@ Only works with dynamic properties"}
         return self.getSelectedObjects(props, "Select properties to move to new group", checkAll=True)
 
     def Activated(self):
-        doc = FreeCAD.ActiveDocument
+        doc = self.obj.Document
         selection = Gui.Selection.getSelection()
-        obj = self.obj
         #remove the property
         window = FreeCADGui.getMainWindow()
-        items = self.getGroups(obj)
+        items = self.getGroups(self.obj)
         if not items:
-            FreeCAD.Console.PrintError(f"DynamicData::Error -- no groups of {obj.Label} may be renamed\n")
+            FreeCAD.Console.PrintError(f"DynamicData::Error -- no groups of {self.obj.Label} may be renamed\n")
             return
         if len(items)==0:
             FreeCAD.Console.PrintMessage("DyanmicData: no properties.\n")
@@ -1450,15 +1460,16 @@ Only works with dynamic properties"}
         items.insert(0,"<All groups>")
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool.\n\n\
 This can be used to rename a group, by moving all properties to a new group.\n\
-Select source group to pick properties from, or all groups to pick from all.\n',items,0,False,windowFlags)
+Select source group to pick properties from, or all groups to pick from all.\n', items, 0, False, windowFlags)
         if not ok:
             return
         else:
-            props = self.getPropertiesOfGroup(obj,item)
+            props = self.getPropertiesOfGroup(self.obj, item)
             if props:
-                toGroup = self.getGroups(obj,[item])
+                toGroup = self.getGroups(self.obj,[item])
                 items2 = ["<New group>"] + toGroup
-                item2,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool\n\nSelect destination group\n',items2,0,False,windowFlags)
+                item2,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool\n\nSelect destination group\n'\
+                            ,items2, 0, False, windowFlags)
                 if not ok:
                     return
                 if item2 == items2[0]:
@@ -1470,14 +1481,15 @@ Select source group to pick properties from, or all groups to pick from all.\n',
                 doc.openTransaction("Move to new group")
                 for prop in props:
                     try:
-                        obj.setGroupOfProperty(prop,newName)
+                        self.obj.setGroupOfProperty(prop, newName)
                         FreeCAD.Console.PrintMessage(f"Property {prop} move to group {newName}\n")
                     except Exception as ex:
                         FreeCAD.Console.PrintError(f"Cannot move {prop}, only dynamic properties are supported\n")
                 doc.commitTransaction()
-        if obj in selection:
-            FreeCADGui.Selection.removeSelection(obj)
-            FreeCADGui.Selection.addSelection(obj)
+        #refresh property view
+        if self.obj in selection:
+            FreeCADGui.Selection.removeSelection(self.obj)
+            FreeCADGui.Selection.addSelection(self.obj)
         doc.recompute()
         return
 
@@ -1485,12 +1497,8 @@ Select source group to pick properties from, or all groups to pick from all.\n',
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+        if len(selection) == 1 and self.getDynamicProperties(selection[0]) and self.getGroups(selection[0]):
             self.obj = selection[0]
-            return True
-        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
-        if len(objs) == 1:
-            self.obj = objs[0]
             return True
         return False
 ########################################################################################
@@ -1519,6 +1527,7 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
             return item
         else:
             FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties to rename\n")
+            return None
 
     def getOutExpr(self, obj, prop):
         """get the expression set for this property, if any"""
@@ -1553,36 +1562,34 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
         return inExprs
 
     def Activated(self):
-        doc = FreeCAD.ActiveDocument
-        obj = self.obj
-        prop = self.getProperty(obj) #string name of property
+        doc = self.obj.Document
+        prop = self.getProperty(self.obj) #string name of property
         if not prop:
             return
-        outExpr = self.getOutExpr(obj, prop)
+        outExpr = self.getOutExpr(self.obj, prop)
         if not outExpr:
-            propval = getattr(obj, prop)
-        newName = self.getNewPropertyName(obj, prop)
+            propval = getattr(self.obj, prop)
+        newName = self.getNewPropertyName(self.obj, prop)
         if not newName:
             return
-        if not "dd" in newName[:2] or bool(newName[2:3] < "A" or newName[2:3] > "Z"):
-            FreeCAD.Console.PrintWarning("Not all dd commands will function properly if you don't follow the dd naming convention of ddUppercase\n")
-        inExprs = self.getInExprs(obj, prop)
-        typeId = obj.getTypeIdOfProperty(prop)
-        docu = obj.getDocumentationOfProperty(prop)
-        group = obj.getGroupOfProperty(prop)
-        obj.Document.openTransaction(f"Rename {prop}")
-        obj.addProperty(typeId, newName, group, docu)
+
+        inExprs = self.getInExprs(self.obj, prop)
+        typeId = self.obj.getTypeIdOfProperty(prop)
+        docu = self.obj.getDocumentationOfProperty(prop)
+        group = self.obj.getGroupOfProperty(prop)
+        doc.openTransaction(f"Rename {prop}")
+        self.obj.addProperty(typeId, newName, group, docu)
         if outExpr:
-            obj.setExpression(newName, outExpr)
+            self.obj.setExpression(newName, outExpr)
         else:
-            setattr(obj, newName, propval)
+            setattr(self.obj, newName, propval)
         for inExpr in inExprs:
             inExpr[0].setExpression(inExpr[1], inExpr[2].replace(prop,newName))
-        obj.removeProperty(prop)
-        obj.Document.commitTransaction()
-        if obj in FreeCADGui.Selection.getSelection():
-            FreeCADGui.Selection.removeSelection(obj)
-            FreeCADGui.Selection.addSelection(obj)
+        self.obj.removeProperty(prop)
+        doc.commitTransaction()
+        if self.obj in FreeCADGui.Selection.getSelection():
+            FreeCADGui.Selection.removeSelection(self.obj)
+            FreeCADGui.Selection.addSelection(self.obj)
         doc.recompute()
         return
 
@@ -1590,12 +1597,8 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+        if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
-            return True
-        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
-        if len(objs) == 1:
-            self.obj = objs[0]
             return True
         return False
 
@@ -1637,21 +1640,21 @@ class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
             return newTip
 
     def Activated(self):
-        doc = FreeCAD.ActiveDocument
-        obj = self.obj
-        prop = self.getProperty(obj) #string name of property
+        doc = self.obj.Document
+        prop = self.getProperty(self.obj) #string name of property
         if not prop:
             return
-        docu = obj.getDocumentationOfProperty(prop)
-        newTip = self.getNewTooltip(obj, prop)
+        docu = self.obj.getDocumentationOfProperty(prop)
+        newTip = self.getNewTooltip(self.obj, prop)
         if newTip == docu:
             return
-        obj.Document.openTransaction(f"Set tooltip of {prop}")
-        obj.setDocumentationOfProperty(prop, newTip)
-        obj.Document.commitTransaction()
-        if obj in FreeCADGui.Selection.getSelection():
-            FreeCADGui.Selection.removeSelection(obj)
-            FreeCADGui.Selection.addSelection(obj)
+        doc.openTransaction(f"Set tooltip of {prop}")
+        self.obj.setDocumentationOfProperty(prop, newTip)
+        doc.commitTransaction()
+        #refresh property view
+        if self.obj in FreeCADGui.Selection.getSelection():
+            FreeCADGui.Selection.removeSelection(self.obj)
+            FreeCADGui.Selection.addSelection(self.obj)
         doc.recompute()
         return
 
@@ -1659,12 +1662,8 @@ class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+        if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
-            return True
-        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
-        if len(objs) == 1:
-            self.obj = objs[0]
             return True
         return False
 
@@ -1688,28 +1687,28 @@ class DynamicDataRemovePropertyCommandClass(DynamicDataBaseCommandClass):
                 'ToolTip' : "Remove a custom property from the DynamicData object"}
 
     def getProperties(self,obj):
-        props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
+        """get all dynamic properties, and let user select the ones to remove in a dialog"""
+        props = [p for p in obj.PropertiesList if self.isDynamic(obj, p)]
         return self.getSelectedObjects(props, "Select dynamic properties to remove", checkAll=False)
 
     def Activated(self):
-        doc = FreeCAD.ActiveDocument
+        doc = self.obj.Document
         selection = Gui.Selection.getSelection()
-        obj = self.obj
         #remove the property
         window = QtGui.QApplication.activeWindow()
-        items = self.getProperties(obj)
-        if len(items)==0:
+        items = self.getProperties(self.obj)
+        if len(items) == 0: #user canceled
             return
-        obj.Document.openTransaction("Remove properties")
+        doc.openTransaction("Remove properties")
         for item in items:
             try:
-                obj.removeProperty(item)
+                self.obj.removeProperty(item)
             except Exception as ex:
                 FreeCAD.Console.PrintError(f"DynamicData::Exception cannot remove {item}\n{ex}")
-        obj.Document.commitTransaction()
-        if obj in selection:
-            FreeCADGui.Selection.removeSelection(obj)
-            FreeCADGui.Selection.addSelection(obj)
+        doc.commitTransaction()
+        if self.obj in selection: #refreshes property view
+            FreeCADGui.Selection.removeSelection(self.obj)
+            FreeCADGui.Selection.addSelection(self.obj)
         doc.recompute()
         return
 
@@ -1717,12 +1716,8 @@ class DynamicDataRemovePropertyCommandClass(DynamicDataBaseCommandClass):
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+        if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
-            return True
-        objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
-        if len(objs) == 1:
-            self.obj = objs[0]
             return True
         return False
 
@@ -1741,65 +1736,43 @@ class DynamicDataImportAliasesCommandClass(DynamicDataBaseCommandClass):
                 'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
     def Activated(self):
-        sheets=[]
-        dd = None
-        doc = FreeCAD.ActiveDocument
+
+        doc = self.dd.Document
         selection = Gui.Selection.getSelectionEx()
-        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
         if not selection:
-            return
-        for sel in selection:
-            obj = sel.Object
-            if "Spreadsheet.Sheet" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore spreadsheet label's ending in underscore
-                sheets.append(obj)
-            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                if not dd:
-                    dd = obj
-                else:
-                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
-                    return
-        if len(sheets)==0:
-            #todo: handle no selected spreadsheets.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected spreadsheet(s)\n")
-            return
-        if not dd:
-            #todo: handle no dd object selected.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
             return
 
         #sanity check
         window = QtGui.QApplication.activeWindow()
-        items=["Do the import, I know what I\'m doing","Cancel"]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
-'Warning: This will modify your spreadsheet. \n\
-\n\
-It will import the aliases from the spreadsheet and reset them to \n\
-point to the dd object.  After the import is done you should make any changes \n\
-to the dd property rather than to the alias cell in the spreadsheet. \n\
-\n\
-All imports come in as values, not as expressions.\n\
-\n\
-For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2\n\
-\n\
-You should still keep your spreadsheet because other expressions referencing aliases in the\n\
-spreadsheet will still be referencing them.  The difference is now the spreadsheet cells \n\
-will be referencing the dd object.  Again, make any changes to the dd property, not to the spreadsheet.\n\
-\n\
-For example: \n\
-Dependency graph:\n\
-before import: constraint -> spreadsheet\n\
-after import: constraint -> spreadsheet -> dd object\n\
-\n\
-You can partially undo this operation.  If undone, the changes to the spreadsheet will be \n\
-reverted, but you will still need to manually remove the new properties from the dd object.\n\
-The new properties will remain after the undo, but they will no longer reference anything. \n\
-\n\
-You should save your document before proceeding.\n',items,0,False,windowFlags)
-        if not ok or item==items[-1]:
+        items = ["Do the import, I know what I\'m doing","Cancel"]
+        item, ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
+"""Warning: This will modify your spreadsheet.
+
+It will import the aliases from the spreadsheet and reset them to
+point to the dd object.  After the import is done you should make any changes
+to the dd property rather than to the alias cell in the spreadsheet.
+
+All imports come in as values, not as expressions.
+
+For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2
+
+You should still keep your spreadsheet because other expressions referencing aliases in the
+spreadsheet will still be referencing them.  The difference is now the spreadsheet cells
+will be referencing the dd object.  Again, make any changes to the dd property, not to the spreadsheet.
+
+For example:
+Dependency graph:
+before import: constraint -> spreadsheet
+after import: constraint -> spreadsheet -> dd object
+
+You can undo this operation using FreeCAD's Undo function, but you should probably
+save your document before proceeding.""",
+items, 0, False, windowFlags)
+        if not ok or item == items[-1]:
             return
-        FreeCAD.ActiveDocument.openTransaction("dd Import Aliases") #setup undo
+        doc.openTransaction("dd Import Aliases") #setup undo
         aliases=[]
-        for sheet in sheets:
+        for sheet in self.sheets:
             for line in sheet.cells.Content.splitlines():
                 if "<Cells Count=" in line or "</Cells>" in line:
                     continue
@@ -1811,7 +1784,6 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     aliases.append(line[idx:idx2])
                 else:
                     FreeCAD.Console.PrintWarning('DynamicData: skipping alias \"'+line[idx:idx2]+'\" because it ends in an underscore (_).\n')
-
 
             for alias in aliases:
                 atr = getattr(sheet,alias)
@@ -1839,43 +1811,39 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
                     FreeCAD.Console.PrintError('DynamicData: please report: unknown property type error importing alias from spreadsheet ('+str(type(atr))+')\n')
                     continue
 
-                name = 'dd'+sheet.Label+'_'+cap(alias)
-                if not hasattr(dd,name): #avoid adding the same property again
-                    dd.addProperty('App::Property'+propertyType,name,'Imported from: '+sheet.Label, propertyType)
-                    setattr(dd,name,userString)
-                    FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object, resetting spreadsheet: '+sheet.Label+'.'+alias+' to point to '+dd.Label+'.'+name+'\n')
-                    sheet.set(alias,str('='+dd.Label+'.'+name))
+                name = self.fixName(alias)
+                if not hasattr(self.dd, name): #avoid adding the same property again
+                    self.dd.addProperty('App::Property'+propertyType, name, sheet.Label, propertyType)
+                    setattr(self.dd,name,userString)
+                    FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {name} to {self.dd.Label}, resetting spreadsheet: \
+                        {sheet.Label}.{alias} to point to {self.dd.Label}.{name}\n")
+                    sheet.set(alias, f"={self.dd.Label}.{name}")
                 else:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+                    FreeCAD.Console.PrintWarning(f"DynamicData: skipping existing property: {name}\n")
                 continue
 
-        FreeCAD.ActiveDocument.commitTransaction()
+        doc.commitTransaction()
         doc.recompute()
-        if len(aliases)==0:
+        if len(aliases) == 0:
             FreeCAD.Console.PrintMessage('DynamicData: No aliases found.\n')
             return
-
         return
 
     def IsActive(self):
-        sheets=[]
-        dd = None
-        selection = Gui.Selection.getSelectionEx()
+        self.sheets = []
+        self.dd = None
+        selection = Gui.Selection.getSelection()
         if not selection:
             return
-        for sel in selection:
-            obj = sel.Object
-            if "Spreadsheet.Sheet" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore spreadsheet labels ending in underscore
-                sheets.append(obj)
-            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                if not dd:
-                    dd = obj
-                else:
-                    return False #more than 1 dd object selected
-        if len(sheets)==0:
+        self.sheets = [obj for obj in selection if obj.isDerivedFrom("Spreadsheet::Sheet")]
+        dds = [obj for obj in selection if not obj in self.sheets]
+        if len(dds) == 1:
+            self.dd = dds[0]
+        else:
             return False
-        if not dd:
+        if len(self.sheets) == 0:
             return False
+
         return True
 
 #Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
@@ -1889,124 +1857,104 @@ You should save your document before proceeding.\n',items,0,False,windowFlags)
 class DynamicDataImportNamedConstraintsCommandClass(DynamicDataBaseCommandClass):
     """Import Named Constraints Command"""
 
+    def __init__(self):
+        self.dd = None
+        self.sketches = []
+
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'ImportNamedConstraints.svg'),
                 'MenuText': "&Import Named Constraints",
                 'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
 
-
     def Activated(self):
-        sketches=[]
-        dd = None
         doc = FreeCAD.ActiveDocument
-        selection = Gui.Selection.getSelectionEx()
-        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-        if not selection:
-            return
-        for sel in selection:
-            obj = sel.Object
-            if "Sketcher.SketchObject" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore sketch labels ending in underscore
-                sketches.append(obj)
-            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                if not dd:
-                    dd = obj
-                else:
-                    FreeCAD.Console.PrintMessage("Can only have one dd object selected for this operation\n")
-                    return
-        if len(sketches)==0:
-            #todo: handle no selected sketches.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected sketch(es)\n")
-            return
-        if not dd:
-            #todo: handle no dd object selected.  For now, just return
-            FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
-            return
+        # should never get here, so no need for this code -- command won't be active in these cases
+        # if len(sketches)==0:
+        #     #todo: handle no selected sketches.  For now, just return
+        #     FreeCAD.Console.PrintMessage("DynamicData: No selected sketch(es)\n")
+        #     return
+        # if not self.dd:
+        #     #todo: handle no dd object selected.  For now, just return
+        #     FreeCAD.Console.PrintMessage("DynamicData: No selected dd object\n")
+        #     return
 
         #sanity check
         window = QtGui.QApplication.activeWindow()
-        items=["Do the import, I know what I\'m doing","Cancel"]
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
-'Warning: This will modify your sketch. \n\
-It will import the named constraints from the sketch and reset them to \n\
-point to the dd object.  After the import is done you should make changes \n\
-to the dd object property rather than to the constraint itself. \n\
-\n\
-All imports come in as values.\n\
-\n\
-For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2\n\
-\n\
-For that reason, it might be necessary to rework some formulas in some cases \n\
-in order to maintain the parametricity of your model. \n\
-\n\
-This operation can be partially undone.  The sketch will be reset, but you will \n\
-still need to remove the newly created properties from the dd object.  The properties \n\
-will still be there, but they won\'t be linked to anything. \n\
-\n\
-You should save your document before proceeding\n',items,0,False,windowFlags)
-        if not ok or item==items[-1]:
+        items = ["Do the import, I know what I'm doing","Cancel"]
+        item, ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
+"""Warning: This will modify your sketch.
+
+It will import the named constraints from the sketch and reset them to
+point to the dd object.  After the import is done you should make changes
+to the dd object property rather than to the constraint itself.
+
+All imports come in as values.
+
+For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2
+
+For that reason, it might be necessary to rework some formulas in some cases.
+
+This operation can be undone, but you should save your document before proceeding.""",
+items, 0 , False, windowFlags)
+        if not ok or item == items[-1]:
             return
         FreeCAD.ActiveDocument.openTransaction("dd Import Constraints") #setup undo
         constraints=[]
-        for sketch in sketches:
+        for sketch in self.sketches:
             for con in sketch.Constraints:
                 if not con.Name or con.Name[-1:]=='_': #ignore constraint names ending in underscore
                     continue
-                if ' ' in con.Name:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Spaces invalid in constraint names.\n')
-                    continue
                 if not con.Driving:
-                    FreeCAD.Console.PrintWarning('DynamicData: skipping \"'+con.Name+'\" Reference constraints skipped.\n')
+                    FreeCAD.Console.PrintWarning(f"\
+DynamicData: Skipping reference mode constraint: {con.Name} because linking by expression would cause a cyclic \
+dependency and linking by value would produce an incorrect value should the reference value change.\n")
                     continue
                 constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch})
-                #try:
-                #    pass
-                #    #sketch.setExpression('Constraints.'+con.Name, dd.Label+'.dd'+sketch.Label+cap(con.Name))
-                #except:
-                #    FreeCAD.Console.PrintError('DynamicData: Exception setting expression for '+con.Name+' (skipping)\n')
-                #    constraints.pop() #remove the constraint that gave the error
-        if len(constraints)==0:
+
+        if len(constraints) == 0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
             return
 
         for con in constraints:
             propertyType = "Length"
             value = con['value']
-            if con['constraintType']=='Angle':
-                propertyType="Angle"
-                value *= (180.0/math.pi)
-            name = 'dd'+con['sketchLabel']+cap(con['constraintName'])
-            if not hasattr(dd,name): #avoid adding the same property again
-                dd.addProperty('App::Property'+propertyType,name,'Imported from:'+con['sketchLabel'],'['+propertyType+'] constraint type: ['+con['constraintType']+']')
-                setattr(dd,name,value)
-                FreeCAD.Console.PrintMessage('DynamicData: adding property: '+name+' to dd object\n')
+            if con['constraintType'] == 'Angle':
+                propertyType = "Angle"
+                value *= (180.0 / math.pi)
+
+            name = self.fixName(con['constraintName'])
+            if not self.isValidName(con['constraintName']):
+                for idx,constraint in enumerate(sketch.Constraints):
+                    if constraint.Name == con['constraintName']:
+                        sketch.renameConstraint(idx, name)
+                        FreeCAD.Console.PrintWarning(f"DynamicData: Renaming invalid constraint name: {con['constraintName']} to {name}\n")
+                        break
+            if not hasattr(self.dd,name): #avoid adding the same property again
+                self.dd.addProperty(f"App::Property{propertyType}", name, con['sketchLabel'],f"[{propertyType}] constraint type: [{con['constraintType']}]")
+                setattr(self.dd, name, value)
+                FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {name} to dd object\n")
                 sketch = con['sketch']
-                sketch.setExpression('Constraints.'+con['constraintName'], dd.Label+'.dd'+sketch.Label+cap(con['constraintName']))
+                sketch.setExpression(f"Constraints.{name}", f"<<{self.dd.Label}>>.{name}")
             else:
-                FreeCAD.Console.PrintWarning('DynamicData: skipping existing property: '+name+'\n')
+                FreeCAD.Console.PrintWarning(f"DynamicData: skipping existing property: {name}\n")
         FreeCAD.ActiveDocument.commitTransaction()
         doc.recompute()
         return
 
     def IsActive(self):
-        sketches=[]
-        dd = None
+        self.dd = None
+        self.sketches = []
         doc = FreeCAD.ActiveDocument
-        selection = Gui.Selection.getSelectionEx()
+        selection = Gui.Selection.getSelection()
         if not selection:
-            return
-        for sel in selection:
-            obj = sel.Object
-            if "Sketcher.SketchObject" in str(type(obj)) and not obj.Label[-1:] == '_': #ignore sketch labels ending in underscore
-                sketches.append(obj)
-            elif "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                if not dd:
-                    dd = obj
-                else:
-                    return False #more than 1 dd object selected
-        if len(sketches)==0:
             return False
-        if not dd:
+        self.sketches = [obj for obj in selection if obj.isDerivedFrom("Sketcher::SketchObject") and obj.Label[-1] != '_']
+        if len(self.sketches) == 0:
             return False
+        dds = [obj for obj in selection if not obj in self.sketches]
+        if not len(dds) == 1:
+            return False
+        self.dd = dds[0]
         return True
 
 #Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
@@ -2386,9 +2334,6 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
             if prop in whiteList:
                 continue
             p = getattr(obj,prop)
-#            strType = str(type(p))
-#            types = self.PropertyTypes
-#            typeFound = False;
             typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
             if typeId in self.PropertyTypes:
                 available.append({'type':typeId,'value':p,'name':prop})
@@ -2446,7 +2391,16 @@ To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toPrope
         return True
 
 
-#Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
+Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
+Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
+Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
+Gui.addCommand("DynamicDataEditEnumeration",DynamicDataEditEnumerationCommandClass())
+Gui.addCommand("DynamicDataCreateConfiguration", DynamicDataCreateConfigurationCommandClass())
+Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClass())
+Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
+Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
+Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
+Gui.addCommand("DynamicDataSetTooltip",DynamicDataSetTooltipCommandClass())
+Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
+Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 
-
-initialize()
