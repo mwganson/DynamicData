@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.12.13"
-__version__ = "2.57"
+__date__    = "2023.12.14"
+__version__ = "2.58"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -171,40 +171,6 @@ class DynamicDataBaseCommandClass:
             "VectorDistance",
             "Volume"]
 
-    @property
-    def NonLinkableTypes(self):
-        return [ #cannot be linked with setExpresion()
-            "Bool",
-            "Color",
-            "Enumeration",
-            "File",
-            "FileIncluded",
-            "FloatList",
-            "Font",
-            "IntegerList",
-            "Link",
-            "LinkChild",
-            "LinkGlobal",
-            "LinkList",
-            "LinkListChild",
-            "LinkListGlobal",
-            "LinkSubList",
-            "Material",
-            "MaterialList",
-            "Matrix",
-            "Path",
-            "PlacementLink",
-            "String",
-            "StringList",
-            "VectorList"]
-
-    @property
-    def VectorTypes(self):
-        return [#x,y,z elements must be linked separately
-            "Direction",
-            "Position",
-            "Vector",
-            "VectorDistance"]
 
     def getAllProperties(self, obj, includeViewProps = False, blacklist=[]):
         """get all the properties that we might want to copy or set"""
@@ -2130,6 +2096,9 @@ Break expression binding for selected property of {self.obj1.Label}""")
             self.buttons = QtGui.QDialogButtonBox(
                 QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
                 QtCore.Qt.Horizontal, self)
+            self.okBtn = self.buttons.button(QtGui.QDialogButtonBox.Ok)
+            self.okBtn.setText(self.copyRightBtn.text())
+            self.okBtn.setToolTip("Apply action and close dialog")
             self.applyBtn = QtGui.QPushButton("Apply")
             self.buttons.addButton(self.applyBtn, QtGui.QDialogButtonBox.ApplyRole)
             self.buttons.accepted.connect(self.accept)
@@ -2384,6 +2353,10 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 "breakBindRightBtn" : breakBindRightMsg,
             }
             radioBtn = self.btnGroup.checkedButton()
+            self.okBtn.setText(radioBtn.text())
+            dq = "\"" #double quote
+            self.okBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and close dialog")
+            self.applyBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and reopen dialog")
             msgTuple = msg_map[radioBtn.objectName()]
             self.statusLabel.setStyleSheet(f"color:{msgTuple[1]};")
             self.statusLabel.setText(msgTuple[0])
