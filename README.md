@@ -230,6 +230,8 @@ When you add a new property type you are presented with a list of property types
 
 
 ### Release notes
+* 2023.12.14 (version 2.58)<br/>
+** give copy dialog Ok and Apply buttons more meaningful labels and tooltips
 * 2023.12.14 (version 2.57)<br/>
 ** rework copy/set/bind command to give it a proper dialog and to have more easily maintainable code
 ** activate some commands even where nothing is selected, using the only dd object in the document where there is only one.
