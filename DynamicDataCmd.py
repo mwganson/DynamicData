@@ -26,9 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.12.12"
-__version__ = "2.56"
-version = 2.56
+__date__    = "2023.12.13"
+__version__ = "2.57"
+version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
 
@@ -104,6 +104,22 @@ class DynamicDataBaseCommandClass:
                 if cb.checkState():
                     self.selected.append(cb.text())
             super().accept()
+
+        ### end of SelectObjects class definition
+
+    def getSelectedObjects(self, objs, label="", checkAll=True):
+        """opens a dialog with objs (strings) in a checkboxed list, returns list of selected"""
+        if objs:
+            dlg = DynamicDataBaseCommandClass.SelectObjects(objs,label)
+            if checkAll:
+                dlg.all.setCheckState(QtCore.Qt.Checked)
+            else:
+                dlg.all.setCheckState(QtCore.Qt.Unchecked)
+            ok = dlg.exec_()
+            if not ok:
+                return []
+            return dlg.selected
+        return []
 
     @property
     def PropertyTypes(self):
@@ -190,24 +206,27 @@ class DynamicDataBaseCommandClass:
             "Vector",
             "VectorDistance"]
 
-    def getSelectedObjects(self, objs, label="", checkAll=True):
-        """opens a dialog with objs (strings) in a checkboxed list, returns list of selected"""
-        if objs:
-            dlg = DynamicDataBaseCommandClass.SelectObjects(objs,label)
-            if checkAll:
-                dlg.all.setCheckState(QtCore.Qt.Checked)
-            else:
-                dlg.all.setCheckState(QtCore.Qt.Unchecked)
-            ok = dlg.exec_()
-            if not ok:
-                return []
-            return dlg.selected
-        return []
+    def getAllProperties(self, obj, includeViewProps = False, blacklist=[]):
+        """get all the properties that we might want to copy or set"""
+        props = [prop for prop in obj.PropertiesList if not prop in blacklist]
+        if includeViewProps:
+            viewProps = [f"(view) {prop}" for prop in obj.ViewObject.PropertiesList if not prop in blacklist]
+        else:
+            viewProps = []
+        return props + viewProps
 
     def getDynamicProperties(self, obj):
         """get the list of the dynamic properties of obj"""
         props = [p for p in obj.PropertiesList if self.isDynamic(obj,p)]
         return props
+
+    def getGroup(self, obj, prop):
+        """return the name of the group this property is in"""
+        if not obj:
+            return None
+        if not prop in obj.PropertiesList:
+            return None
+        return obj.getGroupOfProperty(prop)
 
     def getGroups(self,obj,skipList=[]):
         """get the groups of obj, skipping those in skipList"""
@@ -843,6 +862,12 @@ you can use Undo to revert all your changes to the selected object.
         if len(selection) == 1:
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
         return False
 
 
@@ -996,6 +1021,13 @@ Enumeration to edit.  Create one first, and then try again.\n")
         if len(selection) == 1 and self.getEnumerations(selection[0]):
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object if it has an enumeration property
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                if self.getEnumerations(self.obj):
+                    return True
         return False
 
 
@@ -1500,6 +1532,12 @@ Select source group to pick properties from, or all groups to pick from all.\n',
         if len(selection) == 1 and self.getDynamicProperties(selection[0]) and self.getGroups(selection[0]):
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
         return False
 ########################################################################################
 # Rename a custom dynamic property
@@ -1600,6 +1638,12 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
         if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
         return False
 
 #Gui.addCommand("DynamicDataRenameProperty", DynamicDataRenamePropertyCommandClass())
@@ -1665,6 +1709,12 @@ class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
         if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
         return False
 
 #Gui.addCommand("DynamicDataSetTooltip", DynamicDataSetTooltipCommandClass())
@@ -1719,6 +1769,12 @@ class DynamicDataRemovePropertyCommandClass(DynamicDataBaseCommandClass):
         if len(selection) == 1 and self.getDynamicProperties(selection[0]):
             self.obj = selection[0]
             return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
         return False
 
 #Gui.addCommand("DynamicDataRemoveProperty", DynamicDataRemovePropertyCommandClass())
@@ -1966,6 +2022,624 @@ dependency and linking by value would produce an incorrect value should the refe
 
 class DynamicDataCopyPropertyCommandClass(DynamicDataBaseCommandClass):
     """Copy Property Command"""
+    class CopyDlg(QtGui.QDialog):
+        def __init__(self, cmd, obj1, obj2):
+            super(DynamicDataCopyPropertyCommandClass.CopyDlg, self).__init__(Gui.getMainWindow())
+            self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
+            self.setWindowTitle(f"DynamicData v{__version__} Copy / Set / Bind")
+            icon = QtGui.QIcon(os.path.join(iconPath, 'CopyProperty.svg'))
+            self.setWindowIcon(icon)
+            self.applied = False #apply button clicked
+            self.obj1 = obj1
+            self.obj2 = obj2 if obj2 else obj1
+            self.cmd = cmd
+            self.blockSignals(True)
+            self.layout = QtGui.QGridLayout()
+            for ii in range(1,10):
+                self.layout.setRowStretch(ii, 1)
+            self.layout.setRowStretch(0, 0)
+            self.setLayout(self.layout)
+            label = self.obj1.Label
+            name = self.obj1.Name
+            same = bool(label == name)
+            label = label if same else f"{label} ({name})"
+            self.obj1Label = QtGui.QLabel(label)
+            self.layout.addWidget(self.obj1Label, 0, 0, 1, 2)
+
+            label = self.obj2.Label if self.obj2 else self.obj1.Label
+            name = self.obj2.Name if self.obj2 else self.obj1.Name
+            same = bool(label == name)
+            label = label if same else f"{label} ({name})"
+            self.obj2Label = QtGui.QLabel(label)
+            self.layout.addWidget(self.obj2Label, 0, 3, 1, 2)
+
+            self.obj1List = QtGui.QListWidget()
+            self.obj1List.itemSelectionChanged.connect(self.updateStatus)
+            self.layout.addWidget(self.obj1List, 1, 0, 9, 2)
+            self.obj2List = QtGui.QListWidget()
+            self.obj2List.itemSelectionChanged.connect(self.updateStatus)
+            self.layout.addWidget(self.obj2List, 1, 3, 9, 2)
+            self.fillUpList(self.obj1, self.obj1List, 1)
+            self.fillUpList(self.obj2, self.obj2List, 2)
+
+            self.btnGroup = QtGui.QButtonGroup()
+            self.btnGroup.buttonClicked.connect(self.radioBtnClicked)
+            self.copyRightBtn = QtGui.QRadioButton("Copy ->")
+            self.copyRightBtn.setChecked(True)
+            self.btnGroup.addButton(self.copyRightBtn)
+            self.copyRightBtn.setToolTip(f"""
+Arrow points in direction of data flow.
+Creates copy of selected property in {self.obj1.Label} -> to new property of same type in {self.obj2.Label}""")
+            self.copyRightBtn.setObjectName("copyRightBtn")
+            self.layout.addWidget(self.copyRightBtn, 1, 2, 1, 1)
+            self.copyLeftBtn = QtGui.QRadioButton("<- Copy")
+            self.btnGroup.addButton(self.copyLeftBtn)
+            self.copyLeftBtn.setToolTip(f"""
+Arrow points in direction of data flow.
+Creates new property in {self.obj1.Label} <- from selected property of {self.obj2.Label}""")
+            self.copyLeftBtn.setObjectName("copyLeftBtn")
+            self.layout.addWidget(self.copyLeftBtn, 2, 2, 1, 1)
+
+            self.setRightBtn = QtGui.QRadioButton("Set ->")
+            self.btnGroup.addButton(self.setRightBtn)
+            self.setRightBtn.setToolTip(f"""
+Arrow points in direction of data flow.
+Sets selected existing property in {self.obj2.Label} to value of selected property in {self.obj1.Label}""")
+            self.setRightBtn.setObjectName("setRightBtn")
+            self.layout.addWidget(self.setRightBtn, 3, 2, 1, 1)
+            self.setLeftBtn = QtGui.QRadioButton("<- Set")
+            self.btnGroup.addButton(self.setLeftBtn)
+            self.setLeftBtn.setToolTip(f"Sets selected existing property in {self.obj1.Label} to value of selected property in {self.obj2.Label}")
+            self.setLeftBtn.setObjectName("setLeftBtn")
+            self.layout.addWidget(self.setLeftBtn, 4, 2, 1, 1)
+
+            self.bindRightBtn = QtGui.QRadioButton("Bind to ->")
+            self.btnGroup.addButton(self.bindRightBtn)
+            self.bindRightBtn.setToolTip(f"""
+Arrow points in direction of binding, left is bound to right.
+Bind selected property of {self.obj1.Label} to selected property of {self.obj2.Label} via Expressions""")
+            self.bindRightBtn.setObjectName("bindRightBtn")
+            self.layout.addWidget(self.bindRightBtn, 5, 2, 1, 1)
+            self.bindLeftBtn = QtGui.QRadioButton("<- Bind to")
+            self.btnGroup.addButton(self.bindLeftBtn)
+            self.bindLeftBtn.setToolTip(f"""
+Arrow points in direction of binding, right is bound to left.
+Bind selected property of {self.obj2.Label} to selected property of {self.obj1.Label} via Expressions""")
+            self.bindLeftBtn.setObjectName("bindLeftBtn")
+            self.layout.addWidget(self.bindLeftBtn, 6, 2, 1, 1)
+
+            self.breakBindRightBtn = QtGui.QRadioButton("Break binding ->")
+            self.btnGroup.addButton(self.breakBindRightBtn)
+            self.breakBindRightBtn.setToolTip(f"""
+Arrow points to object being affected.
+Break expression binding for selected property of {self.obj2.Label}""")
+            self.breakBindRightBtn.setObjectName("breakBindRightBtn")
+            self.layout.addWidget(self.breakBindRightBtn, 7, 2, 1, 1)
+            self.breakBindLeftBtn = QtGui.QRadioButton("<- Break binding")
+            self.btnGroup.addButton(self.breakBindLeftBtn)
+            self.breakBindLeftBtn.setToolTip(f"""
+Arrow points to object being affected.
+Break expression binding for selected property of {self.obj1.Label}""")
+            self.breakBindLeftBtn.setObjectName("breakBindLeftBtn")
+            self.layout.addWidget(self.breakBindLeftBtn, 8, 2, 1, 1)
+
+            self.statusLabel = QtGui.QLabel()
+            self.statusLabel.setToolTip("Messages go here: blue text = normal message, red text = critical error in proposed action.")
+            self.layout.addWidget(self.statusLabel, 11, 0, 2, 5)
+
+            self.buttons = QtGui.QDialogButtonBox(
+                QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
+                QtCore.Qt.Horizontal, self)
+            self.applyBtn = QtGui.QPushButton("Apply")
+            self.buttons.addButton(self.applyBtn, QtGui.QDialogButtonBox.ApplyRole)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+            self.applyBtn.clicked.connect(self.apply)
+            self.layout.addWidget(self.buttons, 14, 0, 1, 3)
+            self.blockSignals(False)
+            self.updateStatus()
+
+        @property
+        def Obj1Item(self):
+            """currently selected item, might be None"""
+            return self.obj1List.currentItem()
+
+        @property
+        def Obj2Item(self):
+            """currently selected item, might be None"""
+            return self.obj2List.currentItem()
+
+        @property
+        def Obj1IsView(self):
+            """boolean, true if obj1 selected property is a view property"""
+            item = self.Obj1Item
+            if not item:
+                return False
+            txt = item.text()
+            return txt.startswith("(view) ")
+
+        @property
+        def Obj2IsView(self):
+            """boolean, true if obj2 selected property is a view property"""
+            item = self.Obj2Item
+            if not item:
+                return False
+            txt = item.text()
+            return txt.startswith("(view) ")
+
+        @property
+        def Obj1PropName(self):
+            """property name selected in left list"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            txt = item.text()
+            if txt.startswith("(view) "):
+                return txt[7:]
+            else:
+                return txt
+
+        @property
+        def Obj2PropName(self):
+            """property name selected in right list"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            txt = item.text()
+            if txt.startswith("(view) "):
+                return txt[7:]
+            else:
+                return txt
+
+        @property
+        def Obj1Group(self):
+            """group of the currently selected property"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            if self.Obj1IsView:
+                obj = self.obj1.ViewObject
+            else:
+                obj = self.obj1
+            grp = obj.getGroupOfProperty(self.Obj1PropName)
+            return grp if grp else "Base"
+
+        @property
+        def Obj2Group(self):
+            """group of the currently selected property"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            if self.Obj2IsView:
+                obj = self.obj2.ViewObject
+            else:
+                obj = self.obj2
+            grp = obj.getGroupOfProperty(self.Obj2PropName)
+            return grp if grp else "Base"
+
+        @property
+        def Obj1Value(self):
+            """value of selected property"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            if not self.Obj1IsView:
+                return getattr(self.obj1, self.Obj1PropName)
+            else:
+                try:
+                    return getattr(self.obj1.ViewObject, self.Obj1PropName)
+                except:
+                    return "No python counterpart"
+
+        @property
+        def Obj2Value(self):
+            """value of selected property"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            if not self.Obj2IsView:
+                return getattr(self.obj2, self.Obj2PropName)
+            else:
+                try:
+                    return getattr(self.obj2.ViewObject, self.Obj2PropName)
+                except:
+                    return "No python counterpart"
+
+        @property
+        def Obj1Type(self):
+            """type id of selected property, with 'App::Property' prefix"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            if not self.Obj1IsView:
+                return self.obj1.getTypeIdOfProperty(self.Obj1PropName)
+            else:
+                return self.obj1.ViewObject.getTypeIdOfProperty(self.Obj1PropName)
+
+        @property
+        def Obj2Type(self):
+            """type id of selected property, with 'App::Property' prefix"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            if not self.Obj2IsView:
+                return self.obj2.getTypeIdOfProperty(self.Obj2PropName)
+            else:
+                return self.obj2.ViewObject.getTypeIdOfProperty(self.Obj2PropName)
+
+        @property
+        def Obj1Expression(self):
+            """expression engine value for this property, if any"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            if self.Obj1IsView:
+                return None
+            expr = self.obj1.ExpressionEngine
+            exp_dict = {xp[0]:xp[1] for xp in expr}
+            if self.Obj1PropName in exp_dict:
+                return exp_dict[self.Obj1PropName]
+            else:
+                return None
+
+        @property
+        def Obj2Expression(self):
+            """expression engine value for this property, if any"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            if self.Obj2IsView:
+                return None
+            expr = self.obj2.ExpressionEngine
+            exp_dict = {xp[0]:xp[1] for xp in expr}
+            if self.Obj2PropName in exp_dict:
+                return exp_dict[self.Obj2PropName]
+            else:
+                return None
+
+        @property
+        def Obj1Tip(self):
+            """documentation of property, tooltip shown"""
+            item = self.Obj1Item
+            if not item:
+                return None
+            if not self.Obj1IsView:
+                return self.obj1.getDocumentationOfProperty(self.Obj1PropName)
+            else:
+                return self.obj1.ViewObject.getDocumentationOfProperty(self.Obj1PropName)
+
+        @property
+        def Obj2Tip(self):
+            """documentation of property, tooltip shown"""
+            item = self.Obj2Item
+            if not item:
+                return None
+            if not self.Obj2IsView:
+                return self.obj2.getDocumentationOfProperty(self.Obj2PropName)
+            else:
+                return self.obj2.ViewObject.getDocumentationOfProperty(self.Obj2PropName)
+
+        def radioBtnClicked(self, button):
+            #print(f"radio button clicked = {button.objectName()}")
+            self.updateStatus()
+
+        def updateStatus(self):
+            """updates the status label to give a preview of the action to be performed"""
+            if not hasattr(self, "btnGroup"):
+                return #not fully initialized yet
+            vobj1 = "" if not self.Obj1IsView else ".ViewObject"
+            vobj2 = "" if not self.Obj2IsView else ".ViewObject"
+
+            cyclicMatch1 = bool(self.obj2 in self.obj1.InListRecursive) #if true, obj2 depends on obj1, so obj1 cannot bind to obj2
+            cyclicMatch2 = bool(self.obj1 in self.obj2.InListRecursive)
+            cyclicMsg1 = f"\nCircular dependency because {self.obj2.Label} already depends on {self.obj1.Label}." if cyclicMatch1 else ""
+            cyclicMsg2 = f"\nCircular dependency because {self.obj1.Label} already depends on {self.obj2.Label}." if cyclicMatch2 else ""
+
+            typeMismatch = bool(self.Obj1Type != self.Obj2Type)
+            typeMsg = f"\nType mismatch detected: {self.Obj1Type} and {self.Obj2Type}" if typeMismatch else ""
+            typeClr = ["blue","red"][int(typeMismatch)]
+            typeClr1 = ["blue","red"][int(typeMismatch or cyclicMatch1)]
+            typeClr2 = ["blue","red"][int(typeMismatch or cyclicMatch2)]
+
+            cyclicMatch1 = bool(self.obj2 in self.obj1.InListRecursive) #if true, obj2 depends on obj1, so obj1 cannot bind to obj2
+            cyclicMatch2 = bool(self.obj1 in self.obj2.InListRecursive)
+            cyclicMsg1 = f"\nCircular dependency because {self.obj2.Label} already depends on {self.obj1.Label}." if cyclicMatch1 else ""
+            cyclicMsg2 = f"\nCircular dependency because {self.obj1.Label} already depends on {self.obj2.Label}." if cyclicMatch2 else ""
+            cyclicClr1 = ["blue","red"][int(cyclicMatch1 or typeMismatch)]
+            cyclicClr2 = ["blue","red"][int(cyclicMatch2 or typeMismatch)]
+
+            copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} to a new property in {self.obj1.Label}","blue")
+            copyRightMsg = (f"Copy {self.obj1.Label}{vobj1}.{self.Obj1PropName} to a new property in {self.obj2.Label}","blue")
+            setLeftMsg = (f"Set {self.obj1.Label}{vobj1}.{self.Obj1PropName} to value of {self.obj2.Label}{vobj2}.{self.Obj2PropName}{typeMsg}",typeClr)
+            setRightMsg = (f"Set {self.obj2.Label}{vobj2}.{self.Obj2PropName} to value of {self.obj1.Label}{vobj1}.{self.Obj1PropName}{typeMsg}",typeClr)
+            if not vobj2:
+                bindLeftMsg = (f"Bind {self.obj2.Label}.{self.Obj2PropName} to {self.obj1.Label}.{self.Obj1PropName}{typeMsg}{cyclicMsg2}",typeClr2)
+            else:
+                bindLeftMsg = (f"Cannot bind {self.obj2.Label}{vobj2}.{self.Obj2PropName} because it is a view object property.{typeMsg}","red")
+            if not vobj1:
+                bindRightMsg = (f"Bind {self.obj1.Label}.{self.Obj1PropName} to {self.obj2.Label}.{self.Obj2PropName}{typeMsg}{cyclicMsg1}",typeClr1)
+            else:
+                bindRightMsg = (f"Cannot bind {self.obj1.Label}{vobj1}.{self.Obj1PropName} because it is a view object property.","red")
+            if self.Obj1Expression:
+                breakBindLeftMsg = (f"Break binding of {self.obj1.Label}.{self.Obj1PropName}.","blue")
+            else:
+                breakBindLeftMsg = (f"No expression binding to break for {self.obj1.Label}.{self.Obj1PropName}.","red")
+            if self.Obj1IsView:
+                breakBindLeftMsg = (breakBindLeftMsg[0] + "\nView objects cannot be bound or unbound via expressions", "red")
+            if self.Obj2Expression:
+                breakBindRightMsg = (f"Break binding of {self.obj2.Label}.{self.Obj2PropName}.","blue")
+            else:
+                breakBindRightMsg = (f"No expression binding to break for {self.obj2.Label}.{self.Obj2PropName}.","red")
+            if self.Obj2IsView:
+                breakBindRightMsg = (breakBindRightMsg[0] + "\nView objects cannot be bound or unbound via expressions", "red")
+
+            msg_map = {
+                "copyLeftBtn" : copyLeftMsg,
+                "copyRightBtn" : copyRightMsg,
+                "setLeftBtn" : setLeftMsg,
+                "setRightBtn" : setRightMsg,
+                "bindLeftBtn" : bindLeftMsg,
+                "bindRightBtn" : bindRightMsg,
+                "breakBindLeftBtn" : breakBindLeftMsg,
+                "breakBindRightBtn" : breakBindRightMsg,
+            }
+            radioBtn = self.btnGroup.checkedButton()
+            msgTuple = msg_map[radioBtn.objectName()]
+            self.statusLabel.setStyleSheet(f"color:{msgTuple[1]};")
+            self.statusLabel.setText(msgTuple[0])
+
+        def getNewPropertyName(self, obj, candidate):
+            """When creating a new property and already there is a property with that
+            same name, we can ask the user for a preferred new property name"""
+            if not hasattr(obj, candidate):
+                return candidate
+
+            # Use regular expression to extract base name and number
+            match = re.match(r'^(.*?)(\d*)$', candidate)
+            base_name, number_suffix = match.groups() if match else (candidate, '')
+            idx = int(number_suffix) if number_suffix else 1
+
+            while hasattr(obj, f"{base_name}{idx}"):
+                idx += 1
+
+            new_candidate = f"{base_name}{idx}"
+
+            new_name, ok = QtGui.QInputDialog.getText(self, "Attribute already exists", "Enter name for new property: ", text=new_candidate)
+            if not new_name or not ok:
+                return None
+
+            return new_name
+        def copyLeft(self):
+            """copy the selected property from the list on the right to the object (self.obj1) on the left
+            returns None if user aborts, False if there was some error, True on success
+            """
+            propName = self.getNewPropertyName(self.obj1, self.Obj2PropName)
+            if not propName:
+               return None
+            try:
+                self.obj1.addProperty(self.Obj2Type, propName, self.Obj2Group, self.Obj2Tip)
+            except:
+                FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj1.Label}")
+                return False
+            try:
+                setattr(self.obj1, propName, self.Obj2Value)
+                return True
+            except:
+                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj2Value}, but property was created.\n")
+                return False
+
+        def copyRight(self):
+            """copy the selected property from the list on the left to the object (self.obj2) on the right
+            returns None if user aborts, False if there was some error, True on success
+            """
+            propName = self.getNewPropertyName(self.obj2, self.Obj1PropName)
+            if not propName:
+               return None
+
+            try:
+                self.obj2.addProperty(self.Obj1Type, propName, self.Obj1Group, self.Obj1Tip)
+            except:
+                FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj2.Label}")
+                return False
+            try:
+                setattr(self.obj2, propName, self.Obj1Value)
+                return True
+            except:
+                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj1Value}, but property was created.\n")
+                return False
+
+        def setLeft(self):
+            """sets an existing property of self.obj1 to the same value of selected property in right side list"""
+            #first check that the property types are a match
+            if self.Obj1Type != self.Obj2Type:
+                FreeCAD.Console.PrintError(f"""
+DynamicData: Type mismatch: {self.obj2.Label}.{self.Obj2PropName} is type {self.Obj2Type}
+while {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
+                return False
+            #now check to see if the property is bound by an expression already
+            if self.Obj1Expression:
+                FreeCAD.Console.PrintWarning(f"""
+DynamicData warning: {self.obj1.Label}.{self.Obj1PropName} was bound by an expression:\n{self.Obj1Expression}\nbut it has now been cleared.""")
+                self.obj1.setExpression(self.Obj1PropName, None)
+            try:
+                if not self.Obj2IsView:
+                    setattr(self.obj1, self.Obj1PropName, self.Obj2Value)
+                else:
+                    setattr(self.obj1.ViewObject, self.Obj1PropName, self.Obj2Value)
+                return True
+            except Exception as e:
+                FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Value}\n")
+                return False
+
+        def setRight(self):
+            """sets an existing property of self.obj2 to the same value of selected property in left side list"""
+            #first check that the property types are a match
+            if self.Obj1Type != self.Obj2Type:
+                FreeCAD.Console.PrintError(f"""
+DynamicData: Type mismatch: {self.obj2.Label}.{self.Obj2PropName} is type {self.Obj2Type}
+while {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
+                return False
+            #now check to see if the property is bound by an expression already
+            if self.Obj2Expression:
+                FreeCAD.Console.PrintWarning(f"""
+DynamicData warning: {self.obj2.Label}.{self.Obj2PropName} was bound by an expression:\n{self.Obj2Expression}\nbut it has now been cleared.""")
+                self.obj2.setExpression(self.Obj2PropName, None)
+            try:
+                if not self.Obj1IsView:
+                    setattr(self.obj2, self.Obj2PropName, self.Obj1Value)
+                else:
+                    setattr(self.obj2.ViewObject, self.Obj2PropName, self.Obj1Value)
+                return True
+            except Exception as e:
+                FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Value}\n")
+                return False
+
+        def bindRight(self):
+            """bind to the property on the right"""
+            #check for a type mismatch
+            if self.Obj1Type != self.Obj2Type:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: Type mismatch.  {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type} where
+{self.obj2.Label}.{self.Obj2PropName} is type {self.Obj2Type}""")
+                return False
+            # check for cyclic dependency
+            # objects in obj.InList and obj.InListRecursive are dependent on obj
+            # since this command binds a property of obj1 to obj2 we must check
+            # to see if obj2 is in obj1's inlist
+            if self.obj2 in self.obj1.InListRecursive:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: Cannot bind  {self.obj1.Label}.{self.Obj1PropName} to {self.obj2.Label}.{self.Obj2PropName}
+because this would create a cyclic dependency.""")
+                return False
+            if self.Obj1IsView:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj1.Label}.ViewObject.{self.Obj1PropName} is a view object expression,
+which cannot be bound by expression.\n""")
+                return False
+            FreeCAD.Console.PrintMessage(f"""
+DynamicData: binding {self.obj1.Label}.{self.Obj1PropName} to {self.obj2.Label}.{self.Obj2PropName}""")
+            self.obj1.setExpression(self.Obj1PropName, f"{self.obj2.Name}.{self.Obj2PropName}")
+            return True
+
+        def bindLeft(self):
+            """bind to the property selected on the left"""
+            #check for a type mismatch
+            if self.Obj2Type != self.Obj1Type:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: Type mismatch.  {self.obj2.Label}.{self.Obj2PropName} is type {self.Obj2Type} where
+{self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
+                return False
+            # check for cyclic dependency
+            # objects in obj.InList and obj.InListRecursive are dependent on obj
+            # since this command binds a property of obj2 to obj1 we must check
+            # to see if obj1 is in obj2's inlist
+            if self.obj1 in self.obj2.InListRecursive:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: Cannot bind  {self.obj2.Label}.{self.Obj2PropName} to {self.obj1.Label}.{self.Obj1PropName}
+because this would create a cyclic dependency.""")
+                return False
+            if self.Obj2IsView:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj2.Label}.ViewObject.{self.Obj2PropName} is a view object expression,
+which cannot be bound by expression.\n""")
+                return False
+            FreeCAD.Console.PrintMessage(f"""
+DynamicData: binding {self.obj2.Label}.{self.Obj2PropName} to {self.obj1.Label}.{self.Obj1PropName}""")
+            self.obj2.setExpression(self.Obj2PropName, f"{self.obj1.Name}.{self.Obj1PropName}")
+            return True
+
+        def breakBindLeft(self):
+            """Clears the expression binding the property on the left that is bound to the property on the right"""
+            # check if the property on the left is already bound or not
+            # if it's not bound by an expression, then the user might have selected the wrong
+            # radio button by mistake, so alert to the error and return
+            if not self.Obj1Expression:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj1.Label}.{self.Obj1PropName} is not bound by an expression.\n""")
+                return False
+            if self.Obj2IsView:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj2.Label}.ViewObject.{self.Obj2PropName} is a view object expression,
+which cannot be bound by expression.\n""")
+                return False
+            self.obj1.setExpression(self.Obj1PropName, None)
+            return True
+
+        def breakBindRight(self):
+            """Clears the expression binding the property on the right that is bound to the property on the left"""
+            # check if the property on the right is already bound or not
+            # if it's not bound by an expression, then the user might have selected the wrong
+            # radio button by mistake, so alert to the error and return
+            if not self.Obj2Expression:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj2.Label}.{self.Obj2PropName} is not bound by an expression.\n""")
+                return False
+            #check if this is a view object property, which cannot be bound by expression
+            if self.Obj2IsView:
+                FreeCAD.Console.PrintError(f"""
+DynamicData error: {self.obj2.Label}.ViewObject.{self.Obj2PropName} is a view object expression,
+which cannot be bound by expression.\n""")
+                return False
+            self.obj2.setExpression(self.Obj2PropName, None)
+            return True
+
+
+        def fillUpList(self, obj, objList, idx):
+            pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+            supportViewObjectProperties = pg.GetBool('SupportViewObjectProperties', False)
+            blacklist = ["ExpressionEngine","Proxy","Shape","DynamicData"]
+            props = self.cmd.getAllProperties(obj, supportViewObjectProperties, blacklist)
+            for prop in props:
+                item = QtGui.QListWidgetItem(prop)
+                objList.addItem(item)
+                objList.setCurrentItem(item)
+                if idx == 1:
+                    tip = f"[{self.Obj1Type}]\nGroup: {self.Obj1Group}\nTooltip: {self.Obj1Tip}\nvalue: {self.Obj1Value}\nExpr: {self.Obj1Expression}"
+                elif idx == 2:
+                    tip = f"[{self.Obj2Type}]\nGroup: {self.Obj2Group}\nTooltip: {self.Obj2Tip}\nvalue: {self.Obj2Value}\nExpr: {self.Obj2Expression}"
+                item.setToolTip(tip)
+            if props:
+                objList.setCurrentRow(0)
+
+        def accept(self):
+            func_map = {
+                "copyLeftBtn" : self.copyLeft,
+                "copyRightBtn" : self.copyRight,
+                "setLeftBtn" : self.setLeft,
+                "setRightBtn" : self.setRight,
+                "bindLeftBtn" : self.bindLeft,
+                "bindRightBtn" : self.bindRight,
+                "breakBindLeftBtn" : self.breakBindLeft,
+                "breakBindRightBtn" : self.breakBindRight,
+            }
+            radioBtn = self.btnGroup.checkedButton()
+            if radioBtn:
+                func = func_map.get(radioBtn.objectName())
+                self.obj1.Document.openTransaction(f"DynamicData: {func.__name__}")
+                retval = func()
+                if retval == None: #user aborted
+                    self.obj1.Document.abortTransaction()
+                    FreeCAD.Console.PrintMessage(f"DynamicData: {func.__name__} aborted by user\n")
+                elif retval == False: #error, but already reported in func(), so don't repeat it here
+                    self.obj1.Document.abortTransaction()
+                else:
+                    self.obj1.Document.commitTransaction()
+
+            super().accept()
+
+        def reject(self):
+            print("rejected")
+            super().reject()
+
+        def apply(self):
+            self.applied = True
+            self.accept()
+
+        ### end of CopyDlg class definition
+
+    def __init__(self):
+        self.obj1 = None
+        self.obj2 = None
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'CopyProperty.svg'),
@@ -1974,421 +2648,32 @@ class DynamicDataCopyPropertyCommandClass(DynamicDataBaseCommandClass):
 
 
     def Activated(self):
-        breakOnly = False #only break existing parametric link if True
-        other = None #other object to copy properties either to or from
-        other2 = None #allow set value from one non-dd to other non-dd
-        dd = None
-        dd2 = None
-        doc = FreeCAD.ActiveDocument
-        selection = Gui.Selection.getSelectionEx()
-        if len(selection) != 1 and len(selection) != 2:
-            return False
-        for sel in selection:
-            obj = sel.Object
-            if "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                if not dd:
-                    dd = obj
-                else:
-                    dd2 = obj
-            else:
-                if not other:
-                    other = obj
-                else:
-                    other2 = obj
+        dlg = self.doDlg()
+        while dlg.applied:
+            dlg.deleteLater()
+            dlg = self.doDlg()
+        dlg.deleteLater()
+        self.obj1.Document.recompute()
 
-        MODE_CANCEL = -1
-        MODE_COPY_OBJ_TO_DD = 0
-        MODE_SET_OBJ_TO_DD = 1
-        MODE_SET_DD_TO_OBJ = 2
-        MODE_COPY_DD_TO_DD2 = 3
-        MODE_COPY_DD2_TO_DD = 4
-        MODE_SET_DD_TO_DD2 = 5
-        MODE_SET_DD2_TO_DD = 6
-        MODE_SET_OBJ_TO_OBJ2 = 7
-        MODE_SET_OBJ2_TO_OBJ = 8
-        MODE_UNLINK_DD = 9
-        MODE_UNLINK_OBJ = 10
-        MODE_COPY_DD_TO_DD = 11
-        MODE_SET_DD_TO_DD = 12
-        #this is just to avoid exceptions in generating ops strings
-        no_dd = no_dd2 = no_other = no_other2 = False
-        if not dd:
-            no_dd = True
-            dd = other
-        if not dd2:
-            no_dd2 = True
-            dd2 = dd or other
-        if not other:
-            no_other = True
-            other = dd
-        if not other2:
-            no_other2 = True
-            other2 = dd or other
-        ops = { MODE_COPY_OBJ_TO_DD:"Copy property from "+other.Label+" --> to new dd ("+dd.Label+") property",
-                MODE_SET_OBJ_TO_DD:"Set property value from "+other.Label+" --> to existing dd ("+dd.Label+") property",
-                MODE_SET_DD_TO_OBJ:"Set property value from dd ("+dd.Label+") --> to existing "+other.Label +" property",
-                MODE_SET_OBJ_TO_OBJ2:"Set property value from "+other.Label+" --> to existing "+other2.Label+" property",
-                MODE_SET_OBJ2_TO_OBJ:"Set property value from "+other2.Label+" --> to existing "+other.Label+" property",
-                MODE_COPY_DD_TO_DD2:"Copy property from dd ("+dd.Label+") --> to new dd ("+dd2.Label+") property",
-                MODE_COPY_DD2_TO_DD:"Copy property from dd ("+dd2.Label+") --> to new dd ("+dd.Label+") property",
-                MODE_SET_DD_TO_DD2:"Set property value from dd ("+dd.Label+") --> to existing dd ("+dd2.Label+") property",
-                MODE_SET_DD2_TO_DD:"Set property value from dd ("+dd2.Label+") --> to exiting dd ("+dd.Label+") property",
-                MODE_COPY_DD_TO_DD:"Copy existing property to new property",
-                MODE_SET_DD_TO_DD:"Set existing property from existing property",
-                MODE_UNLINK_DD:"Break existing parametric link of existing dd ("+dd.Label+") property",
-                MODE_UNLINK_OBJ:"Break existing parametric link of existing ("+obj.Label+") property",
-                MODE_CANCEL:"Cancel"}
-        if no_dd:
-            dd = None
-        if no_dd2:
-            dd2 = None
-        if no_other:
-            other = None
-        if no_other2:
-            other2 = None
-
-        if dd and not dd2 and not other:
-            dd2 = dd #allow for copying within the same dd object
-
-        if other and dd:
-            modes=[ops[MODE_COPY_OBJ_TO_DD], ops[MODE_SET_OBJ_TO_DD], ops[MODE_SET_DD_TO_OBJ], ops[MODE_CANCEL]]
-
-        elif other and other2:
-            modes=[ops[MODE_SET_OBJ_TO_OBJ2], ops[MODE_SET_OBJ2_TO_OBJ], ops[MODE_CANCEL]]
-
-        elif dd and dd2:
-            modes = [ops[MODE_COPY_DD_TO_DD2], ops[MODE_COPY_DD2_TO_DD], ops[MODE_SET_DD_TO_DD2], ops[MODE_SET_DD2_TO_DD], ops[MODE_CANCEL]]
-
-        if dd == dd2 and not other and not other2:
-            modes=[ops[MODE_COPY_DD_TO_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_UNLINK_DD], ops[MODE_CANCEL]]
-
-        if len(selection) == 1 and other and not dd:
-            modes=[ops[MODE_UNLINK_OBJ], ops[MODE_CANCEL]]
-
-        if len(selection) == 1 and not other and dd:
-            modes=[ops[MODE_UNLINK_DD], ops[MODE_SET_DD_TO_DD], ops[MODE_COPY_DD_TO_DD], ops[MODE_CANCEL]]
-
-        window = QtGui.QApplication.activeWindow()
-        mode,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Select mode of operation',modes,0,False,windowFlags)
-        if not ok:
-            return
-        if mode==ops[MODE_CANCEL]:
-            return
-        if mode == ops[MODE_COPY_OBJ_TO_DD] or mode == ops[MODE_COPY_DD_TO_DD2] or mode == ops[MODE_COPY_DD2_TO_DD]:
-            if mode == ops[MODE_COPY_DD_TO_DD2]:
-                fromObj = dd
-                toObj = dd2
-            elif mode == ops[MODE_COPY_DD2_TO_DD]:
-                fromObj = dd2
-                toObj = dd
-            elif mode == ops[MODE_COPY_OBJ_TO_DD]:
-                fromObj = other
-                toObj = dd
-            #make a copy of the property and add it to the dd object
-            properties = self.getProperty(fromObj,allowMultiple=True)
-            if not properties:
-                return #user canceled
-            fromProperty = properties[0]
-            for property in properties:
-                cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-                name = property['name']
-                if 'dd' in name[:2] or 'Dd' in name[:2]:
-                    name = name[2:]
-                name = 'dd'+cap(name)
-                propertyType = property['type']
-                if not propertyType:
-                    return #user canceled
-                name,ok=QtGui.QInputDialog.getText(window,'DynamicData','Enter the name for the new property\n',text=name, flags=windowFlags)
-                if 'dd' in name[:2] or 'Dd' in name[:2]:
-                    name = name[2:]
-                if not ok:
-                    return
-                name = 'dd'+cap(name)
-                while hasattr(toObj,name):
-                    name,ok=QtGui.QInputDialog.getText(window,'DynamicData','A property with that name already exists.  \n\
-Enter the name for the new property\n',text=name, flags=windowFlags)
-                    if not ok:
-                        return
-                    if 'dd' in name[:2] or 'Dd' in name[:2]:
-                        name = name[2:]
-                    name = 'dd'+cap(name)
-                doc.openTransaction("dd CopyProperty")
-                try:
-                    toObj.addProperty('App::Property'+propertyType.replace('(ViewObject)',''), name,'Copied from: '+fromObj.Label,'['+propertyType+']')
-                    toProperty = {'name':name,'type':propertyType,'value':property['value']}
-                except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception trying to add property ('+property['name']+')\n')
-                try:
-                    if propertyType=='String':
-                        setattr(toObj,name,str(property['value']))
-                    else:
-                        setattr(toObj,name,property['value'])
-                except:
-                    FreeCAD.Console.PrintError('DynamicData: Exception trying to set property value ('+str(property['value'])+')\nCould be a property type mismatch.\n')
-                doc.commitTransaction()
-                doc.recompute()
-                self.makeParametric(fromObj, fromProperty, toObj, toProperty)
-        elif mode == ops[MODE_SET_OBJ_TO_DD] or mode==ops[MODE_SET_DD_TO_OBJ] or mode==ops[MODE_SET_DD_TO_DD2] \
-                    or mode==ops[MODE_SET_DD2_TO_DD] or mode==ops[MODE_SET_OBJ_TO_OBJ2] or mode == ops[MODE_SET_OBJ2_TO_OBJ] \
-                    or mode==ops[MODE_UNLINK_DD] or mode==ops[MODE_UNLINK_OBJ]:
-            if mode == ops[MODE_UNLINK_DD]:
-                fromObj = dd
-                toObj = dd
-                breakOnly = True
-            elif mode == ops[MODE_UNLINK_OBJ]:
-                fromObj = other
-                toObj = other
-                breakOnly = True
-            elif mode == ops[MODE_SET_OBJ_TO_DD]:
-                fromObj = other
-                toObj = dd
-            elif mode == ops[MODE_SET_DD_TO_OBJ]:
-                fromObj = dd
-                toObj = other
-            elif mode == ops[MODE_SET_DD_TO_DD2]:
-                fromObj = dd
-                toObj = dd2
-            elif mode == ops[MODE_SET_DD2_TO_DD]:
-                fromObj = dd2
-                toObj = dd
-            elif mode == ops[MODE_SET_OBJ_TO_OBJ2]:
-                fromObj = other
-                toObj = other2
-            elif mode == ops[MODE_SET_OBJ2_TO_OBJ]:
-                fromObj = other2
-                toObj = other
-            #here we just set the value of an existing property
-            if breakOnly:
-                fromProperty = self.getProperty(fromObj, '\nChoose the property of '+fromObj.Label+' to unlink\n')
-            else:
-                fromProperty = self.getProperty(fromObj,'\nChoose the FROM property of '+fromObj.Label+'\n')
-            if not fromProperty:
-                return
-            fromProperty=fromProperty[0] #returns a list, but only valid for copy modes, not set modes
-            if not breakOnly:
-                toProperty = self.getProperty(toObj,'\n\nPrevious Selection: '+fromObj.Label+':'+fromProperty['name']+' ('+str(fromProperty['value'])+')\n\nChoose the TO property of '+toObj.Label+'\n', matchType=fromProperty['type'].replace('(ViewObject)',''))
-                if not toProperty:
-                    return #user canceled
-                toProperty=toProperty[0]
-            else:
-                toProperty = fromProperty
-            if not toProperty:
-                return
-            if not breakOnly:
-                doc.openTransaction("dd SetProperty")
-                try:
-                    if '(ViewObject)' in toProperty['type']:
-                        setattr(toObj.ViewObject, toProperty['name'],fromProperty['value'])
-                    else:
-                        setattr(toObj,toProperty['name'],fromProperty['value'])
-                except:
-                    FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to set property value ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-                doc.commitTransaction()
-                doc.recompute()
-                self.makeParametric(fromObj, fromProperty, toObj, toProperty)
-            else: #break only
-                self.makeParametric(fromObj, fromProperty, toObj, toProperty, breakOnly=True)
-
-
-        doc.recompute()
-        return
-
-    def makeParametric(self,fromObj,fromProperty,toObj,toProperty,breakOnly=False):
-        """create a parametric link using toObj.setExpression()
-        fromProperty and toProperty are dict objects with keys:
-        'name', 'type', and 'value' eg: {'name':'Height','type':'Length','value': 8 mm}
-        this function only gets called after a successful copy/set operation
-        copy operation is when new property was created in toObj
-        set operation is when existing property value was changed in toObj"""
-
-        #User might not want to do this, but we check to see if we can do it before asking
-        if toProperty['type'] in self.NonLinkableTypes:
-            return
-        #ViewObject does not have setExpression(), so do not try to parametrically link
-        if '(ViewObject)' in fromProperty['type'] or '(ViewObject)' in toProperty['type']:
-            return
-        breakLink = False
-        if not breakOnly:
-            window = QtGui.QApplication.activeWindow()
-            items = ["Create parametric link", "Make simple non-parametric copy by value","Break parametric link"]
-            item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Create parametric link?',items,0,False,windowFlags)
-            if not ok:
-                return
-            elif item==items[1]:
-                return
-            elif item==items[-1]: #break parametric link
-                breakLink=True
-        else:
-            breakLink = True
-
-        #only set parametric link in non-dd objects
-        if hasattr(toObj, "DynamicData"):
-            tmpObj = fromObj
-            fromObj = toObj
-            toObj = tmpObj
-            tmpProp = fromProperty
-            fromProperty = toProperty
-            toProperty = tmpProp
-
-        #handle vector types first
-        if fromProperty['type'] in self.VectorTypes:
-            try:
-                if not breakLink:
-                    toObj.setExpression(toProperty['name']+'.x',fromObj.Name+'.'+fromProperty['name']+'.x')
-                    toObj.setExpression(toProperty['name']+'.y',fromObj.Name+'.'+fromProperty['name']+'.y')
-                    toObj.setExpression(toProperty['name']+'.z',fromObj.Name+'.'+fromProperty['name']+'.z')
-                else: #break the parametric link
-                    toObj.setExpression(toProperty['name']+'.x', None)
-                    toObj.setExpression(toProperty['name']+'.y', None)
-                    toObj.setExpression(toProperty['name']+'.z', None)
-            except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-            return
-
-        #handle placement types
-        if fromProperty['type'] in 'Placement':
-            try:
-                if not breakLink:
-                    toObj.setExpression(toProperty['name']+'.Base.x',fromObj.Name+'.'+fromProperty['name']+'.Base.x')
-                    toObj.setExpression(toProperty['name']+'.Base.y',fromObj.Name+'.'+fromProperty['name']+'.Base.y')
-                    toObj.setExpression(toProperty['name']+'.Base.z',fromObj.Name+'.'+fromProperty['name']+'.Base.z')
-                    toObj.setExpression(toProperty['name']+'.Rotation.Angle',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Angle')
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.x')
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.y')
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z',fromObj.Name+'.'+fromProperty['name']+'.Rotation.Axis.z')
-                else: #break parametric link
-                    toObj.setExpression(toProperty['name']+'.Base.x', None)
-                    toObj.setExpression(toProperty['name']+'.Base.y', None)
-                    toObj.setExpression(toProperty['name']+'.Base.z', None)
-                    toObj.setExpression(toProperty['name']+'.Rotation.Angle', None)
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.x', None)
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.y', None)
-                    toObj.setExpression(toProperty['name']+'.Rotation.Axis.z', None)
-            except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-            return
-
-        #handle rotation types
-        if fromProperty['type'] in 'Rotation':
-            try:
-                if not breakLink:
-                    toObj.setExpression(toProperty['name']+'.Angle',fromObj.Name+'.'+fromProperty['name']+'.Angle')
-                    toObj.setExpression(toProperty['name']+'.Axis.x',fromObj.Name+'.'+fromProperty['name']+'.Axis.x')
-                    toObj.setExpression(toProperty['name']+'.Axis.y',fromObj.Name+'.'+fromProperty['name']+'.Axis.y')
-                    toObj.setExpression(toProperty['name']+'.Axis.z',fromObj.Name+'.'+fromProperty['name']+'.Axis.z')
-                else: #break parametric link
-                    toObj.setExpression(toProperty['name']+'.Angle', None)
-                    toObj.setExpression(toProperty['name']+'.Axis.x', None)
-                    toObj.setExpression(toProperty['name']+'.Axis.y', None)
-                    toObj.setExpression(toProperty['name']+'.Axis.z', None)
-            except:
-                FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-            return
-
-
-        #handle all other general types
-        try:
-            if not breakLink:
-                toObj.setExpression(toProperty['name'],fromObj.Name+'.'+fromProperty['name'])
-            else: #break the link
-                toObj.setExpression(toProperty['name'], None)
-        except:
-            FreeCAD.Console.PrintError(\
-'DynamicData: Exception trying to parametrically link ('+str(fromProperty['value'])+')\n\
-Could be a property type mismatch\n\
-\n\
-From Object: '+fromObj.Label+', From Property: '+fromProperty['name']+', type: '+fromProperty['type']+'\n\
-To Object: '+toObj.Label+', To Property: '+toProperty['name']+', type: '+toProperty['type']+'\n')
-        return
-
-    def getProperty(self,obj,msg='',allowMultiple=False,matchType=''):
-        """ask user which property and return it or None
-           property will be in the form of a list of dictionary objects
-           with keys 'type', 'name', 'value' """
-        available = []
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        supportViewObjectProperties = pg.GetBool('SupportViewObjectProperties', True)
-        propertiesList = obj.PropertiesList
-        whiteList=['Proxy','ExpressionEngine','DynamicData','Label','Shape']
-        for prop in propertiesList:
-            if prop in whiteList:
-                continue
-            p = getattr(obj,prop)
-            typeId = obj.getTypeIdOfProperty(prop)[13:] #strip "App::Property" from beginning
-            if typeId in self.PropertyTypes:
-                available.append({'type':typeId,'value':p,'name':prop})
-        if supportViewObjectProperties:
-            viewPropertiesList = obj.ViewObject.PropertiesList
-            for vprop in viewPropertiesList:
-                if vprop in whiteList:
-                    continue
-                vp = getattr(obj.ViewObject,vprop)
-                strType = str(type(vp))
-                types = self.PropertyTypes
-                typeFound = False;
-                typeId = obj.ViewObject.getTypeIdOfProperty(vprop)[13:] #strip "App::Property" from beginning
-                if typeId in self.PropertyTypes:
-                    available.append({'type':'(ViewObject)'+typeId,'value':vp,'name':vprop})
-
-        items=[]
-        moved=[]
-        for ii in range(0,len(available)):
-            a = available[ii]
-            items.append("name: "+a['name']+", type: "+a['type']+", value: "+str(a['value']))
-            if matchType==a['type'].replace('(ViewObject)',''): #put same types at top of list
-                items.insert(0,items[-1])
-                items.pop(-1)
-                moved.append(ii)
-        for mm in range(0,len(moved)): #arrange available list to match items list
-            available.insert(0,available[moved[mm]])
-            available.pop(moved[mm])
-
-        if allowMultiple:
-            items.append("<copy all>")
-        items.append("<cancel>")
-        window = QtGui.QApplication.activeWindow()
-        item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Copy/Set Property Tool\n\nSelect property to copy\n'+msg,items,0,False,windowFlags)
-        if not ok or item==items[-1]:
-            return None
-        if allowMultiple and item==items[-2]:
-            return available
-        return [available[items.index(item)]]
+    def doDlg(self):
+        dlg = DynamicDataCopyPropertyCommandClass.CopyDlg(self, self.obj1, self.obj2)
+        dlg.exec_()
+        return dlg
 
     def IsActive(self):
-        other = None #other object to copy properties either to or from
-        dd = None
-        selection = Gui.Selection.getSelectionEx()
+        self.obj1 = None
+        self.obj2 = None
+        selection = Gui.Selection.getSelection()
+        if not selection:
+            return False
         if len(selection) == 1:
-            return True #only can break parametric link with only 1 object selected
-        if len(selection) != 1 and len(selection) != 2:
-            return False
-        for sel in selection:
-            obj = sel.Object
-            if "FeaturePython" in str(type(obj)) and hasattr(obj,"DynamicData"):
-                dd = obj
-        if not dd and not len(selection)==2:
-            return False
-        return True
+            self.obj1 = selection[0]
+            return True
+        if len(selection) == 2:
+            self.obj1 = selection[0]
+            self.obj2 = selection[1]
+            return True
+        return False
 
 
 Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
