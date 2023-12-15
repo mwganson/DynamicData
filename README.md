@@ -33,16 +33,18 @@ Adds a new custom property to the selected object.  The selected object need not
 
 After selecting the property type, the next step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
 
-**Note:** as of version 1.12 all tooltips now get `[Type]` prepended.  Example, if type is `Length` the tooltip would be something like `[Length] my tooltip`.  
-* `Old style name;groupname;tooltip;value` syntax is still supported in the `Name` field for those who wish to keep using it.
+All tooltips now get `[Type]` prepended.  Example, if type is `Length` the tooltip would be something like `[Length] my tooltip`.  
+* `Old style name;groupname;tooltip;value` syntax is still supported in the `Name` field for those who wish to keep using it.  In the old style, before the introduction of this new dialog, all of this information was entered into a single text field.  The syntax for this method is propertyname;groupname;tooltip;value.  You can still enter all of this into the name field if you like, but I doubt anybody is still doing it this way.
 
-All property names are prepended with `dd` automatically and the first letter is capitalized.  (If you don't like this you can rename the property after it has been added, but it is recommended to follow the dd naming convention or else some functions in the workbench might not work properly, such as the copy property function.)  Thus, a name entered of `length` would be converted to `ddLength` and get displayed in the property view as `dd Length`.  The purpose for this is to make it easier to reference your properties later on.  For example, if you wish to reference a DynamicData custom property from a sketch constraint you can enter `=dd.dd` (or click the expression engine `fx` icon and enter `dd.dd`) to bring up a list of available custom properties.
+Property names are no longer prepended with `dd` automatically.  The prefix is no longer needed with recent versions of FreeCAD where the bug in the expression engine has now been fixed.  If you wish to still continue using the dd prefix you can still do so when you create your property name.  I considered adding a preference for this, but rejected the idea after some deliberation, feeling it would unnecessary complicate the code.  Below is a screenshot of the expression engine property suggestion box that pops up when entering a property reference.
 
 ![dd constraint reference screenshot](Resources/media/dd_constraint_reference_scr.png)
 
-DynamicData has its own built-in evaluator, which can be used when entering values.  The actual value that gets placed into the property is the evaluated amount.  New, beginning with version 2.0, you can now enter FreeCAD expressions into the value field.  To signify to DynamicData that your entry is to be evaluated as a FreeCAD expression, prepend and equals sign (`=`) to the value.  If initializing a list type, such as IntegerList or FloatList, use something like `=list(3;2;1)` to initialize them.  For a list of type VectorList you can use the `create()` function integrated into the expression engine, see example below. `create()` works for types vector, placement, and rotation.  
+DynamicData's built-in evaluator has been replaced with FreeCAD's integrated expression evaluator.  This simplifies the code, and since the expression evaluator is what has the final say on how values get interpreted, this creates a more uniform format for property values.  But I still did some custom evaluations for some property types to make them easier for the user to input starting values.  For example, when setting the initial value for a new Vector property type you can simply enter "(10,20,30)" in the value field in DynamicData's add property dialog, but this won't work when entering it directly into the expression engine.  Behind the scenes in DynamicData some preprocessing is done to make that entry work.  Similarly, for the Color property types you can enter the desired color in 3 different formats, for example for the color red you could enter: "(255,0,0)" or "#ff0000" or simply "red" (without the quotes).  You can also leave the value field blank and later select the desired color from a color picker dialog in FreeCAD.
 
-**Note:** even though your value will be evaluated by the FreeCAD expression engine, you don't get the benefit of being prompted with autocompletions when entering it into the value field.
+**Note:** even though your value will be evaluated by the FreeCAD expression engine, you don't get the benefit of being prompted with autocompletions when entering it into the value field.  But for many property types some preprocessing is done and you get a sort of preview of what the value will be.  This information pops up in a QLabel that is between the property name field and the value field in the add property dialog.
+
+You will notice in the above add property dialog screenshot that for the Length property type there is some default placeholder text giving a very brief summary of some example value entries for that property.  This is true for many property types.  Often there are alternative entry formats that will also work.  Generally, you can use commas in place of semicolons.  If the preprocessor is able to successfully parse and evaluate your value field entry, then it will most probably be a successful operation when the workbench attempts to set the property to the desired value, but the preprocessor does not always take into account the property type you are using and not all values, of course, will be compatible with all property types.  You can't put a list into a Float property, for example.  For that you need the FloatList type.
 
 ### Some examples
 
@@ -53,7 +55,7 @@ DynamicData has its own built-in evaluator, which can be used when entering valu
 =list(create(<<vector>>; 2; 1; 2);create(<<vector>>; 0;0;0))
 3*5
 cos(pi)
-golden_ratio
+goldenrod --(for the Color property type)
 ```
 
 For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:  
@@ -68,15 +70,16 @@ or if using the expression engine:
 =list(3;5;9;12)
 ```
 
-For Enumeration types (new to v2.34) you enter the enumerations as a list:  
+For Enumeration types you enter the enumerations as a list:  
 
 ```
-zero;one;two;three;four;five;six;seven
+("zero","one","two","three","four")
+["zero";"one";"two"]
 ```
 
-Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by `=dd.ddMyEnum` is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.
+You will probably find it simpler to leave the Enumeration value blank, and then use DynamicData's Edit Enumerations command to fill in the values.  Enumeration properties are always lists of strings.  When the enumeration is accessed via the Expression Engine, such as in a spreadsheet, the result is an integer corresponding to the index of the selected enumeration item.  For example, in the above enumeration if the user selects four, then the value returned by `=dd.ddMyEnum` is 4 because "four" is the 5th item in the enumeration and because this is a 0-indexed list.
 
-You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  For example, make an IntegerList called MyInts:
+You may make use of these enumeration properties by also creating another list property, such as IntegerList, FloatList, or StringList that contains the same number of elements as the enumeration.  See also the section below on Configurations for more ideas on using these versatile Enumeration property types.  For example, make an IntegerList called MyInts:
 
 ```
 0;1;2;3;4;5;6;7
@@ -93,6 +96,9 @@ False;True
 Since this evaluates to 0 or 1 depending on user selection it could be used as a boolean:
 
 `=dd.ddMyEnum ? 5 : 7` (would yield a value of 5 if True, 7 if False)
+
+For the Link property type (not App::Link objects, but the property that links to another object) you can simply enter the object's name or label.  If the evaluation label says "None" then that means it wasn't able to find the object.  Double check the spelling.  Something similar can be done for other Link types, such as LinkList and LinkSubList.  Follow the initial placeholder text for guidance on the syntax for setting the default values for advanced property types.  If there is already a value there in the Value field, clear it to see the placeholder text.
+
 ### Edit Enumerations
 ![Edit Enumerations icon](Resources/icons/DynamicDataEditEnumerations.svg)
 
