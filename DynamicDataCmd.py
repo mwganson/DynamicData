@@ -27,7 +27,7 @@ __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
 __date__    = "2023.12.14"
-__version__ = "2.58"
+__version__ = "2.59"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -36,7 +36,7 @@ mostRecentTypesLength = 5 #will be updated from parameters
 from FreeCAD import Gui
 from PySide import QtCore, QtGui
 
-import FreeCAD, FreeCADGui, os, math, re
+import FreeCAD, FreeCADGui, os, math, re, ast
 App = FreeCAD
 Gui = FreeCADGui
 __dir__ = os.path.dirname(__file__)
@@ -225,6 +225,24 @@ class DynamicDataBaseCommandClass:
 
     def isValidName(self, name):
         return name == self.fixName(name)
+
+    def getNewPropertyNameCandidate(self, obj, candidate):
+        """arguments: (obj, candidate) Takes candidate as a starting point and finds a new unique name based on it
+        Example: candidate = "Length23" and there already exists in obj a "Length23",
+        so this function would try Length24, Length25, etc. until a new unique name is found"""
+        if not hasattr(obj, candidate):
+            return candidate
+
+        # Use regular expression to extract base name and number
+        match = re.match(r'^(.*?)(\d*)$', candidate)
+        base_name, number_suffix = match.groups() if match else (candidate, '')
+        idx = int(number_suffix) if number_suffix else 1
+
+        while hasattr(obj, f"{base_name}{idx}"):
+            idx += 1
+
+        new_candidate = f"{base_name}{idx}"
+        return new_candidate
 
     def fixName(self, name):
         """fixes a name so it can be a valid property name"""
@@ -1002,10 +1020,16 @@ Enumeration to edit.  Create one first, and then try again.\n")
 ####################################################################################
 # dialog for adding new property
 
+class EvalError(Exception):
+    def __init__(self, message="Evaluation error occurred"):
+        self.message = message
+        super().__init__(self.message)
+
 class MultiTextInput(QtGui.QDialog):
-    def __init__(self, obj):
+    def __init__(self, obj, cmd):
         QtGui.QDialog.__init__(self)
         self.obj = obj
+        self.cmd = cmd #cmd is the command class
         layout = QtGui.QGridLayout()
         #layout.setColumnStretch(1, 1)
         self.addAnotherProp = False
@@ -1013,9 +1037,12 @@ class MultiTextInput(QtGui.QDialog):
         self.propertyTypeLabel = QtGui.QLabel("Select App::Property type:")
         self.listWidget = QtGui.QListWidget()
         self.listWidget.currentItemChanged.connect(self.onListWidgetCurrentItemChanged)
-        self.label2 = QtGui.QLabel(self)
-        self.label2.setStyleSheet('color: red')
-        self.nameLabel = QtGui.QLabel("Name: dd")
+        self.label2 = QtGui.QLabel("")
+        self.label2.setStyleSheet("color: red;")
+        self.label3 = QtGui.QLabel("")
+        self.label3.setStyleSheet("color: red;")
+        self.label4 = QtGui.QLabel("")
+        self.nameLabel = QtGui.QLabel("Name: ")
         self.nameEdit = QtGui.QLineEdit(self)
         self.nameEdit.textChanged.connect(self.on_text_changed)
         self.valueLabel = QtGui.QLabel("Value: ")
@@ -1033,14 +1060,16 @@ class MultiTextInput(QtGui.QDialog):
         layout.addWidget(self.listWidget, 4, 0, 1, 6)
         layout.addWidget(self.nameLabel, 5, 0, 1, 1)
         layout.addWidget(self.nameEdit, 5, 1, 1, 5)
-        layout.addWidget(self.valueLabel, 6, 0, 1, 1)
-        layout.addWidget(self.valueEdit, 6, 1, 1, 5)
-        layout.addWidget(self.groupLabel, 7, 0, 1, 1)
-        layout.addWidget(self.groupCombo, 7, 1 , 1, 5)
-        layout.addWidget(self.tooltipLabel, 8, 0, 1, 1)
-        layout.addWidget(self.tooltipPrependLabel, 8, 1, 1, 1)
-        layout.addWidget(self.tooltipEdit, 8, 2, 1, 4)
+        layout.addWidget(self.label4, 6, 1, 1, 5)
+        layout.addWidget(self.valueLabel, 7, 0, 1, 1)
+        layout.addWidget(self.valueEdit, 7, 1, 1, 5)
+        layout.addWidget(self.groupLabel, 8, 0, 1, 1)
+        layout.addWidget(self.groupCombo, 8, 1 , 1, 5)
+        layout.addWidget(self.tooltipLabel, 9, 0, 1, 1)
+        layout.addWidget(self.tooltipPrependLabel, 9, 1, 1, 1)
+        layout.addWidget(self.tooltipEdit, 9, 2, 1, 4)
         layout.addWidget(self.label2, 10, 0, 1, 5)
+        layout.addWidget(self.label3, 11, 0, 1, 5)
         self.buttons = QtGui.QDialogButtonBox(
             QtGui.QDialogButtonBox.Ok.__or__(QtGui.QDialogButtonBox.Cancel),
             QtCore.Qt.Horizontal, self)
@@ -1050,48 +1079,145 @@ class MultiTextInput(QtGui.QDialog):
         addAnother = QtGui.QPushButton("Apply", self)
         self.buttons.addButton(addAnother, QtGui.QDialogButtonBox.ActionRole)
         addAnother.clicked.connect(self.addAnotherProperty)
-        layout.addWidget(self.buttons, 11, 0, 1, 5)
+        layout.addWidget(self.buttons, 12, 0, 1, 5)
         self.setLayout(layout)
 
     def addAnotherProperty(self):
+        """user has clicked Apply button, so this informs parent command
+        class to reopen the dialog after adding property"""
         self.addAnotherProp = True
         self.accept()
 
-    def onListWidgetCurrentItemChanged(self,current,previous):
-        if previous and previous.text() in self.nameEdit.text():
-            self.nameEdit.setText(self.nameEdit.text().replace(previous.text(),current.text()))
+    @property
+    def Current(self):
+        return self.listWidget.currentItem().text()
 
-    def on_value_changed(self): #commented out for now because it throws exceptions even inside try: except: block
-        pass
-        #obj = FreeCAD.ActiveDocument.ActiveObject
-        #val = self.valueEdit.text()
-        #result = "Invalid expression as of yet"
-        #if len(val) > 1 and val[0] == "=":
-        #    try:
-        #        result = obj.evalExpression(val[1:])
-        #        self.label2.setStyleSheet('color: black')
-        #    except:
-        #        self.label2.setStyleSheet('color: red')
-        #    self.label2.setText(str(result))
+    def onListWidgetCurrentItemChanged(self,current,previous):
+        """when the user selects a different property type, suggest a name for the property"""
+        candidate = self.cmd.getNewPropertyNameCandidate(self.obj, current.text())
+        self.nameEdit.setText(candidate)
+        self.tooltipPrependLabel.setText(f"[{current.text()}]")
+        defaults = {
+            "Angle": "32 deg or pi rad or 45",
+            "Color": "(255,0,0) or red or #ff0000",
+            "Direction": "create(<<vector>>; 0; 0; 0)",
+            "Enumeration": """["small";"medium";"large"]""",
+            "File": "c:/users/username/Documents/freecad/macros",
+            "FloatConstraint": "(0;-360;360;15) = (initial, min, max, step)",
+            "FloatList": "(1;2;3)",
+            "Font": "Arial",
+            "Length": "6' + 2\" or 5m or 17",
+            "Vector": "create(<<vector>>; 0; 0; 0)",
+            "VectorDistance": "create(<<vector>>; 0; 0; 0)",
+            "VectorList": "((1;2;3);(4;5;6))",
+            "IntegerConstraint": "(0;-360;360;45) = (initial, min, max, step)",
+            "IntegerList": "(1;2;3;4)",
+            "Link": "ObjectNameOrLabel",
+            "LinkChild": "ObjectNameOrLabel",
+            "LinkGlobal": "ObjectNameOrLabel",
+            #"LinkSubList": "[(Object1NameOrLabel,(Face1,Edge2)),(Object2NameOrLabel,(Vertex1))]",
+            "LinkSubList": "[(Extrude,(Face1,Edge2)),(Sketch,(Vertex1))]",
+            "PlacementLink": "ObjectNameOrLabel",
+            "Position": "create(<<vector>>;10;20;30)",
+            "Matrix": "((1;0;0;0),(0;1;0;0),(0;0;1;0),(0;0;0;1))",
+            "Path": "c:/users/username/documents",
+            "LinkList": "[Obj1,Obj2,Obj3]",
+            "Placement": "create(<<placement>>; create(<<vector>>;10;20;30); create(<<rotation>>; create(<<vector>>;1;0;0);45))",
+            "Rotation": "create(<<rotation>>; create(<<vector>>;1;0;0);45)",
+            "String": "Your string here",
+            "StringList": "[a;b;c]",
+            "Precision": "1e-7",
+
+
+
+        }
+        if current.text() in defaults.keys():
+            self.valueEdit.setPlaceholderText(defaults[current.text()])
+        else:
+            self.valueEdit.setPlaceholderText("")
+        self.on_value_changed()
+
+    def on_value_changed(self):
+        """this just provides a pre-evaluation of the value and displays in a label"""
+        val = self.valueEdit.text()
+        skiplist = ["StringList","Font"]
+        if self.Current in skiplist:
+            self.label4.setText("")
+            return
+        elif self.Current == "LinkSubList":
+            try:
+                txt = self.cmd.getLinkSubList(val)
+                self.label4.setText(f"{txt}")
+                self.label4.setStyleSheet("color:black;")
+            except EvalError as ev:
+                self.label4.setText(ev.message)
+                self.label4.setStyleSheet("color:red;")
+            return
+        elif self.Current == "LinkList" or self.Current == "LinkListGlobal" or self.Current == "LinkListChild":
+            try:
+                txt = self.cmd.getLinkList(val)
+                self.label4.setText(f"{txt}")
+                self.label4.setStyleSheet("color:black;")
+            except EvalError as ev:
+                self.label4.setText(ev.message)
+                self.label4.setStyleSheet("color:red;")
+            return
+        elif self.Current == "Link" or self.Current == "LinkChild" or self.Current == "LinkGlobal":
+            txt = self.cmd.getLink(val)
+            self.label4.setText(f"{txt}")
+            self.label4.setStyleSheet("color:black;")
+            return
+        elif self.Current == "Color":
+            if not val:
+                self.label4.setText("")
+                return
+            clr = self.cmd.getColor(val)
+            if clr:
+                self.label4.setText(f"{clr}")
+                clr2 = tuple(255-c for c in clr)
+                self.label4.setStyleSheet(f"color: rgb{clr2};background-color: rgb{clr};")
+            else:
+                self.label4.setText("Invalid color")
+                self.label4.setStyleSheet("color:red;")
+            return
+        result = "invalid"
+        if not val:
+            self.label4.setText("")
+            return
+        if val.startswith("="):
+            val = val[1:]
+        try:
+            result = f"{self.cmd.eval_expr(val)}"
+            self.label4.setStyleSheet('color: black')
+            self.label4.setText(str(result))
+        except EvalError as ev:
+            self.label4.setStyleSheet('color: red')
+            self.label4.setText(ev.message)
+
 
     def on_text_changed(self):
-        cur = self.nameEdit.text()
-        if len(cur) == 1:
-            cur = cur.upper()
-        elif len(cur) > 1:
-            cur = cur[0].upper() + cur[1:]
+        """handler for the property name field when it changes"""
+        name = self.nameEdit.text()
+        if ";" in name:
+            name = name[:name.index(";")]
+        #label2 is for invalid name messages
+        #later label3 shows where there is a conflict with an existing name
+        if not self.cmd.isValidName(name):
+            self.label2.setText(f"{name} is not a valid name, suggestion: {self.cmd.fixName(name)}")
         else:
-            return
-        self.nameEdit.setText(cur)
+            self.label2.setText("")
+
         self.on_edit_finished()
 
     def on_edit_finished(self):
+        """we still support the original semicolon-delimited way of adding properties
+        in a single QLineEdit even though that was very user-unfriendly"""
         if ";" in self.nameEdit.text():
             hasValue = False
             propertyName = self.nameEdit.text()
             split = propertyName.split(';')
             propertyName = split[0].replace(' ','_')
-            if len(propertyName)==0:
+            if len(propertyName) == 0:
                 propertyName = "Prop"
             if len(split)>1: #has a group name
                 if len(split[1])>0: #allow for ;; empty string to mean use current group name
@@ -1112,10 +1238,10 @@ class MultiTextInput(QtGui.QDialog):
             self.valueEdit.setEnabled(True)
             self.tooltipEdit.setEnabled(True)
             propertyName = self.nameEdit.text()
-        if hasattr(self.obj,'dd'+propertyName):
-            self.label2.setText('Property name already exists')
+        if hasattr(self.obj,propertyName):
+            self.label3.setText(f"Property name already exists, suggestion: {self.cmd.getNewPropertyNameCandidate(self.obj, propertyName)}")
         else:
-            self.label2.setText('')
+            self.label3.setText('')
 
 
 ######################################################################################
@@ -1128,7 +1254,20 @@ class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
     global mostRecentTypesLength
 
     def __init__(self):
-        self.obj = None
+        #global mostRecentTypes
+        global mostRecentTypesLength
+        import locale
+        import operator as op
+        self.obj = None #set in IsActive()
+        self.groupName = "DefaultGroup"
+        self.defaultPropertyName = "Prop"
+        self.tooltip = "tip"
+        self.value = 0
+
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+        mostRecentTypesLength = pg.GetInt('mruLength',5)
+        for ii in range(0, mostRecentTypesLength):
+            mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
 
     def GetResources(self):
         return {'Pixmap'  : os.path.join( iconPath , 'AddProperty.svg'),
@@ -1142,12 +1281,6 @@ class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
 
         doc = FreeCAD.ActiveDocument
         obj = self.obj
-        if not 'FeaturePython' in str(obj.TypeId):
-            FreeCAD.Console.PrintError('DynamicData Workbench: Cannot add property to non-FeaturePython objects.\n')
-            return
-        doc.openTransaction("dd Add Property")
-        #add the property
-        #window = QtGui.QApplication.activeWindow()
         items = self.PropertyTypes
         recent = []
         pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
@@ -1157,42 +1290,29 @@ class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
                 recent.insert(0,mostRecentTypes[ii])
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
 
-        dlg = MultiTextInput(obj)
+        #create and initialize dialog
+        dlg = MultiTextInput(obj, self)
         dlg.setWindowFlags(windowFlags)
-        dlg.setWindowTitle("DynamicData")
+        dlg.setWindowTitle("DynamicData Add Property")
+        icon = QtGui.QIcon(self.GetResources()["Pixmap"])
+        dlg.setWindowIcon(icon)
         dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n")
         items = recent+items
         dlg.listWidget.addItems(items)
         dlg.listWidget.setCurrentRow(0)
         item = items[0]
-        vals=['']
-        for ii in range(1,1000):
-            vals.append(str(ii))
-        idx = 0
-        while hasattr(obj,'dd' + item + str(vals[idx])):
-            idx += 1
-        item + str(vals[idx])
-        dlg.nameEdit.setText(item + vals[idx])
-
-        if hasattr(obj,'dd'+ item + vals[idx]):
-            dlg.label2.setText('Property name already exists')
-        else:
-            dlg.label2.setText('')
+        candidate = self.getNewPropertyNameCandidate(self.obj, item)
+        dlg.nameEdit.setText(candidate)
         dlg.nameEdit.selectAll()
-        if "List" in item:
-            dlg.valueLabel.setText("Values:")
-            dlg.label.setText("List values should be semicolon delimited, e.g. 1;2;3;7")
-        props = obj.PropertiesList
-        groups = []
-        groups.append(self.groupName)
-        for p in props:
-            cur_group = obj.getGroupOfProperty(p)
-            if len(cur_group) > 0 and not cur_group in groups:
-                groups.append(cur_group)
+
+        #props = obj.PropertiesList
+        groups = self.getGroups(self.obj)
         dlg.groupCombo.addItems(groups)
         dlg.tooltipLabel.setText("Tooltip:")
         dlg.tooltipPrependLabel.setText("["+item+"]")
 
+
+        #execute dialog
         ok = dlg.exec_()
         if not ok:
             return
@@ -1207,221 +1327,164 @@ class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
         for ii in range(mostRecentTypesLength-1,-1,-1):
             if mostRecentTypes[ii]:
                 pg.SetString('mru'+str(ii), mostRecentTypes[ii])
-        if not ";" in dlg.nameEdit.text():
-            self.propertyName = dlg.nameEdit.text() + ";" \
-                              + dlg.groupCombo.currentText() + ";" \
-                              + dlg.tooltipEdit.text() + ";" \
-                              + dlg.valueEdit.text()
-        else:
-            self.propertyName = dlg.nameEdit.text()
-        if len(self.propertyName)==0:
-            self.propertyName=';;;' #use defaults
+        propName = dlg.nameEdit.text()
+        self.propertyName = propName if not ";" in propName else propName[:propName.index(";")]
+        self.groupName = dlg.groupCombo.currentText()
+        self.tooltip = dlg.tooltipEdit.text()
+        try:
+            self.value = self.eval_expr(dlg.valueEdit.text())
+        except EvalError as ev:
+            self.value = dlg.valueEdit.text()
 
-        if 'dd' in self.propertyName[:2] or 'Dd' in self.propertyName[:2]:
-            self.propertyName = self.propertyName[2:] #strip dd temporarily
-        cap = lambda x: x[0].upper() + x[1:] #credit: PradyJord from stackoverflow for this trick
-        self.propertyName = cap(self.propertyName) #capitalize first character to add space between dd and self.propertyName
-        self.tooltip='['+item+'] ' #e.g. [Float]
-        val=None
-        vals=[]
-        hasVal = False
-        listval = ''
-        if ';' in self.propertyName:
-            split = self.propertyName.split(';')
-            self.propertyName = split[0].replace(' ', '_')
-            if len(self.propertyName)==0:
-                self.propertyName = self.defaultPropertyName
-            if len(split)>1: #has a group name
-                if len(split[1])>0: #allow for ;; empty string to mean use current group name
-                    self.groupName = split[1]
-            if len(split)>2: #has a tooltip
-                if len(split[2])>0:
-                    self.tooltip = self.tooltip + split[2]
-            if len(split)>=4: #has a value
-                if "=list(" in split[3]:
-                    listval = split[3]
-                    for ii in range(4, len(split)):
-                        listval += ';' + split[ii]
-                val = split[3]
-                if len(val)>0:
-                    hasVal = True
-            if len(split)>4 and 'List' in item: #multiple values for list type property
-                hasVal = True
-                for ii in range(3,len(split)):
-                    try:
-                        if len(split[ii])>0:
-                            vals.append(self.eval_expr(split[ii]))
-                    except Exception as ex:
-                        FreeCAD.Console.PrintError(f"dd: {ex}\n")
-                        vals.append(split[ii])
-        if hasattr(obj,'dd'+self.propertyName):
-            FreeCAD.Console.PrintError('DyamicData: Unable to add property: dd'+self.propertyName+' because it already exists.\n')
-            self.checkAddAnother(dlg)
-            return
-        p = obj.addProperty('App::Property'+item,'dd'+self.propertyName,str(self.groupName),self.tooltip)
-        if hasVal and len(vals)==0:
-            if val[0] == "=":
-                try:
-                    obj.setExpression('dd'+self.propertyName, val[1:])
-                    obj.touch()
-                    doc.recompute()
-                    doc.commitTransaction()
-                    self.checkAddAnother(dlg)
-                    return
-                except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expreesion: '+str(val[1:])+'\n')
-                    doc.commitTransaction()
-                    self.checkAddAnother(dlg)
-                    return
+        doc.openTransaction("DynamicData: Add Property")
+        self.obj.addProperty(f"App::Property{item}", self.propertyName, self.groupName, self.tooltip)
+        doc.commitTransaction()
+        doc.openTransaction("DynamicData: Set property value")
+        if item == "Link" or item == "LinkChild" or item == "LinkGlobal" or item == "PlacementLink":
+            if self.value:
+                link = self.getObjectByNameOrLabel(self.value)
+                if link:
+                    setattr(self.obj, self.propertyName, link)
+        elif item in ["LinkList","LinkListChild","LinkListGlobal"]:
+            if self.value:
+                links = self.getLinkList(self.value)
+                if links:
+                    setattr(self.obj, self.propertyName, links)
+        elif item == "StringList" and self.value:
+            val = self.value[1:-1] #strip the [] brackets
+            vals = val.split(",") if "," in val else val.split(";") if ";" in val else ast.literal_eval(self.value)
+            setattr(self.obj, self.propertyName, vals)
+        elif item == "LinkSubList" and self.value:
+            links = self.getLinkSubList(self.value)
+            if links:
+                setattr(self.obj, self.propertyName, links)
+        elif item == "Color" and self.value:
+            val = self.getColor(f"{self.value}")
+            setattr(self.obj, self.propertyName, val)
+        elif isinstance(self.value, str):
+            if self.value.startswith("="):
+                self.obj.setExpression(self.propertyName, self.value[1:])
+            elif self.value:
+                setattr(self.obj, self.propertyName, self.value)
+        elif self.value:
             try:
-                atr = self.eval_expr(val)
+                setattr(self.obj, self.propertyName, self.value)
             except:
-                #try:
-                #    atr = val
-                #except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set value: '+str(val)+'\n')
-            try:
-                if item == "Enumeration":
-                    list2 = split[3:]
-                    try:
-                        setattr(p,'dd'+self.propertyName, list2)
-                    except Exception:
-                        FreeCAD.Console.PrintWarning("DynamicData: Unable to set list enumeration: "+str(list)+"\n")
-                else:
-                    setattr(p,'dd'+self.propertyName,atr)
-            except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set attribute: '+str(val)+'\n')
-        elif hasVal and len(vals)>0:
-            if listval:
-                try:
-                    obj.setExpression('dd'+self.propertyName, listval[1:]) #[1:] strips the "="
-                    obj.touch()
-                    doc.recompute()
-                    doc.commitTransaction()
-                    self.checkAddAnother(dlg)
-                    return
-                except:
-                    FreeCAD.Console.PrintWarning('DynamicData: Unable to set expression: '+str(listval[1:])+'\n')
-                    doc.commitTransaction()
-                    self.checkAddAnother(dlg)
-                    return
-            try:
-                setattr(p,'dd'+self.propertyName,list(vals))
-            except:
-                FreeCAD.Console.PrintWarning('DynamicData: Unable to set list attribute: '+str(vals)+'\n')
-        obj.touch()
-        doc.recompute()
-
+                setattr(self.obj, self.propertyName, f"{self.value}")
         doc.commitTransaction()
         doc.recompute()
         self.checkAddAnother(dlg)
+        dlg.deleteLater()
         return
+
+    def getLinkSubList(self, userstring):
+        """userstring will be in form
+        [(ObjectNameOrLabel,(Sub1,Sub2,Sub3...),(Object2NameOrLabel,(Face1,Vertex2,...))]
+        this converts to the list of tuples needed for setting a LinkSubList property"""
+        if not userstring:
+            return []
+        cleaned = re.sub(r'(\w+)', r'"\1"', userstring)
+        try:
+            names = ast.literal_eval(cleaned)
+        except:
+            raise EvalError(f"cannot evaluate {userstring}")
+        links = [self.getObjectByNameOrLabel(name[0]) if self.getObjectByNameOrLabel(name[0]) else None for name in names ]
+        links2 = []
+        for idx,link in enumerate(links):
+            links2.append((links[idx],names[1]))
+        return links2
+
+    def getLinkList(self, userstring):
+        """userstring will be in the form:
+        [ObjectNameOrLabel,Object2NameOrLabel,...]
+        this converts to [<Part::Feature>,<Part::Feature>]"""
+        if not userstring:
+            return []
+        cleaned = re.sub(r'(\w+)', r'"\1"', userstring)
+        try:
+            names = ast.literal_eval(cleaned)
+        except:
+            raise EvalError(f"cannot evaluate {userstring}")
+        links = [self.getObjectByNameOrLabel(name) if self.getObjectByNameOrLabel(name) else None for name in names]
+        return links
+
+    def getLink(self, userstring):
+        """userstring will be of the form ObjectNameOrLabel"""
+        link = self.getObjectByNameOrLabel(userstring)
+        return link
+
+    def getObjectByNameOrLabel(self, nameOrLabel):
+        """returns None if object is not found"""
+        doc = self.obj.Document
+        retval = doc.getObject(nameOrLabel)
+        if retval:
+            return retval
+        retval = doc.getObjectsByLabel(nameOrLabel)
+        if retval:
+            return retval[0]
+        return None
+
+    def getColor(self, userstring):
+        """user might enter 'red' or 'green' or (255,255,255)
+           all should be returned in form of (255,255,255)"""
+        # Try to match the input with a tuple
+        tuple_match = re.match(r'\((\d+),(\d+),(\d+)\)', userstring.replace(";",","))
+        if tuple_match:
+            return tuple(map(int, tuple_match.groups()))
+
+        # Check if the input matches a color name
+        color = QtGui.QColor(userstring.replace(";",","))
+        if color.isValid():
+            return color.red(), color.green(), color.blue()
+
+        # Try to match the input as a hexadecimal value
+        hex_match = re.match(r'#([0-9a-fA-F]{6})', userstring.replace(";",","))
+        if hex_match:
+            hex_value = hex_match.group(1)
+            return tuple(int(hex_value[i:i+2], 16) for i in (0, 2, 4))
+
+        # If none of the patterns match, return None or handle the case accordingly
+        return None
+
+
+    def eval_expr(self, expr):
+        if not expr:
+            return ""
+        try:
+            retval = self.obj.evalExpression(expr)
+            return retval
+        except:
+            try:
+                retval = ast.literal_eval(expr)
+                return retval
+            except:
+                try:
+                    retval = ast.literal_eval(expr.replace(";",","))
+                    return retval
+                except:
+                    raise EvalError(f"Cannot evaluate {expr}\n")
 
     def checkAddAnother(self,dlg):
         modifiers = QtGui.QApplication.keyboardModifiers()
-        if modifiers == QtCore.Qt.ControlModifier or dlg.addAnotherProp: #Ctrl+OK or Add another
+        if modifiers == QtCore.Qt.ControlModifier or dlg.addAnotherProp: #Ctrl+OK or Apply
+            dlg.deleteLater()
             self.Activated()
 
     def IsActive(self):
         if not FreeCAD.ActiveDocument:
             return False
         selection = Gui.Selection.getSelection()
-        if len(selection) == 1 and hasattr(selection[0],"DynamicData"):
+        if len(selection) == 1:
             self.obj = selection[0]
             return True
+        #in case nothing is selected we can use the dd object, but only if there is only 1 dd object
         objs = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj, "DynamicData")]
         if len(objs) == 1:
             self.obj = objs[0]
             return True
         return False
 
-    def __init__(self):
-        #global mostRecentTypes
-        global mostRecentTypesLength
-        import ast, locale
-        import operator as op
-        self.groupName="DefaultGroup"
-        self.defaultPropertyName="Prop"
-        self.tooltip="tip"
 
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
-        mostRecentTypesLength = pg.GetInt('mruLength',5)
-        for ii in range(0, mostRecentTypesLength):
-            mostRecentTypes.append(pg.GetString('mru'+str(ii),""))
-
-        self.SEPARATOR = locale.localeconv()['decimal_point']
-        self.SEPARATOR_STANDIN = 'p'
-        self.DEGREES_INDICATOR = 'd'
-        self.RADIANS_INDICATOR = 'r'
-
-        # for evaluating math expressions in gui input text fields
-        # credit "jfs" of stackoverflow for these 2 functions, which I modified for my needs
-        # supported operators
-
-
-        self.operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-             ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor, #ast.BitXor: op.pow would remap ^ to pow()
-             ast.USub: op.neg}
-        #add some constants and references that might be useful for users
-        self.constants = {'pi':math.pi,'e':math.e, 'phi':16180339887e-10, 'golden':16180339887e-10,'golden_ratio':16180339887e-10,
-             'inch':254e-1, 'in':254e-1,'inches':254e-1, 'thou':254e-4}
-        self.references= {'version':'version'}
-        self.maths = {'cos':'cos','acos':'acos','tan':'tan','atan':'atan','sin':'sin','asin':'asin','log':'log','tlog':'log10'}
-
-    def eval_this(self,node):
-        import ast
-        import operator as op
-        if isinstance(node, ast.Num): # <number>
-            return node.n
-        elif isinstance(node, ast.BinOp): # <left> <operator> <right>
-            return self.operators[type(node.op)](self.eval_this(node.left), self.eval_this(node.right))
-        elif isinstance(node, ast.UnaryOp): # <operator> <operand> e.g., -1
-            return self.operators[type(node.op)](self.eval_this(node.operand))
-    #provide support for constants and references
-        elif node.id:
-            if node.id in self.constants:
-                return self.constants[node.id]
-            elif node.id in self.references: #e.g. references[node.id] is a string, e.g. 'version' representing global variable version
-                return globals()[self.references[node.id]]
-            elif node.id[:3] in self.maths:
-                func = getattr(math, self.maths[node.id[:3]])
-                opstring = node.id[3:].replace(self.SEPARATOR_STANDIN,self.SEPARATOR)
-                if opstring[-1:]==self.DEGREES_INDICATOR:
-                    opstring = opstring[:-1]
-                    return func(float(opstring)*math.pi/180.0)
-                elif opstring[-1:]==self.RADIANS_INDICATOR:
-                    opstring = opstring[:-1]
-                    return func(float(opstring))
-                else:
-                    return func(float(opstring))
-            elif node.id[:4] in self.maths:
-                func = getattr(math, self.maths[node.id[:4]])
-                opstring = node.id[4:].replace(self.SEPARATOR_STANDIN,self.SEPARATOR)
-                if opstring[-1:]==self.DEGREES_INDICATOR:
-                    opstring = opstring[:-1]
-                    return func(float(opstring)*math.pi/180.0)
-                elif opstring[-1:]==self.RADIANS_INDICATOR:
-                    opstring = opstring[:-1]
-                    return func(float(opstring))
-                else:
-                    return func(float(opstring))
-            else:
-                App.Console.PrintError('ast evaluator: unsupported token: '+node.id+'\n')
-        else:
-            raise TypeError(node)
-
-    def eval_expr(self,expr):
-        import ast
-        import operator as op
-        """
-        >>> eval_expr('2^6')
-        4
-        >>> eval_expr('2**6')
-        64
-        >>> eval_expr('1 + 2*3**(4^5) / (6 + -7)')
-        -5.0
-        """
-        return self.eval_this(ast.parse(expr, mode='eval').body)
 
 #Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
 
@@ -2361,23 +2424,14 @@ Break expression binding for selected property of {self.obj1.Label}""")
             self.statusLabel.setStyleSheet(f"color:{msgTuple[1]};")
             self.statusLabel.setText(msgTuple[0])
 
+
+
         def getNewPropertyName(self, obj, candidate):
             """When creating a new property and already there is a property with that
             same name, we can ask the user for a preferred new property name"""
-            if not hasattr(obj, candidate):
-                return candidate
-
-            # Use regular expression to extract base name and number
-            match = re.match(r'^(.*?)(\d*)$', candidate)
-            base_name, number_suffix = match.groups() if match else (candidate, '')
-            idx = int(number_suffix) if number_suffix else 1
-
-            while hasattr(obj, f"{base_name}{idx}"):
-                idx += 1
-
-            new_candidate = f"{base_name}{idx}"
-
-            new_name, ok = QtGui.QInputDialog.getText(self, "Attribute already exists", "Enter name for new property: ", text=new_candidate)
+            new_candidate = self.cmd.getNewPropertyNameCandidate(obj, candidate)
+            new_name, ok = QtGui.QInputDialog.getText(self, "Attribute already exists",
+                                                    "Enter name for new property: ", text=new_candidate)
             if not new_name or not ok:
                 return None
 
@@ -2592,7 +2646,7 @@ which cannot be bound by expression.\n""")
                 retval = func()
                 if retval == None: #user aborted
                     self.obj1.Document.abortTransaction()
-                    FreeCAD.Console.PrintMessage(f"DynamicData: {func.__name__} aborted by user\n")
+                    return #doesn't close dialog
                 elif retval == False: #error, but already reported in func(), so don't repeat it here
                     self.obj1.Document.abortTransaction()
                 else:
