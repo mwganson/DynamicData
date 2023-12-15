@@ -1,7 +1,7 @@
 # DynamicData Workbench
 
 ![icon](Resources/icons/DynamicDataLogo.svg)
-A [FreeCAD](https://freecad.org) workbench for creating and managing custom property container objects.
+A [FreeCAD](https://freecad.org) workbench for creating and managing custom dynamic property container objects.
 
 ## Installation
 
@@ -11,7 +11,7 @@ You will also want to install this <a href="https://forum.freecad.org/viewtopic.
 
 ## Overview
 
-With this workbench you can create custom FeaturePython objects to serve as containers for custom properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.  (But without the workbench installed those other users will not be able to add/remove properties unless it is done via scripting.)
+With this workbench you can create custom FeaturePython objects to serve as containers for custom dynamic properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.
 
 ### Example Video:
 
@@ -21,15 +21,13 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 
 ![CreateObject icon](Resources/icons/CreateObject.svg)
 
-Creates a new DynamicData container object.
+Creates a new DynamicData container object.  Since DynamicData was first written FreeCAD has allowed all objects to receive dynamic properties, so you could put the custom properties in any object, but in doing so there is greater risk of creating inadvertently circular references between objects.  Another advantage to creating this container object is if it is the only such dd object in the document, then many of the toolbar commands can be active even where no object is selected.  (But if another object is selected, then the commands, such as the command to add a new property, will attempt to work on that object.)
 
 ### Add Property
 
 ![AddProperty icon](Resources/icons/AddProperty.svg)
 
-Adds a new custom property to the selected DynamicData container object.  (If no DynamicData object is selected in the tree view this command will be disabled.)
-
-**Note:** As of version 2.44, adding a property is all done from within a single dialog.
+Adds a new custom property to the selected object.  The selected object need not be a DynamicData dd object.  If no object is selected this command will be disabled unless there is only one Dynamic Data (dd) object in the document, in which case the dd object will be used.
 
 ![add property screenshot](Resources/media/add_property_scr.png)
 
