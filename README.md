@@ -103,7 +103,7 @@ For the Link property type (not App::Link objects, but the property that links t
 ![Edit Enumerations icon](Resources/icons/DynamicDataEditEnumerations.svg)
 
 Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog 
-to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does not at this time provide an editor for these property types, but you can edit them with DynamicData.
+to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does provide an editor for these property types, but you have to jump through a few hoops to get to it.  Right click a property label -> show all, then expand the enumration in the tree, and click the [...] button to open the editor.  Or, you can edit them with DynamicData.
 
 ![edit enumerations screenshot](Resources/media/edit_enumerations_scr.png)
 
@@ -131,7 +131,7 @@ Toggle the Show help checkbox to see some additional information while the dialo
 
 ![RemoveProperty icon](Resources/icons/RemoveProperty.svg)
 
-Use this tool to remove a property previously added using the Add Property tool.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. **Note:** Care must be taken when removing properties because this action cannot be undone.
+Use this tool to remove a property previously added using the Add Property tool or the Copy property command.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. This only works on dynamic properties that you have added, and not on an object's build=in properties, such as the Radius property of a Part workbench Cylinder primitive.  If you don't see the property in the dialog, then it could be because it is not a dynamic property.  **Note:** This action can be undone with Undo/Redo in FreeCAD.
 
 ![remove property screenshot](Resources/media/remove_property_scr.png)
 
@@ -139,20 +139,22 @@ Use this tool to remove a property previously added using the Add Property tool.
 
 ![ImportAliases icon](Resources/icons/ImportAliases.svg)
 
-Use this to import aliases from selected spreadsheets as properties into selected dd object.
+Use this to import aliases from selected spreadsheets as properties into selected object.  The selected object need not be a DynamicData dd object, but care must be taken to avoid circular references if not using a dd object.
 
 **Warning: selected spreadsheets will be modified.  The cells containing the aliases will reference
 the dd object property.**
 
 To prevent a cell containing an alias from being imported you should end the alias name with an underscore (`_`).  When the workbench code sees an alias name that ends with an underscore it will skip that alias and display a warning message in the report view, informing the user that this alias was skipped.  Similarly, spreadsheets with labels ending in the underscore will likewise be skipped.
 
-To use this feature, select your dd object and one or more spreadsheets to be imported, then invoke the command either from the menu or the toolbar.  New properties of various types, e.g. `Length` will be added to the dd object for each alias found.  The property type depends on who FreeCAD has interpreted the type to be, which is based on the units used in the cell contents.  For example, `10.5 mm` would be seen as a `Length` property type while `45 deg` would be seen as an `Angle` property type, `5 mi/h` would be seen as a `Speed` type, etc.  Note: there could be some inconsistencies between the unit types recognized by the spreadsheet code and the property type names used in FreeCAD.  Please report any errors to me via Direct Message "TheMarkster" on the FreeCAD forum.  As an example of this type of mismatch, "Speed" types are identified as "Velocity" in the spreadsheet, so a minor fix is needed (already done in version 1.41) in the DynamicData source code to account for this naming inconsistency.
+To use this feature, select your dd object and one or more spreadsheets to be imported, then invoke the command either from the menu or the toolbar.  New properties of various types, e.g. `Length` will be added to the dd object for each alias found.  The property type depends on what FreeCAD has interpreted the type to be, which is based on the units used in the cell contents.  For example, `10.5 mm` would be seen as a `Length` property type while `45 deg` would be seen as an `Angle` property type, `5 mi/h` would be seen as a `Speed` type, etc.  Note: there could be some inconsistencies between the unit types recognized by the spreadsheet code and the property type names used in FreeCAD.  Please report any errors to me via Direct Message "TheMarkster" on the FreeCAD forum or create an issue here on github.  As an example of this type of mismatch, "Speed" types are identified as "Velocity" in the spreadsheet, so a minor fix is needed (already done in version 1.41) in the DynamicData source code to account for this naming inconsistency.
 
-Once you have imported the aliases you should still keep the spreadsheet because other FreeCAD objects, example sketch constraints, that were referencing the aliases before the import will still be referencing them.  Difference is now the spreadsheet references the dd object property.  Keep the spreadsheet, but only make modifications to the values in the dd property editor.  Otherwise, the changes made in the spreadsheet will break the connection to the dd object property.
+Once you have imported the aliases you should still keep the spreadsheet because other FreeCAD objects, example sketch constraints, that were referencing the aliases before the import will still be referencing them.  Difference is now the spreadsheet references the container object property.  Keep the spreadsheet, but only make modifications to the values in the dd property editor.  Otherwise, the changes made in the spreadsheet will break the connection to the dd object property.
 
 Another important consideration is the imports are done by value and not by reference.  In other words, suppose you have an aliased cell with a formula such as `=B1 * A2 - C3`.  The import will be whatever value that formula evaluates to *at the time of the import*.  If you later modify the contents of B1, A2, or C3, those changes *do not* get propagated to the dd object property.  In other words, if `B1 * A2 - C3` evalates to 15.23, then 15.23 is what gets imported.  I've hesitated to include this feature mostly because of this issue that could come up, but I've decided to let the user decide for himself whether to use this or not.
 
-This operation can be partially undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, but it will not remove the newly created properties from the dd object.  But while the properties remain they will no longer reference anything else in the document or be referenced by anything else in the document, so they will be harmless in that sense.  Still, it is recommended to save your document before using this feature.
+This operation can be undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, and it will remove the newly created properties from the dd object.  Still, it is recommended to save your document before using this feature.  "Save and save often," a wise man once said about FreeCAD.
+
+**Previously, on import the alias names got edited with the dd prefix and with the name of the spreadsheet, but this is no longer the case.  The new properties get the same names as used for the aliases, and get into a new group, which is named after the spreadsheet from which they were imported.**
 
 ### Import Named Constraints
 
@@ -166,32 +168,17 @@ To prevent a named constraint from being imported, append an underscore to the c
 
 To use this feature, select your dd object and one or more sketches to be imported, then invoke the command either from the menu or the toolbar.  New properties of type `Length` will be added to the dd object for each named constraint found except `Angle` type will be used for `Angle` constraint types.
 
-**Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.**  For example, suppose you have a constraint named `radius` with an expression `Sketch.length*2` with a value of 2.75mm.  This would create a new property in the dd object named `ddSketchRadius` with a value of 2.75mm and the constraint is now set to `dd.ddSketchRadius`.  The upshot of this is if you change the value of the `Sketch.length` constraint the `ddSketchRadius` property is NOT updated.  In such cases you should alter the value of the `ddSketchRadius` property so that it once again references that length property, presumably now called `ddSketchLength`.
+**Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.**  For example, suppose you have a constraint named `radius` with an expression `Sketch.length*2` with a value of 2.75mm.  This would create a new property in the dd object named `radius` with a value of 2.75mm and the constraint is now set to `dd.radius`.  The upshot of this is if you change the value of the `Sketch.length` constraint the `radius` property is **NOT** updated.  In such cases you should alter the value of the `radius` property so that it once again references that length property, presumably now called `length`.
 
-This operation can now be partially undone (as of version 1.40).  If you use FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, but the newly created dd property objects will remain.  The new properties will not reference anything else and will not be reference by anything else, but the Undo operation does not delete properties.  It is suggested to make a backup copy of your .FCStd file before using this feature.
+This operation can be undone with FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, and the newly created dd property objects will be removed.  It is suggested to save your file before using this feature, and then carefully ensure you are satisfied with the import before saving again.
 
 ### Copy Property
-
 ![CopyProperty icon](Resources/icons/CopyProperty.svg)
 
-**New feature in version 1.5**: Now you can parametrically link a copied or set property. Then when the source property changes, the copy will parametrically change with it.  You can still choose the non-parametric copy when setting/copying.  The parametric link can also be broken later using the Set/Copy command.  For some property types breaking the parametric link is trivial enough to do it manually, but for other types, such as Placement, it can be very tedious to do it manually.
-
-Copy a property from one object to another or within the same dd object.  Properties can only be copied to a dd object, but the source can be a non-dd object or a dd object (including copies from within the same dd object).  Can also be used to set the value of an existing property rather than creating a new property.  To use, just select the object containing the original property to be copied and the dd object that will contain the new property, then click the Copy Property icon.  You will be guided through the process with a series of dialogs.
-
-One potential application for this feature is to make copies of placement properties.  These copies can then be used to easily set the original objects Placement property to any of the values held by any of the placement copies.  For example, your model might include a lever that can be in any of 3 positions, say forward, neutral, and reverse.  Move it to the forward position, and then make a copy of the placement.  Move it to the neutral position, and do the same, ditto for the reverse position.  Your dd object could contain 3 placement properties: `ddForward`, `ddNeutral`, and `ddReverse`.
-
-### Copy a property from another object to a dd object
-
-In this example we will copy a placement property from a Sphere to a dd object.  Select the Sphere and the dd object in the tree view, and then click the Copy Property icon in the toolbar (or select via the menu).  
-1. Select the Copy property from Sphere --> to dd (dd) option and click OK.  
-2. You will be presented with a list of the properties available to be copied from the Sphere object, select the Placement property and click OK.  
-3. Give the new property to be created a new name or just click OK to accept the default name chosen for you.  (Note: if the new name you give conflicts with an existing property name in the dd object you will be prompted again for a new name, so if you see this multiple times it means there is a name conflict.)
+In previous versions this feature was a combination of a number of input dialog prompts, but has now been consolidated into a single dialog.  Here is a screenshot of the new dialog.
 
 ![copy property example screenshot](Resources/media/copy_property_scr.png)
 
-### Set a property value
-
-The process for this is substantially the same as for copying a property except you will need to select an existing property in the target object to receive a new value rather than giving a name for a new property to be created.  It is important to match the property types when trying to copy the value from one property to another or else the operation is likely to fail.  (But note there are cases where it might work to copy a property value of one type to another property of a different type, for example, an Integer value can be copied to a Float property.)  There is no error checking being done to prevent you from trying to copy a value from one property type to another, but once the from property is chosen, then when selecting the to property to receive the value the properties that are of the same type as the from property will be displayed at the top of the selection list for your convenience.
 
 ### Rename Property
 
