@@ -179,14 +179,15 @@ In previous versions this feature was a combination of a number of input dialog 
 
 ![copy property example screenshot](Resources/media/copy_property_scr.png)
 
+In this dialog you can copy a property from one object to another (or make a copy of the property in the same object if you only select one object before executing the command). Copying, in this context, means to make a new property of the same type as the original property and set it to the same value as the original, same tooltip, and same group name.  You can also "set" a value of one property to the value of another.  Setting, in this context, means updating the value of an existing property.  The distinction between copying and setting is that in copying a new property is created, while in setting an existing property is modified.  You can also "bind" a property to another via the expression engine.  When a property is bound to another property, then whenever that property changes, the bound property will change with it.  For example, you might have a property named Length in your dd object and you would like the Length property of a PartDesign::Pad to update itself automatically when you change the Length property of the dd object.  You can accomplish this with the bind command by binding the Pad's Length property to the dd object's Length property.  The properties need not have the same name, but they must be the same property type or else the workbench will not execute the command.  (You still might be able to do it in FreeCAD in some cases, for example binding a Length property to a Float property.)
 
 ### Rename Property
 
-Rename a dynamic property.  The property must be dynamic, but need not be a DynamicData object.  FreeCAD does not natively support the renaming of properties, so the way this works is a new property of the same is created with the new name, and then the old property is deleted.  An attempt is made to move all dependency links from the old property to the new, but it is conceivable something might go astray during this process, so it is advised to ensure all the links were properly reconnected to the new property.  You can use Undo to undo this operation.
+Rename a dynamic property.  The property must be dynamic, but need not be a DynamicData object.  FreeCAD does not natively support the renaming of properties, so the way this works is a new property of the same is created with the new name, and then the old property is deleted.  An attempt is made to move all dependency links from the old property to the new, but it is conceivable something might go astray during this process, so it is advised to ensure all the links were properly reconnected to the new property.  You can use Undo to undo this operation.  **Suggestion:** save your file before renaming, and then only once assured all went well should you save it again.  If something went wrong, then you can close the file without saving changes and reopen it (or use the Revert option the File menu.)
 
 ### Set Tooltip
 
-Change the tooltip of a dynamic property.
+Change the tooltip of a dynamic property.  The tooltip is the brief message that is displayed when hovering the mouse pointer over the property in the property view.  This can be useful as a note to yourself or to other users as to the purpose of the property.
 
 ### Move to new group 
 
@@ -208,7 +209,7 @@ There is also an option in the Edit -> Preferences -> Start -> Options section t
 
 ### Support ViewObject Properties
 
-If this is True you will be able also to access properties in the view tab.  View tab properties will have (ViewObject) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking.
+If this is True you will be able also to access properties in the view tab.  View tab properties will have (view) prepended to their property types in the selection dialog.  Manipulating these properties is the same as for the data tab properties except the view tab properties do not support parametric linking and you cannot add a new property to an object's view tab because FreeCAD does not support this operation.  You can copy a view object property to another object, but it will go into that object's data tab.
 
 ### Add to active container on creation
 
