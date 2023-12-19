@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.12.14"
-__version__ = "2.59"
+__date__    = "2023.12.19"
+__version__ = "2.60"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -1034,6 +1034,15 @@ class MultiTextInput(QtGui.QDialog):
         #layout.setColumnStretch(1, 1)
         self.addAnotherProp = False
         self.label = QtGui.QLabel(self)
+        self.objLabelPrefix = QtGui.QLabel("Target object:")
+        self.objLabel = QtGui.QLabel("")
+        self.objIcon = QtGui.QLabel()
+        obj_label = self.obj.Label
+        if self.obj.Name != obj_label:
+            obj_label = f"{self.obj.Label} ({self.obj.Name})"
+        self.objLabel.setText(obj_label)
+        self.objIcon.setPixmap(self.obj.ViewObject.Icon.pixmap(32,32))
+        self.label.setText("In Value field:\nUse =expr for expressions, e.g. =Box.Height\n")
         self.propertyTypeLabel = QtGui.QLabel("Select App::Property type:")
         self.listWidget = QtGui.QListWidget()
         self.listWidget.currentItemChanged.connect(self.onListWidgetCurrentItemChanged)
@@ -1056,7 +1065,10 @@ class MultiTextInput(QtGui.QDialog):
         self.tooltipEdit = QtGui.QLineEdit(self)
 
         layout.addWidget(self.label, 0, 0, 2, 5)
-        layout.addWidget(self.propertyTypeLabel, 2, 0, 2, 6)
+        layout.addWidget(self.objLabelPrefix, 2, 0, 1, 1)
+        layout.addWidget(self.objLabel, 2, 2, 1, 2)
+        layout.addWidget(self.objIcon, 2, 1, 1, 1)
+        layout.addWidget(self.propertyTypeLabel, 3, 0, 1, 6)
         layout.addWidget(self.listWidget, 4, 0, 1, 6)
         layout.addWidget(self.nameLabel, 5, 0, 1, 1)
         layout.addWidget(self.nameEdit, 5, 1, 1, 5)
@@ -1296,7 +1308,6 @@ class DynamicDataAddPropertyCommandClass(DynamicDataBaseCommandClass):
         dlg.setWindowTitle("DynamicData Add Property")
         icon = QtGui.QIcon(self.GetResources()["Pixmap"])
         dlg.setWindowIcon(icon)
-        dlg.label.setText("Old-style name;group;tip;value syntax\nstill supported in Name field\n\nIn Value field:\nUse =expr for expressions, e.g. =Box.Height\n")
         items = recent+items
         dlg.listWidget.addItems(items)
         dlg.listWidget.setCurrentRow(0)

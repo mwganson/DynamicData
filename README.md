@@ -33,7 +33,7 @@ Adds a new custom property to the selected object.  The selected object need not
 
 After selecting the property type, the next step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
 
-All tooltips now get `[Type]` prepended.  Example, if type is `Length` the tooltip would be something like `[Length] my tooltip`.  
+All tooltips now get `[Type]` prepended.  Example, if type is `Length` the tooltip would be something like `[Length] my tooltip`.
 * `Old style name;groupname;tooltip;value` syntax is still supported in the `Name` field for those who wish to keep using it.  In the old style, before the introduction of this new dialog, all of this information was entered into a single text field.  The syntax for this method is propertyname;groupname;tooltip;value.  You can still enter all of this into the name field if you like, but I doubt anybody is still doing it this way.
 
 Property names are no longer prepended with `dd` automatically.  The prefix is no longer needed with recent versions of FreeCAD where the bug in the expression engine has now been fixed.  If you wish to still continue using the dd prefix you can still do so when you create your property name.  I considered adding a preference for this, but rejected the idea after some deliberation, feeling it would unnecessary complicate the code.  Below is a screenshot of the expression engine property suggestion box that pops up when entering a property reference.
@@ -58,19 +58,19 @@ cos(pi)
 goldenrod --(for the Color property type)
 ```
 
-For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:  
+For List property types, e.g. IntegerList or FloatList, you can separate the values by semicolons:
 
 ```
 3;5;9;12
 ```
 
-or if using the expression engine:  
+or if using the expression engine:
 
 ```
 =list(3;5;9;12)
 ```
 
-For Enumeration types you enter the enumerations as a list:  
+For Enumeration types you enter the enumerations as a list:
 
 ```
 ("zero","one","two","three","four")
@@ -87,7 +87,7 @@ You may make use of these enumeration properties by also creating another list p
 
 Then in a spreadsheet `=dd.ddMyInts[dd.ddMyEnum]` would return the integer in MyInts that corresponds to the user selection in MyEnum.  For example, if the user has selected "zero" in the enumeration, then this cell in a spreadsheet would hold the value of 4.
 
-Make an enumeration MyEnum:  
+Make an enumeration MyEnum:
 
 ```
 False;True
@@ -102,7 +102,7 @@ For the Link property type (not App::Link objects, but the property that links t
 ### Edit Enumerations
 ![Edit Enumerations icon](Resources/icons/DynamicDataEditEnumerations.svg)
 
-Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog 
+Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog
 to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does provide an editor for these property types, but you have to jump through a few hoops to get to it.  Right click a property label -> show all, then expand the enumration in the tree, and click the [...] button to open the editor.  Or, you can edit them with DynamicData.
 
 ![edit enumerations screenshot](Resources/media/edit_enumerations_scr.png)
@@ -110,7 +110,7 @@ to select the enumeration property to edit.  Editing is just a matter of typing 
 ### Create/Edit Configuration
 ![Create/Edit Configuration icon](Resources/icons/DynamicDataCreateConfiguration.svg)
 
-Use this tool to create a configuration.  A configuration is a set of properties that are controlled by a single enumeration property.  The screenshot below shows the 
+Use this tool to create a configuration.  A configuration is a set of properties that are controlled by a single enumeration property.  The screenshot below shows the
 configuration editor dialog in v2.50.
 
 ![Create/edit configuration screenshot](Resources/media/create_configuration_scr.png)
@@ -189,7 +189,7 @@ Rename a dynamic property.  The property must be dynamic, but need not be a Dyna
 
 Change the tooltip of a dynamic property.  The tooltip is the brief message that is displayed when hovering the mouse pointer over the property in the property view.  This can be useful as a note to yourself or to other users as to the purpose of the property.
 
-### Move to new group 
+### Move to new group
 
 Move dynamic properties to a different group, or create a new group to put them in.  This also allows to rename groups by moving all properties from it into a new group.  Only dynamic properties are supported, but the object container need not be a DynamicData object.
 
@@ -220,6 +220,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2023.12.19 (version 2.60)<br/>
+** add information in add property dialog showing target object since it will not always be a dd object
 * 2023.12.15 (version 2.59)<br/>
 ** drop dd prefix since it is no longer needed in newer versions of FreeCAD
 ** improve add property dialog
@@ -248,7 +250,7 @@ When you add a new property type you are presented with a list of property types
 * 2023.09.25 (version 2.53)<br/>
 ** ensure configuration editor dialog is deleted on closing<br/>
 ** remove unnecessary variable (self.ok) since we don't check it after dialog closes <br/>
-** reword configuration selection qinputdialog from multiple found to select configuration <br/> 
+** reword configuration selection qinputdialog from multiple found to select configuration <br/>
 * 2023.09.24 (version 2.52)<br/>
 ** add new configuration option when opening the configuration editor on an object with one or more existing enumeration properties
 * 2023.09.24 (version 2.51)<br/>
@@ -399,7 +401,7 @@ This also allows to rename groups by moving all properties from that group to a 
 ** Add sketch import<br/>
 * 2018.09.25 (version 1.11)<br/>
 ** bugfixes, handle empty names better<br/>
-* 2018.09.24 (version 1.1)<br/> 
+* 2018.09.24 (version 1.1)<br/>
 ** Add 5 most recently used types to top of property type list, sort remainder.<br/>
 ** Display version information in DynamicData string property <br/>
-* v2018.09.19  2018.09.19:  Initial version  
+* v2018.09.19  2018.09.19:  Initial version
