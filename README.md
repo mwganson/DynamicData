@@ -11,7 +11,7 @@ You will also want to install this <a href="https://forum.freecad.org/viewtopic.
 
 ## Overview
 
-With this workbench you can create custom FeaturePython objects to serve as containers for custom dynamic properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on there systems and yet will still remain fully functional.
+With this workbench you can create custom FeaturePython objects to serve as containers for custom dynamic properties.  These custom properties can then be used in much the same way as cells in a spreadsheet.  Users can refer to a custom property in a sketcher constraint (or from anywhere the Expression Engine can be accessed) the same way one might refer to a cell in a spreadsheet.  Take note that FCStd files containing these DynamicData dd objects <b>can be shared</b> with other users who do not have the DynamicData workbench installed on their systems and yet will still remain fully functional.
 
 ### Example Video:
 
