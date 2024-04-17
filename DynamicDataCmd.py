@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2023.12.19"
-__version__ = "2.60"
+__date__    = "2024.04.16"
+__version__ = "2.61"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -2019,18 +2019,19 @@ dependency and linking by value would produce an incorrect value should the refe
                 value *= (180.0 / math.pi)
 
             name = self.fixName(con['constraintName'])
+            importedName = con['sketchLabel'] + name.capitalize()
             if not self.isValidName(con['constraintName']):
                 for idx,constraint in enumerate(sketch.Constraints):
                     if constraint.Name == con['constraintName']:
                         sketch.renameConstraint(idx, name)
                         FreeCAD.Console.PrintWarning(f"DynamicData: Renaming invalid constraint name: {con['constraintName']} to {name}\n")
                         break
-            if not hasattr(self.dd,name): #avoid adding the same property again
-                self.dd.addProperty(f"App::Property{propertyType}", name, con['sketchLabel'],f"[{propertyType}] constraint type: [{con['constraintType']}]")
-                setattr(self.dd, name, value)
-                FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {name} to dd object\n")
+            if not hasattr(self.dd,importedName): #avoid adding the same property again
+                self.dd.addProperty(f"App::Property{propertyType}", importedName, con['sketchLabel'],f"[{propertyType}] constraint type: [{con['constraintType']}]")
+                setattr(self.dd, importedName, value)
+                FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {importedName} to dd object\n")
                 sketch = con['sketch']
-                sketch.setExpression(f"Constraints.{name}", f"<<{self.dd.Label}>>.{name}")
+                sketch.setExpression(f"Constraints.{name}", f"<<{self.dd.Label}>>.{importedName}")
             else:
                 FreeCAD.Console.PrintWarning(f"DynamicData: skipping existing property: {name}\n")
         FreeCAD.ActiveDocument.commitTransaction()
