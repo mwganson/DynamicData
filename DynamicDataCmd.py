@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.04.16"
-__version__ = "2.61"
+__date__    = "2024.04.17"
+__version__ = "2.62"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -2019,7 +2019,8 @@ dependency and linking by value would produce an incorrect value should the refe
                 value *= (180.0 / math.pi)
 
             name = self.fixName(con['constraintName'])
-            importedName = con['sketchLabel'] + name.capitalize()
+            importedName = con['sketchLabel'] + name[0].upper() + name[1:]
+
             if not self.isValidName(con['constraintName']):
                 for idx,constraint in enumerate(sketch.Constraints):
                     if constraint.Name == con['constraintName']:
