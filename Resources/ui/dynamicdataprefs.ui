@@ -49,6 +49,25 @@
     </widget>
    </item>
    <item>
+    <widget class="Gui::PrefCheckBox" name="CondensedToolbar">
+     <property name="toolTip">
+      <string>If enabled, DynamicData toolbar will be a condensed version with all commands grouped under one icon (changes applied after restarting FreeCAD)</string>
+     </property>
+     <property name="text">
+      <string>Condensed toolbar</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>CondensedToolbar</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/DynamicData</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="Gui::PrefCheckBox" name="SupportViewObjectProperties">
      <property name="toolTip">
       <string>If enabled, Dynamic Data will support operating on View properties of objects</string>

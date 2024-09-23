@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.04.17"
-__version__ = "2.62"
+__date__    = "2024.09.22"
+__version__ = "2.63"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -291,6 +291,7 @@ class DynamicDataSettingsCommandClass(DynamicDataBaseCommandClass):
             lay.addWidget(self.form)
             self.setLayout(lay)
             self.form.KeepToolbar.setChecked(self.pg.GetBool('KeepToolbar', True))
+            self.form.CondensedToolbar.setChecked(self.pg.GetBool('CondensedToolbar', True))
             self.form.SupportViewObjectProperties.setChecked(self.pg.GetBool('SupportViewObjectProperties', False))
             self.form.AddToActiveContainer.setChecked(self.pg.GetBool('AddToActiveContainer', False))
             self.form.AddToFreeCADPreferences.setChecked(self.pg.GetBool("AddToFreeCADPreferences",True))
@@ -298,6 +299,7 @@ class DynamicDataSettingsCommandClass(DynamicDataBaseCommandClass):
 
         def closeEvent(self, event):
             self.pg.SetBool('KeepToolbar', self.form.KeepToolbar.isChecked())
+            self.pg.SetBool('CondensedToolbar', self.form.CondensedToolbar.isChecked())
             self.pg.SetBool('SupportViewObjectProperties', self.form.SupportViewObjectProperties.isChecked())
             self.pg.SetBool('AddToActiveContainer', self.form.AddToActiveContainer.isChecked())
             self.pg.SetBool('AddToFreeCADPreferences',self.form.AddToFreeCADPreferences.isChecked())
@@ -2715,6 +2717,28 @@ which cannot be bound by expression.\n""")
             return True
         return False
 
+class DynamicDataCommands:
+    def GetCommands(self):
+
+        return tuple(["DynamicDataCreateObject", "DynamicDataAddProperty",
+                    "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
+                    "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
+                    "DynamicDataImportAliases","DynamicDataCopyProperty",
+                    "DynamicDataRenameProperty","DynamicDataSetTooltip",
+                    "DynamicDataMoveToNewGroup","DynamicDataSettings"]) # a tuple of command names that you want to group
+
+    def GetDefaultCommand(self): # return the index of the tuple of the default command. This method is optional and when not implemented '0' is used
+        return 0
+
+    def GetResources(self):
+        return {'Pixmap'  : os.path.join( iconPath , 'CreateObject.svg'), 'MenuText': 'DynamicData Commands', 'ToolTip': 'DynamicData commands'}
+
+    def IsActive(self): # optional
+        return True
+
+
+
+
 
 Gui.addCommand("DynamicDataCreateObject", DynamicDataCreateObjectCommandClass())
 Gui.addCommand("DynamicDataAddProperty", DynamicDataAddPropertyCommandClass())
@@ -2728,4 +2752,5 @@ Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass
 Gui.addCommand("DynamicDataSetTooltip",DynamicDataSetTooltipCommandClass())
 Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
 Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
+Gui.addCommand("DynamicDataCommands", DynamicDataCommands())
 

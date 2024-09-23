@@ -28,6 +28,8 @@ global dynamicdataWB_icons_path
 dynamicdataWB_icons_path = os.path.join(dynamicdataWBPath,'Resources','icons')
 global main_dynamicdataWB_Icon
 main_dynamicdataWB_Icon = os.path.join(dynamicdataWB_icons_path , 'DynamicDataLogo.svg')
+global contextMenuAdded
+contextMenuAdded = False
 
 #def myFunc(string):
 #    print (string)
@@ -52,22 +54,28 @@ class DynamicDataWorkbench(Workbench):
 
     def __init__(self):
 #        self.__class__.Icon = main_dynamicdataWB_Icon
+        self.list = None
         pass
 
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
         import DynamicDataCmd #needed files for FreeCAD commands
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty",
                     "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
                     "DynamicDataImportAliases","DynamicDataCopyProperty",
                     "DynamicDataRenameProperty","DynamicDataSetTooltip",
-                    "DynamicDataMoveToNewGroup","DynamicDataSettings"] # A list of command names created in the line above
-        self.appendToolbar("DynamicData Commands",self.list[:-4]) # leave settings off toolbar
-        self.appendMenu("&DynamicData",self.list) # creates a new menu
+                    "DynamicDataMoveToNewGroup","DynamicDataSettings",
+                    "DynamicDataCommands"] # A list of command names created in the line above
+        if pg.GetBool("CondensedToolbar", True):
+            self.appendToolbar("DynamicData Commands",  [self.list[-1]]) # leave DDCommands off toolbar
+        else:
+            self.appendToolbar("DynamicData Commands", self.list[:-5])
+        self.appendMenu("&DynamicData", self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+
         if pg.GetBool("AddToFreeCADPreferences",True):
             Gui.addPreferencePage(DynamicDataCmd.uiPath + "/dynamicdataprefs.ui", "DynamicData")
             Gui.addIcon("preferences-dynamicdata",dynamicdataWB_icons_path + "/DynamicDataPreferencesLogo.svg")
@@ -97,6 +105,7 @@ class DynamicDataWorkbench(Workbench):
         return
 
     def showMenu(self):
+        global contextMenuAdded
         from PySide import QtGui
         window = QtGui.QApplication.activeWindow()
         #freecad hides wb toolbars on leaving wb, we unhide ours here to keep it around
@@ -126,6 +135,27 @@ class DynamicDataWorkbench(Workbench):
         #            FreeCAD.Console.PrintMessage(str(subActions[jj].isVisible())+'\n')
         #            subActions[jj].setVisible(True)
         #        break
+
+        # following keeps the context menu active, too.
+
+
+        class DDContextMenuEditor:
+            DEBUG = False
+
+            def modifyContextMenu(self, recipient):
+                if recipient == "View":
+                    if Gui.activeWorkbench().name() != "DynamicDataWorkbench":
+                        return [{"append":"DynamicDataCommands", "menuItem":"Std_Delete"}]
+                elif recipient == "Tree":
+                    if Gui.activeWorkbench().name() != "DynamicDataWorkbench":
+                        return [{"append":"DynamicDataCommands", "menuItem":"Std_Delete"}]
+                elif DDContextMenuEditor.DEBUG == True:
+                    FreeCAD.Console.PrintMessage(f"Recipient = {recipient}")
+
+        manip = DDContextMenuEditor()
+        if hasattr(Gui,"addWorkbenchManipulator") and not contextMenuAdded:
+            Gui.addWorkbenchManipulator(manip)
+            contextMenuAdded = True
 
     def ContextMenu(self, recipient):
         """This is executed whenever the user right-clicks on screen"""

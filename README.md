@@ -201,11 +201,14 @@ Use this to change workbench settings.
 
 ### Keep Toolbar
 
-Setting this to True (default is `True`) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.
+Setting this to True (default is `True`) means the DynamicData toolbar will remain active even after switching away from the DynamicData workbench.  Enabling this also means the DynamicData context menu will remain active for both the tree and view context menus.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is a Boolean type in BaseApp -> Preferences -> Mod -> DynamicData -> KeepToolbar.
 
 You must always open the DynamicData workbench at least once per FreeCAD session in order to first initialize the workbench toolbar.  If you would like to have the DynamicData toolbar icons always available without need to visit the DynamicData workbench you may configure DynamicData as your default startup workbench so that whenever you start FreeCAD it opens in the DynamicData workbench. (Edit -> Preferences -> General -> Startup -> Autoload module after startup -> DynamicData.)
 
 There is also an option in the Edit -> Preferences -> Start -> Options section to load DynamicData after creating / opening an existing document from the start page.
+
+### Condensed toolbar
+If this is enabled (default = True) a condensed version of the toolbar will be shown.  All of the DynamicData commands will grouped together under a single icon to take up less space on the toolbar.  (Changes to this setting will be applied after restarting FreeCAD.)
 
 ### Support ViewObject Properties
 
@@ -220,6 +223,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2024.09.22 (version 2.63)<br/>
+** Condense the toolbar so it takes up less space on the toolbar, add setting to enable/disable this option (enabled by default).  If Keep toolbar is active, then also the DynamicData context menu is retained.
 * 2024.04.17 (version 2.62)<br/>
 ** ensure only the first letter of the imported named constraint gets capitalized, leaving any other capitalized letters intact.
 * 2024.04.16 (version 2.61)<br/>
