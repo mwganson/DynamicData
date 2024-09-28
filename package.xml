@@ -2,8 +2,8 @@
 <package format="1">
   <name>DynamicData</name>
   <description>Container object for holding custom properties, alternative to spreadsheet</description>
-  <version>2.63</version>
-  <date>2024.09.22</date>
+  <version>2.64</version>
+  <date>2024.09.28</date>
   <maintainer email="mwganson@gmail.com">TheMarkster</maintainer>
   <license file="LICENSE">LGPL-2.1</license>
   <url type="repository" branch="master">https://github.com/mwganson/DynamicData</url>
@@ -13,7 +13,7 @@
       <name>DynamicData</name>
       <classname>DynamicDataWorkbench</classname>
       <description>Container object for holding custom properties, alternative to spreadsheet</description>
-        <version>2.63</version>
+        <version>2.64</version>
       <subdirectory>./</subdirectory>
       <icon>Resources/icons/DynamicDataLogo.svg</icon>
       <freecadmin>0.18.0</freecadmin>

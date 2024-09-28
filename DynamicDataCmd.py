@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.09.22"
-__version__ = "2.63"
+__date__    = "2024.09.28"
+__version__ = "2.64"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -223,14 +223,25 @@ class DynamicDataBaseCommandClass:
         """checks if this is a DynamicData object"""
         return hasattr(obj, "DynamicData")
 
-    def isValidName(self, name):
-        return name == self.fixName(name)
+    def isUnit(self, name):
+        """check if name is a reserved keyword for units, such as T or k"""
+        #if parsing quantity succeeds, it means this name is a reserved keyword
+        try:
+            FreeCAD.Units.parseQuantity(name)
+            return True
+        except:
+            return False
+
+    def isValidName(self, obj, name):
+        isUnit = self.isUnit(name)
+        return name == self.fixName(obj, name) and not self.isUnit(name)
 
     def getNewPropertyNameCandidate(self, obj, candidate):
         """arguments: (obj, candidate) Takes candidate as a starting point and finds a new unique name based on it
         Example: candidate = "Length23" and there already exists in obj a "Length23",
         so this function would try Length24, Length25, etc. until a new unique name is found"""
-        if not hasattr(obj, candidate):
+
+        if not hasattr(obj, candidate) and not self.isUnit(candidate):
             return candidate
 
         # Use regular expression to extract base name and number
@@ -238,13 +249,16 @@ class DynamicDataBaseCommandClass:
         base_name, number_suffix = match.groups() if match else (candidate, '')
         idx = int(number_suffix) if number_suffix else 1
 
+        if self.isUnit(base_name):
+            base_name = f"{base_name}_"
+
         while hasattr(obj, f"{base_name}{idx}"):
             idx += 1
 
         new_candidate = f"{base_name}{idx}"
         return new_candidate
 
-    def fixName(self, name):
+    def fixName(self, obj, name):
         """fixes a name so it can be a valid property name"""
         pattern = re.compile(r'^\d') #can't begin with a number
         pattern2 = re.compile(r'[^0-9a-zA-Z]') #no non-alphanumerics
@@ -266,6 +280,9 @@ class DynamicDataBaseCommandClass:
         if pattern.match(new_name):
             new_name = f"_{new_name}"
         new_name = re.sub(pattern2, '_', new_name) #replace with _'s
+
+        if self.isUnit(new_name):
+            new_name = self.getNewPropertyNameCandidate(obj, new_name)
         return new_name
 
 
@@ -1216,8 +1233,11 @@ class MultiTextInput(QtGui.QDialog):
             name = name[:name.index(";")]
         #label2 is for invalid name messages
         #later label3 shows where there is a conflict with an existing name
-        if not self.cmd.isValidName(name):
-            self.label2.setText(f"{name} is not a valid name, suggestion: {self.cmd.fixName(name)}")
+        if not self.cmd.isValidName(self.obj, name):
+            if name:
+                self.label2.setText(f"{name} is not a valid name, suggestion: {self.cmd.fixName(self.obj, name)}")
+            else:
+                self.label2.setText("Name field cannot be empty.")
         else:
             self.label2.setText("")
 
@@ -1909,7 +1929,7 @@ items, 0, False, windowFlags)
                     FreeCAD.Console.PrintError('DynamicData: please report: unknown property type error importing alias from spreadsheet ('+str(type(atr))+')\n')
                     continue
 
-                name = self.fixName(alias)
+                name = self.fixName(self.dd, alias)
                 if not hasattr(self.dd, name): #avoid adding the same property again
                     self.dd.addProperty('App::Property'+propertyType, name, sheet.Label, propertyType)
                     setattr(self.dd,name,userString)
@@ -2020,10 +2040,10 @@ dependency and linking by value would produce an incorrect value should the refe
                 propertyType = "Angle"
                 value *= (180.0 / math.pi)
 
-            name = self.fixName(con['constraintName'])
+            name = self.fixName(self.dd, con['constraintName'])
             importedName = con['sketchLabel'] + name[0].upper() + name[1:]
 
-            if not self.isValidName(con['constraintName']):
+            if not self.isValidName(self.dd, con['constraintName']):
                 for idx,constraint in enumerate(sketch.Constraints):
                     if constraint.Name == con['constraintName']:
                         sketch.renameConstraint(idx, name)

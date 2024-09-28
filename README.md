@@ -223,6 +223,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2024.09.28 (version 2.64)<br/>
+** better name validation for new properties, must avoid reserved keywords, like T, k
 * 2024.09.22 (version 2.63)<br/>
 ** Condense the toolbar so it takes up less space on the toolbar, add setting to enable/disable this option (enabled by default).  If Keep toolbar is active, then also the DynamicData context menu is retained.
 * 2024.04.17 (version 2.62)<br/>
