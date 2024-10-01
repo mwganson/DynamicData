@@ -106,6 +106,25 @@
     </widget>
    </item>
    <item>
+    <widget class="Gui::PrefCheckBox" name="CheckForUpdates">
+     <property name="toolTip">
+      <string>If enabled, Dynamic Data will connect to and check github.com to see if an update is available.</string>
+     </property>
+     <property name="text">
+      <string>Check for updates</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <property name="prefEntry" stdset="0">
+      <cstring>CheckForUpdates</cstring>
+     </property>
+     <property name="prefPath" stdset="0">
+      <cstring>Mod/DynamicData</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="Gui::PrefCheckBox" name="AddToFreeCADPreferences">
       <property name="toolTip">
         <string>If enabled, Dynamic Data settings page will appear in FreeCAD preferences</string>

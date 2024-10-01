@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.09.28"
-__version__ = "2.64"
+__date__    = "2024.10.01"
+__version__ = "2.65"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -311,6 +311,7 @@ class DynamicDataSettingsCommandClass(DynamicDataBaseCommandClass):
             self.form.CondensedToolbar.setChecked(self.pg.GetBool('CondensedToolbar', True))
             self.form.SupportViewObjectProperties.setChecked(self.pg.GetBool('SupportViewObjectProperties', False))
             self.form.AddToActiveContainer.setChecked(self.pg.GetBool('AddToActiveContainer', False))
+            self.form.CheckForUpdates.setChecked(self.pg.GetBool('CheckForUpdates', True))
             self.form.AddToFreeCADPreferences.setChecked(self.pg.GetBool("AddToFreeCADPreferences",True))
             self.form.mruLength.setValue(self.pg.GetInt('mruLength', 5))
 
@@ -319,6 +320,7 @@ class DynamicDataSettingsCommandClass(DynamicDataBaseCommandClass):
             self.pg.SetBool('CondensedToolbar', self.form.CondensedToolbar.isChecked())
             self.pg.SetBool('SupportViewObjectProperties', self.form.SupportViewObjectProperties.isChecked())
             self.pg.SetBool('AddToActiveContainer', self.form.AddToActiveContainer.isChecked())
+            self.pg.SetBool('CheckForUpdates', self.form.CheckForUpdates.isChecked())
             self.pg.SetBool('AddToFreeCADPreferences',self.form.AddToFreeCADPreferences.isChecked())
             self.pg.SetInt('mruLength', self.form.mruLength.value())
             super(DynamicDataSettingsCommandClass.DynamicDataSettingsDlg, self).closeEvent(event)

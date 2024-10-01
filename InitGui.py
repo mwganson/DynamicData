@@ -80,20 +80,51 @@ class DynamicDataWorkbench(Workbench):
             Gui.addPreferencePage(DynamicDataCmd.uiPath + "/dynamicdataprefs.ui", "DynamicData")
             Gui.addIcon("preferences-dynamicdata",dynamicdataWB_icons_path + "/DynamicDataPreferencesLogo.svg")
 
-    def myCallbackFunction(self,result):
-        if result == "True":
-            FreeCAD.Console.PrintWarning("A new version of DynamicData is available for update in the Addon Manager.\n")
-        else:
-            #FreeCAD.Console.PrintMessage("DD up to date\n")
-            pass #up to date
-
     def Activated(self):
         """This function is executed when the workbench is activated."""
-        #global act
-        #act.setVisible(True)
-        import AddonManager
-        if hasattr(AddonManager, "check_updates"):
-            AddonManager.check_updates("DynamicData",self.myCallbackFunction)
+        import requests
+        import xml.etree.ElementTree as ET
+
+        def get_remote_version(user, repo, branch='master'):
+            # GitHub raw URL for package.xml
+            url = f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/package.xml"
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    # Parse the XML content of package.xml
+                    xml_content = response.content
+                    tree = ET.ElementTree(ET.fromstring(xml_content))
+                    root = tree.getroot()
+                    # Find the version element and return its text
+                    version = root.find("version").text
+                    return version
+                else:
+                    print(f"Failed to fetch package.xml: {response.status_code}")
+                    return None
+            except Exception as e:
+                print(f"Error fetching or parsing package.xml: {e}")
+                return None
+
+        def check_for_update(current_version, user, repo, branch, callback):
+            latest_version = get_remote_version(user, repo, branch)
+            if latest_version and latest_version > current_version:
+                callback(latest_version)
+
+        def update_callback(latest_version):
+            FreeCAD.Console.PrintWarning(f"DynamicData {latest_version} is now available in the Addon Manager.\n")
+
+        import DynamicDataCmd
+        current_version = DynamicDataCmd.__version__
+        user = "mwganson"
+        repo = "DynamicData"
+        branch = "master"
+
+        pg = FreeCAD.ParamGet("User parameter:/Preferences/Mod/DynamicData")
+        checkUpdates = pg.GetBool("CheckForUpdates", True)
+
+        if checkUpdates:
+            check_for_update(current_version, user, repo, branch, update_callback)
+
         return
 
     def Deactivated(self):
