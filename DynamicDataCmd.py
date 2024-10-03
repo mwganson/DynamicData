@@ -1986,6 +1986,16 @@ class DynamicDataImportNamedConstraintsCommandClass(DynamicDataBaseCommandClass)
                 'MenuText': "&Import Named Constraints",
                 'ToolTip' : "Import named constraints from selected sketch(es) into selected dd object"}
 
+    def getExpression(self, sketch, constraintName):
+        """Check if sketch.Constraints.constraintName has an expression, if not return None"""
+        for name,value in sketch.ExpressionEngine:
+            if name.endswith(constraintName):
+                expr = value.replace(".Constraints", f"<<{sketch.Label}>>.Constraints")
+                if ".Constraints" in expr:
+                    expr = f"href({expr})" # prevents circular reference
+                return expr
+        return None
+
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         # should never get here, so no need for this code -- command won't be active in these cases
@@ -2008,13 +2018,13 @@ It will import the named constraints from the sketch and reset them to
 point to the dd object.  After the import is done you should make changes
 to the dd object property rather than to the constraint itself.
 
-All imports come in as values.
+If the constraint contains an expression, the expression will be copied over to
+the new dd property, otherwise the import will be by value.
 
-For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2
+Constraint names ending in underscore (_) will be ignored.
+Sketch labels ending in underscore (_) are also ignored.
 
-For that reason, it might be necessary to rework some formulas in some cases.
-
-This operation can be undone, but you should save your document before proceeding.""",
+This operation can be undone.  It is advised to save your document before doing the import.""",
 items, 0 , False, windowFlags)
         if not ok or item == items[-1]:
             return
@@ -2029,7 +2039,11 @@ items, 0 , False, windowFlags)
 DynamicData: Skipping reference mode constraint: {con.Name} because linking by expression would cause a cyclic \
 dependency and linking by value would produce an incorrect value should the reference value change.\n")
                     continue
-                constraints.append({'constraintName':con.Name,'value':con.Value,'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch})
+                expr = self.getExpression(sketch, con.Name)
+                # print(f"expr = {expr}, sketch.Label = {sketch.Label}, con.Name = {con.Name}")
+                constraints.append({'expression':expr, 'constraintName':con.Name,'value':con.Value,\
+                            'constraintType':con.Type,'sketchLabel':sketch.Label, 'sketch':sketch, \
+                            'driving': con.Driving})
 
         if len(constraints) == 0:
             FreeCAD.Console.PrintMessage('DynamicData: No named constraints found.\n')
@@ -2054,6 +2068,7 @@ dependency and linking by value would produce an incorrect value should the refe
             if not hasattr(self.dd,importedName): #avoid adding the same property again
                 self.dd.addProperty(f"App::Property{propertyType}", importedName, con['sketchLabel'],f"[{propertyType}] constraint type: [{con['constraintType']}]")
                 setattr(self.dd, importedName, value)
+                self.dd.setExpression(importedName, con['expression'])
                 FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {importedName} to dd object\n")
                 sketch = con['sketch']
                 sketch.setExpression(f"Constraints.{name}", f"<<{self.dd.Label}>>.{importedName}")

@@ -168,7 +168,7 @@ To prevent a named constraint from being imported, append an underscore to the c
 
 To use this feature, select your dd object and one or more sketches to be imported, then invoke the command either from the menu or the toolbar.  New properties of type `Length` will be added to the dd object for each named constraint found except `Angle` type will be used for `Angle` constraint types.
 
-**Care should be taken if the constraint uses the expression engine because only the value of the expression is used, not the expression itself, which could be a formula or a reference to some other constraint, property, or spreadsheet alias.**  For example, suppose you have a constraint named `radius` with an expression `Sketch.length*2` with a value of 2.75mm.  This would create a new property in the dd object named `radius` with a value of 2.75mm and the constraint is now set to `dd.radius`.  The upshot of this is if you change the value of the `Sketch.length` constraint the `radius` property is **NOT** updated.  In such cases you should alter the value of the `radius` property so that it once again references that length property, presumably now called `length`.
+As of version 2.66 now the imports are expression aware and will copy the expression used by the named constraint if it has an expression.  The expression will be wrapped inside an href() to prevent circular references since the constraint itself gets an expression linking it back to the dd object.
 
 This operation can be undone with FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, and the newly created dd property objects will be removed.  It is suggested to save your file before using this feature, and then carefully ensure you are satisfied with the import before saving again.
 
@@ -223,6 +223,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2024.10.03 (version 2.66)<br/>
+** when importing named constraints copy the expression if it has one.
 * 2024.10.01 (version 2.65)<br/>
 ** fix update checking, broken due to recent changes to addon manager
 * 2024.09.28 (version 2.64)<br/>
