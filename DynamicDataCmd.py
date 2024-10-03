@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.10.01"
-__version__ = "2.65"
+__date__    = "2024.10.03"
+__version__ = "2.67"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -1988,11 +1988,21 @@ class DynamicDataImportNamedConstraintsCommandClass(DynamicDataBaseCommandClass)
 
     def getExpression(self, sketch, constraintName):
         """Check if sketch.Constraints.constraintName has an expression, if not return None"""
-        for name,value in sketch.ExpressionEngine:
+        #pattern to find ".Constraints" at the start or preceded by a space
+        constraints_pattern = rf'(^|\s)(\.Constraints\.\S+)'
+
+        for name, value in sketch.ExpressionEngine:
             if name.endswith(constraintName):
-                expr = value.replace(".Constraints", f"<<{sketch.Label}>>.Constraints")
-                if ".Constraints" in expr:
-                    expr = f"href({expr})" # prevents circular reference
+                #replace ".Constraints" at the start or after a space with "<<sketch.Label>>.Constraints"
+                expr = re.sub(constraints_pattern, rf'\1<<{sketch.Label}>>\2', value)
+                #print(f"expr = {expr} before lambda")
+                #pattern to find any sketch's ".Constraints.xxx" and wrap it in href()
+                #assumes Constraints.xxx is followed by a space or is at the end of the string
+                expr = re.sub(r'\b(\S+\.Constraints\.\S+)\b', lambda m: f"href({m.group(0)})", expr)
+                #print(f"expr = {expr} after lambda")
+                #above sometimes gives <<href(sketchLabel>>.Constraints...)
+                expr = expr.replace("<<href(", "href(<<")
+                #print(f"massaged expr = {expr}")
                 return expr
         return None
 
@@ -2019,7 +2029,11 @@ point to the dd object.  After the import is done you should make changes
 to the dd object property rather than to the constraint itself.
 
 If the constraint contains an expression, the expression will be copied over to
-the new dd property, otherwise the import will be by value.
+the new dd property, otherwise the import will be by value.  These references
+must be placed inside href() wrappers to prevent circular references, but this
+can sometimes lead to the dd object still being touched after a recompute, so
+you might get those error messages.  These can be ignored except they are telling
+you to manually recompute the dd object so it finishes getting updated.
 
 Constraint names ending in underscore (_) will be ignored.
 Sketch labels ending in underscore (_) are also ignored.
