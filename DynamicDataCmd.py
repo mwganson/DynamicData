@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.10.03"
-__version__ = "2.67"
+__date__    = "2024.10.04"
+__version__ = "2.68"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -1855,6 +1855,43 @@ class DynamicDataImportAliasesCommandClass(DynamicDataBaseCommandClass):
                 'MenuText': "&Import Aliases",
                 'ToolTip' : "Import aliases from selected spreadsheet(s) into selected dd object"}
 
+    def getExpression(self, sheet, alias, aliases):
+        """Get the expression if there is one, modify it, and return it, else None if there is no expression."""
+
+        cell = sheet.getCellFromAlias(alias)  # e.g. "B2"
+        contents = sheet.getContents(cell)
+        #if an expression contents will be for example: "=B2 + 3 * Box.Height"
+        #this must be modified to be: "href(<<Spreadsheet.Label>>.B2) + 3 * Box.Height"
+        #aliases must also be wrapped in href() and prepended with the sheet label)
+
+        if not contents.startswith("="):
+            return None #not an expression
+
+        #remove the '='
+        expression = contents[1:].strip()
+
+        #match valid cell references like "B2", "ZY179"
+        #note that spreadsheet validation disallows these to be aliases, but we
+        #treat them the same anyway, so we don't care either way'
+        cellRefPattern = re.compile(r'\b[A-Z]+[0-9]+\b')
+
+        #split the expression into tokens (delimited by spaces)
+        tokens = expression.split()
+
+        moddedTokens = []
+        for token in tokens:
+            if token in aliases:
+                moddedTokens.append(f'href(<<{sheet.Label}>>.{token})')
+            #check if valid cell reference
+            elif cellRefPattern.match(token):
+                moddedTokens.append(f'href(<<{sheet.Label}>>.{token})')
+            else:
+                #all else unchanged
+                moddedTokens.append(token)
+
+        newExpression = ' '.join(moddedTokens)
+        return newExpression
+
     def Activated(self):
 
         doc = self.dd.Document
@@ -1866,15 +1903,14 @@ class DynamicDataImportAliasesCommandClass(DynamicDataBaseCommandClass):
         window = QtGui.QApplication.activeWindow()
         items = ["Do the import, I know what I\'m doing","Cancel"]
         item, ok = QtGui.QInputDialog.getItem(window,'DynamicData: Sanity Check',
-"""Warning: This will modify your spreadsheet.
+"""Warning: This will modify your spreadsheet.  Undo with Ctrl+Z Undo if it doesn't look right.
 
 It will import the aliases from the spreadsheet and reset them to
 point to the dd object.  After the import is done you should make any changes
 to the dd property rather than to the alias cell in the spreadsheet.
 
-All imports come in as values, not as expressions.
-
-For example: diameter=radius*2 imports as 10.0 mm, not as an expression radius*2
+Expressions are now imported as expressions wrapped inside href() to prevent
+circular reference errors.
 
 You should still keep your spreadsheet because other expressions referencing aliases in the
 spreadsheet will still be referencing them.  The difference is now the spreadsheet cells
@@ -1937,7 +1973,11 @@ items, 0, False, windowFlags)
                     setattr(self.dd,name,userString)
                     FreeCAD.Console.PrintMessage(f"DynamicData: adding property: {name} to {self.dd.Label}, resetting spreadsheet: \
                         {sheet.Label}.{alias} to point to {self.dd.Label}.{name}\n")
+                    expr = self.getExpression(sheet, alias, aliases)
                     sheet.set(alias, f"={self.dd.Label}.{name}")
+
+                    if expr: #will be None if not an expression
+                        self.dd.setExpression(name, expr)
                 else:
                     FreeCAD.Console.PrintWarning(f"DynamicData: skipping existing property: {name}\n")
                 continue

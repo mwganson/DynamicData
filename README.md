@@ -150,7 +150,7 @@ To use this feature, select your dd object and one or more spreadsheets to be im
 
 Once you have imported the aliases you should still keep the spreadsheet because other FreeCAD objects, example sketch constraints, that were referencing the aliases before the import will still be referencing them.  Difference is now the spreadsheet references the container object property.  Keep the spreadsheet, but only make modifications to the values in the dd property editor.  Otherwise, the changes made in the spreadsheet will break the connection to the dd object property.
 
-Another important consideration is the imports are done by value and not by reference.  In other words, suppose you have an aliased cell with a formula such as `=B1 * A2 - C3`.  The import will be whatever value that formula evaluates to *at the time of the import*.  If you later modify the contents of B1, A2, or C3, those changes *do not* get propagated to the dd object property.  In other words, if `B1 * A2 - C3` evalates to 15.23, then 15.23 is what gets imported.  I've hesitated to include this feature mostly because of this issue that could come up, but I've decided to let the user decide for himself whether to use this or not.
+Now, as of version 2.68, cells consisting of expressions will be imported as expressions instead of by value.  Hopefully, all the references will remain intact.  These must be wrapped inside href() to prevent FreeCAD from refusing to add the expression due to circular references.  This could on occasion requre an additional manual recompute of the dd object, so if this happens you can safely ignore the error message you get about dd still being touched.  Care must be taken when importing expressions not to create a circular reference.
 
 This operation can be undone using FreeCAD's undo toolbar command.  The undo operation will undo the changes made to the imported spreadsheet, resetting all cells back to their former state, and it will remove the newly created properties from the dd object.  Still, it is recommended to save your document before using this feature.  "Save and save often," a wise man once said about FreeCAD.
 
@@ -223,6 +223,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2024.10.04 (version 2.68)<br/>
+** handle expressions in imported aliases
 * 2024.10.03 (version 2.67)<br/>
 ** fix bug in importing expressions from named constraints, must check if the expression pointsto another sketch, too.
 * 2024.10.03 (version 2.66)<br/>
