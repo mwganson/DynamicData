@@ -65,13 +65,14 @@ class DynamicDataWorkbench(Workbench):
                     "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
                     "DynamicDataImportAliases","DynamicDataCopyProperty",
-                    "DynamicDataRenameProperty","DynamicDataSetTooltip",
+                    "DynamicDataRenameProperty","DynamicDataRetypeProperty",
+                    "DynamicDataSetTooltip",
                     "DynamicDataMoveToNewGroup","DynamicDataSettings",
                     "DynamicDataCommands"] # A list of command names created in the line above
         if pg.GetBool("CondensedToolbar", True):
             self.appendToolbar("DynamicData Commands",  [self.list[-1]]) # leave DDCommands off toolbar
         else:
-            self.appendToolbar("DynamicData Commands", self.list[:-5])
+            self.appendToolbar("DynamicData Commands", self.list[:-6])
         self.appendMenu("&DynamicData", self.list) # creates a new menu
         #considered putting the menu inside the Edit menu, but decided against it
         #self.appendMenu(["&Edit","DynamicData"],self.list) # appends a submenu to an existing menu

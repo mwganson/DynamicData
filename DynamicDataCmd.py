@@ -1712,6 +1712,98 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
 
 #Gui.addCommand("DynamicDataRenameProperty", DynamicDataRenamePropertyCommandClass())
 ########################################################################################
+
+# Retype a custom dynamic property
+
+class DynamicDataRetyePropertyCommandClass(DynamicDataBaseCommandClass):
+    """Retype Property Command"""
+    def __init__(self):
+        self.obj = None
+
+    def GetResources(self):
+        return {'Pixmap'  : '',
+                'MenuText': "Ret&ype Property",
+                'Accel'   : "Ctrl+Shift+D,Y",
+                'ToolTip' : "Retype a dynamic property"}
+
+    def getProperty(self,obj):
+        props = self.getDynamicProperties(obj)
+        if props:
+            items = props
+            if len(items) == 1:
+                return items[0]
+            item, ok = QtGui.QInputDialog.getItem(FreeCADGui.getMainWindow(), "Retype", "Select property to retype:", items, editable=False)
+            if not ok:
+                return []
+            return item
+        else:
+            FreeCAD.Console.PrintError(f"{obj.Label} has no dynamic properties to retype\n")
+            return None
+
+    def getNewPropertyType(self, obj, prop):
+        """get from user new type for this property"""
+
+        curType = self.obj.getTypeIdOfProperty(prop)
+        newType, ok = QtGui.QInputDialog.getItem(FreeCADGui.getMainWindow(), "Retype",
+        f""" <span>
+Current type is {curType[13:]}.<br/><br/>
+<span style='color: red;'>
+THIS CANNOT BE UNDONE!  CANCEL AND SAVE YOUR FILE <br/>
+JUST IN CASE IT DOES NOT WORK!<br/>
+</span><br/>
+
+Select new type for {prop}:<br/> </span>
+
+""", self.PropertyTypes, editable=False)
+
+        return f"App::Property{newType}" if ok else ""
+
+    def Activated(self):
+        doc = self.obj.Document
+        prop = self.getProperty(self.obj) #string name of property
+        if not prop:
+            return
+        newType = self.getNewPropertyType(self.obj, prop)
+        if not newType:
+            return
+
+        docu = self.obj.getDocumentationOfProperty(prop)
+        group = self.obj.getGroupOfProperty(prop)
+        val = getattr(self.obj, prop)
+
+        self.obj.removeProperty(prop)
+        self.obj.addProperty(newType, prop, group, docu)
+        try:
+            setattr(self.obj, prop, val)
+        except:
+            FreeCAD.Console.PrintError(f"""
+DynamicData: Unable to reset property value {val} for new property of type {newType}
+for property {prop} of {self.obj.Label}, using default value for properties of
+this type. You will need to set the value manually.\n""")
+
+        if self.obj in FreeCADGui.Selection.getSelection():
+            FreeCADGui.Selection.removeSelection(self.obj)
+            FreeCADGui.Selection.addSelection(self.obj)
+        doc.recompute()
+        return
+
+    def IsActive(self):
+        if not FreeCAD.ActiveDocument:
+            return False
+        selection = Gui.Selection.getSelection()
+        if len(selection) == 1 and self.getDynamicProperties(selection[0]):
+            self.obj = selection[0]
+            return True
+        #where nothing is selected and there is only one dd object, use that object
+        if len(selection) == 0:
+            dds = [obj for obj in FreeCAD.ActiveDocument.Objects if hasattr(obj,"DynamicData")]
+            if len(dds) == 1:
+                self.obj = dds[0]
+                return True
+        return False
+
+#Gui.addCommand("DynamicDataRetypeProperty", DynamicDataRetypePropertyCommandClass())
+########################################################################################
 # Set the tooltip of a dynamic property
 
 class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
@@ -2840,7 +2932,8 @@ Gui.addCommand("DynamicDataMoveToNewGroup", DynamicDataMoveToNewGroupCommandClas
 Gui.addCommand("DynamicDataImportNamedConstraints", DynamicDataImportNamedConstraintsCommandClass())
 Gui.addCommand("DynamicDataImportAliases", DynamicDataImportAliasesCommandClass())
 Gui.addCommand("DynamicDataRenameProperty",DynamicDataRenamePropertyCommandClass())
-Gui.addCommand("DynamicDataSetTooltip",DynamicDataSetTooltipCommandClass())
+Gui.addCommand("DynamicDataRetypeProperty", DynamicDataRetyePropertyCommandClass())
+Gui.addCommand("DynamicDataSetTooltip", DynamicDataSetTooltipCommandClass())
 Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
 Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 Gui.addCommand("DynamicDataCommands", DynamicDataCommands())
