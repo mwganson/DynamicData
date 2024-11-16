@@ -30,6 +30,8 @@ global main_dynamicdataWB_Icon
 main_dynamicdataWB_Icon = os.path.join(dynamicdataWB_icons_path , 'DynamicDataLogo.svg')
 global contextMenuAdded
 contextMenuAdded = False
+global pg
+pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
 
 #def myFunc(string):
 #    print (string)
@@ -45,7 +47,6 @@ contextMenuAdded = False
 # Initialize the workbench
 class DynamicDataWorkbench(Workbench):
 
-
     global main_dynamicdataWB_Icon
 
     MenuText = "DynamicData"
@@ -60,7 +61,6 @@ class DynamicDataWorkbench(Workbench):
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
         import DynamicDataCmd #needed files for FreeCAD commands
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty",
                     "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
@@ -83,11 +83,19 @@ class DynamicDataWorkbench(Workbench):
 
     def Activated(self):
         """This function is executed when the workbench is activated."""
-        import requests
+        try:
+            import requests
+            hasRequests = True
+            hasRequests = False #testing
+        except:
+            hasRequests = False
         import xml.etree.ElementTree as ET
 
         def get_remote_version(user, repo, branch='master'):
             # GitHub raw URL for package.xml
+            if not hasRequests:
+                FreeCAD.Console.PrintWarning("DynamicData updater: The requests package was not found, cannot check for updates.  Install requests package or disable auotomatic update checking in DynamicData settings to prevent this warning message.\n")
+                return None
             url = f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/package.xml"
             try:
                 response = requests.get(url)
@@ -120,7 +128,6 @@ class DynamicDataWorkbench(Workbench):
         repo = "DynamicData"
         branch = "master"
 
-        pg = FreeCAD.ParamGet("User parameter:/Preferences/Mod/DynamicData")
         checkUpdates = pg.GetBool("CheckForUpdates", True)
 
         if checkUpdates:
@@ -142,7 +149,6 @@ class DynamicDataWorkbench(Workbench):
         window = QtGui.QApplication.activeWindow()
         #freecad hides wb toolbars on leaving wb, we unhide ours here to keep it around
         #if the user has it set in parameters to do so
-        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
         keep = pg.GetBool('KeepToolbar',True)
         if not keep:
             return
