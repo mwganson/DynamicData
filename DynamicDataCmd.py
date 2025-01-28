@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2024.11.06"
-__version__ = "2.69"
+__date__    = "2022.01.28"
+__version__ = "2.71"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -166,6 +166,7 @@ class DynamicDataBaseCommandClass:
             "Speed",
             "String",
             "StringList",
+            "Temperature",
             "Vector",
             "VectorList",
             "VectorDistance",
@@ -1159,6 +1160,7 @@ class MultiTextInput(QtGui.QDialog):
             "Rotation": "create(<<rotation>>; create(<<vector>>;1;0;0);45)",
             "String": "Your string here",
             "StringList": "[a;b;c]",
+            "Temperature": "0.00 K",
             "Precision": "1e-7",
 
 
@@ -1176,6 +1178,14 @@ class MultiTextInput(QtGui.QDialog):
         skiplist = ["StringList","Font"]
         if self.Current in skiplist:
             self.label4.setText("")
+            return
+        elif self.Current == "Temperature":
+            if "C" in val or "F" in val:
+                self.label4.setStyleSheet("color:red;")
+                self.label4.setText("Note: F and C units not supported.")
+            else:
+                self.label4.setText(val)
+                self.label4.setStyleSheet("color:black;")
             return
         elif self.Current == "LinkSubList":
             try:
