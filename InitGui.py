@@ -48,6 +48,7 @@ pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
 class DynamicDataWorkbench(Workbench):
 
     global main_dynamicdataWB_Icon
+    global hasRequests
 
     MenuText = "DynamicData"
     ToolTip = "DynamicData workbench"
@@ -85,6 +86,7 @@ class DynamicDataWorkbench(Workbench):
         """This function is executed when the workbench is activated."""
         try:
             import requests
+            global hasRequests
             hasRequests = True
             hasRequests = False #testing
         except:
@@ -93,9 +95,15 @@ class DynamicDataWorkbench(Workbench):
 
         def get_remote_version(user, repo, branch='master'):
             # GitHub raw URL for package.xml
+            global hasRequests
             if not hasRequests:
-                FreeCAD.Console.PrintWarning("DynamicData updater: The requests package was not found, cannot check for updates.  Install requests package or disable auotomatic update checking in DynamicData settings to prevent this warning message.\n")
-                return None
+                # check again if requests module is now available
+                try:
+                    import requests
+                    hasRequests = True
+                except:
+                    FreeCAD.Console.PrintWarning("DynamicData updater: The requests package was not found, cannot check for updates.  Install requests package or disable auotomatic update checking in DynamicData settings to prevent this warning message.\n")
+                    return None
             url = f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/package.xml"
             try:
                 response = requests.get(url)
