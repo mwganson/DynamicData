@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2025.02.26"
-__version__ = "2.72"
+__date__    = "2025.02.27"
+__version__ = "2.73"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -1540,7 +1540,7 @@ class DynamicDataMoveToNewGroupCommandClass(DynamicDataBaseCommandClass):
     """Move properties to new group"""
 
     def GetResources(self):
-        return {'Pixmap'  : "",
+        return {'Pixmap'  : os.path.join(iconPath , 'MoveToGroup.svg'),
                 'MenuText': "Move to new &group",
                 'Accel'   : "Ctrl+Shift+D,G",
                 'ToolTip' : "Move dynamic properties to new group.\n\
@@ -1622,7 +1622,7 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
         self.obj = None
 
     def GetResources(self):
-        return {'Pixmap'  : '',
+        return {'Pixmap'  : os.path.join(iconPath , 'RenameProperty.svg'),
                 'MenuText': "Re&name Property",
                 'Accel'   : "Ctrl+Shift+D,N",
                 'ToolTip' : "Rename a dynamic property"}
@@ -1666,7 +1666,7 @@ class DynamicDataRenamePropertyCommandClass(DynamicDataBaseCommandClass):
            returns a list of tuples in the form: [(object, propertyname, expression),]
         """
         inExprs = []
-        inobjs = [o for o in obj.InList]
+        inobjs = [obj] + [o for o in obj.InList]
         for inobj in inobjs:
             for expr in inobj.ExpressionEngine:
                 if prop in expr[1]:
@@ -1731,7 +1731,7 @@ class DynamicDataRetyePropertyCommandClass(DynamicDataBaseCommandClass):
         self.obj = None
 
     def GetResources(self):
-        return {'Pixmap'  : '',
+        return {'Pixmap'  : os.path.join(iconPath , 'RetypeProperty.svg'),
                 'MenuText': "Ret&ype Property",
                 'Accel'   : "Ctrl+Shift+D,Y",
                 'ToolTip' : "Retype a dynamic property"}
@@ -1822,7 +1822,7 @@ class DynamicDataSetTooltipCommandClass(DynamicDataBaseCommandClass):
         self.obj = None
 
     def GetResources(self):
-        return {'Pixmap'  : '',
+        return {'Pixmap'  : os.path.join(iconPath , 'SetTooltip.svg'),
                 'MenuText': "Se&t Tooltip",
                 'Accel'   : "Ctrl+Shift+D,T",
                 'ToolTip' : "Set the tooltip of a dynamic property"}
@@ -2918,6 +2918,7 @@ class DynamicDataCommands:
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
                     "DynamicDataImportAliases","DynamicDataCopyProperty",
                     "DynamicDataRenameProperty","DynamicDataSetTooltip",
+                    "DynamicDataRetypeProperty",
                     "DynamicDataMoveToNewGroup","DynamicDataSettings"]) # a tuple of command names that you want to group
 
     def GetDefaultCommand(self): # return the index of the tuple of the default command. This method is optional and when not implemented '0' is used
