@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2025.02.27"
-__version__ = "2.73"
+__date__    = "2025.04.12"
+__version__ = "2.74"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -101,7 +101,7 @@ class DynamicDataBaseCommandClass:
         def accept(self):
             self.selected = []
             for cb in self.checkBoxes:
-                if cb.checkState():
+                if cb.isChecked():
                     self.selected.append(cb.text())
             super().accept()
 
@@ -1561,7 +1561,7 @@ Only works with dynamic properties"}
             FreeCAD.Console.PrintError(f"DynamicData::Error -- no groups of {self.obj.Label} may be renamed\n")
             return
         if len(items)==0:
-            FreeCAD.Console.PrintMessage("DyanmicData: no properties.\n")
+            FreeCAD.Console.PrintMessage("DynamicData: no properties.\n")
             return
         items.insert(0,"<All groups>")
         item,ok = QtGui.QInputDialog.getItem(window,'DynamicData','Move properties to new group tool.\n\n\
