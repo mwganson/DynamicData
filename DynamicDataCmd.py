@@ -2625,11 +2625,19 @@ Break expression binding for selected property of {self.obj1.Label}""")
             cyclicMsg2 = f"\nCircular dependency because {self.obj1.Label} already depends on {self.obj2.Label}." if cyclicMatch2 else ""
             cyclicClr1 = ["blue","red"][int(cyclicMatch1 or typeMismatch)]
             cyclicClr2 = ["blue","red"][int(cyclicMatch2 or typeMismatch)]
-
-            copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} to a new property in {self.obj1.Label}","blue")
-            copyRightMsg = (f"Copy {self.obj1.Label}{vobj1}.{self.Obj1PropName} to a new property in {self.obj2.Label}","blue")
-            setLeftMsg = (f"Set {self.obj1.Label}{vobj1}.{self.Obj1PropName} to value of {self.obj2.Label}{vobj2}.{self.Obj2PropName}{typeMsg}",typeClr)
-            setRightMsg = (f"Set {self.obj2.Label}{vobj2}.{self.Obj2PropName} to value of {self.obj1.Label}{vobj1}.{self.Obj1PropName}{typeMsg}",typeClr)
+            radioBtn = self.btnGroup.checkedButton()
+            msg = ""
+            value_or_expression = "value"
+            if radioBtn.objectName() in ["setLeftBtn", "setRightBtn", "copyLeftBtn", "copyRightBtn"]:
+                self.byExpressionCheckBox.setEnabled(True)
+                if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                    value_or_expression = "expression"
+            elif radioBtn.objectName() in ["bindLeftBtn", "bindRightBtn", "breakBindLeftBtn", "breakBindRightBtn"]:
+                self.byExpressionCheckBox.setEnabled(False)
+            copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} {value_or_expression} to a new property in {self.obj1.Label}","blue")
+            copyRightMsg = (f"Copy {self.obj1.Label}{vobj1}.{self.Obj1PropName} {value_or_expression} to a new property in {self.obj2.Label}","blue")
+            setLeftMsg = (f"Set {self.obj1.Label}{vobj1}.{self.Obj1PropName} to {value_or_expression} of {self.obj2.Label}{vobj2}.{self.Obj2PropName}{typeMsg}",typeClr)
+            setRightMsg = (f"Set {self.obj2.Label}{vobj2}.{self.Obj2PropName} to {value_or_expression} of {self.obj1.Label}{vobj1}.{self.Obj1PropName}{typeMsg}",typeClr)
             if not vobj2:
                 bindLeftMsg = (f"Bind {self.obj2.Label}.{self.Obj2PropName} to {self.obj1.Label}.{self.Obj1PropName}{typeMsg}{cyclicMsg2}",typeClr2)
             else:
@@ -2661,16 +2669,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 "breakBindLeftBtn" : breakBindLeftMsg,
                 "breakBindRightBtn" : breakBindRightMsg,
             }
-            radioBtn = self.btnGroup.checkedButton()
-            msg = ""
-            if radioBtn.objectName() in ["setLeftBtn", "setRightBtn", "copyLeftBtn", "copyRightBtn"]:
-                self.byExpressionCheckBox.setEnabled(True)
-                if self.hasExpr() and self.byExpressionCheckBox.isChecked():
-                    msg = " | Mode: Expression"
-                else:
-                    msg = " | Mode: Value"
-            elif radioBtn.objectName() in ["bindLeftBtn", "bindRightBtn", "breakBindLeftBtn", "breakBindRightBtn"]:
-                self.byExpressionCheckBox.setEnabled(False)
+
             dq = "\"" #double quote
             self.updateOkButtonText()
             self.okBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and close dialog")
