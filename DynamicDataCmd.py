@@ -2379,12 +2379,14 @@ Break expression binding for selected property of {self.obj1.Label}""")
             hbox = QtGui.QHBoxLayout()
 
             # Checkbox on the left
-            self.byExpressionCheckBox = QtGui.QCheckBox("Use Expression")
+            self.byExpressionCheckBox = QtGui.QCheckBox("Copy expressions")
             self.byExpressionCheckBox.setToolTip(
                 "If checked, properties that have expressions are set as expressions on the other side."
             )
             self.byExpressionCheckBox.stateChanged.connect(self.checkBoxClicked)
             self.byExpressionCheckBox.setChecked(self.pg.GetBool("UseExpression", False))
+            self.byExpressionCheckBox.setObjectName("byExpressionCheckBox")
+            self.byExpressionCheckBox.setEnabled(False)  # initially disabled
 
             hbox.addWidget(self.byExpressionCheckBox)
 
@@ -2661,11 +2663,14 @@ Break expression binding for selected property of {self.obj1.Label}""")
             }
             radioBtn = self.btnGroup.checkedButton()
             msg = ""
-            if radioBtn.objectName() in ["setLeftBtn", "setRightBtn"]:
+            if radioBtn.objectName() in ["setLeftBtn", "setRightBtn", "copyLeftBtn", "copyRightBtn"]:
+                self.byExpressionCheckBox.setEnabled(True)
                 if self.hasExpr() and self.byExpressionCheckBox.isChecked():
                     msg = " | Mode: Expression"
                 else:
                     msg = " | Mode: Value"
+            elif radioBtn.objectName() in ["bindLeftBtn", "bindRightBtn", "breakBindLeftBtn", "breakBindRightBtn"]:
+                self.byExpressionCheckBox.setEnabled(False)
             dq = "\"" #double quote
             self.updateOkButtonText()
             self.okBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and close dialog")
@@ -2676,8 +2681,8 @@ Break expression binding for selected property of {self.obj1.Label}""")
 
         def hasExpr(self):
             btn = self.btnGroup.checkedButton()
-            return btn and btn.objectName() == "setLeftBtn" and self.Obj2Expression or \
-                    btn.objectName() == "setRightBtn" and self.Obj1Expression
+            return btn and btn.objectName() in ["setLeftBtn", "copyLeftBtn"] and not self.Obj1IsView and self.Obj2Expression or \
+                    btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
         
         def getNewPropertyName(self, obj, candidate):
             """When creating a new property and already there is a property with that
@@ -2702,12 +2707,20 @@ Break expression binding for selected property of {self.obj1.Label}""")
             except:
                 FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj1.Label}")
                 return False
-            try:
-                setattr(self.obj1, propName, self.Obj2Value)
-                return True
-            except:
-                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj2Value}, but property was created.\n")
-                return False
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj1.setExpression(propName, self.Obj2Expression)
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{propName} to {self.Obj2Expression}\n")
+                    return False
+            else:
+                try:
+                    setattr(self.obj1, propName, self.Obj2Value)
+                    return True
+                except:
+                    FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj2Value}, but property was created.\n")
+                    return False
 
         def copyRight(self):
             """copy the selected property from the list on the left to the object (self.obj2) on the right
@@ -2722,12 +2735,20 @@ Break expression binding for selected property of {self.obj1.Label}""")
             except:
                 FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj2.Label}")
                 return False
-            try:
-                setattr(self.obj2, propName, self.Obj1Value)
-                return True
-            except:
-                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj1Value}, but property was created.\n")
-                return False
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj2.setExpression(propName, self.Obj1Expression)
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{propName} to {self.Obj1Expression}\n")
+                    return False
+            else:
+                try:
+                    setattr(self.obj2, propName, self.Obj1Value)
+                    return True
+                except:
+                    FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj1Value}, but property was created.\n")
+                    return False
 
         def setLeft(self):
             """sets an existing property of self.obj1 to the same value of selected property in right side list"""
@@ -2744,10 +2765,8 @@ DynamicData warning: {self.obj1.Label}.{self.Obj1PropName} was bound by an expre
                 self.obj1.setExpression(self.Obj1PropName, None)
             if self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    if not self.Obj2IsView:
-                        self.obj1.setExpression(self.Obj1PropName, self.Obj2Expression)
-                    else:
-                        self.obj1.ViewObject.setExpression(self.Obj1PropName, self.Obj2Expression)
+                    self.obj1.setExpression(self.Obj1PropName, self.Obj2Expression)
+                    return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Expression}\n")
                     return False
@@ -2775,12 +2794,9 @@ while {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
                 FreeCAD.Console.PrintWarning(f"""
 DynamicData warning: {self.obj2.Label}.{self.Obj2PropName} was bound by an expression:\n{self.Obj2Expression}\nbut it has now been cleared.""")
                 self.obj2.setExpression(self.Obj2PropName, None)
-            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+            if not self.Obj1IsView and self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    if not self.Obj1IsView:
-                        self.obj2.setExpression(self.Obj2PropName, self.Obj1Expression)
-                    else:
-                        self.obj2.ViewObject.setExpression(self.Obj2PropName, self.Obj1Expression)
+                    self.obj2.setExpression(self.Obj2PropName, self.Obj1Expression)
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Expression}\n")
