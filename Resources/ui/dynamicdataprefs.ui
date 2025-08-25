@@ -87,25 +87,6 @@
     </widget>
    </item>
    <item>
-    <widget class="Gui::PrefCheckBox" name="CopyLocalRefs">
-     <property name="toolTip">
-      <string>If enabled, Dynamic Data will copy local expression refs eg. Length without object name and a dot preceding it.</string>
-     </property>
-     <property name="text">
-      <string>Copy local expression refs verbatim</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <property name="prefEntry" stdset="0">
-      <cstring>CopyLocalRefs</cstring>
-     </property>
-     <property name="prefPath" stdset="0">
-      <cstring>Mod/DynamicData</cstring>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="Gui::PrefCheckBox" name="AddToActiveContainer">
      <property name="toolTip">
       <string>If enabled, Dynamic Data table will be added into active container rather than at document root</string>
