@@ -89,7 +89,7 @@
    <item>
     <widget class="Gui::PrefCheckBox" name="CopyLocalRefs">
      <property name="toolTip">
-      <string>If enabled, Dynamic Data will copy local expression refs eg. Lenght without object name and a dot preceding it.</string>
+      <string>If enabled, Dynamic Data will copy local expression refs eg. Length without object name and a dot preceding it.</string>
      </property>
      <property name="text">
       <string>Copy local expression refs verbatim</string>
