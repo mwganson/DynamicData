@@ -2683,6 +2683,29 @@ Break expression binding for selected property of {self.obj1.Label}""")
             return btn and btn.objectName() in ["setLeftBtn", "copyLeftBtn"] and not self.Obj1IsView and self.Obj2Expression or \
                     btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
         
+        def vaidateExpr(self, srcObj, dstObj, srcProp, expr):
+            copyLocal = self.pgetBool("CopyLocalRefs", True)
+            valid = True
+            if copyLocal:
+                try:
+                    dstObj.evalExpression(expr) #will raise if invalid
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: expression validation error: {e}\n")
+                    valid = False
+            if not valid or not copyLocal:
+                #replace local references to properties of srcObj with <<srcObj.Label>>.Property
+                #so that the expression continues to work after being copied to dstObj
+                #but only if dstObj does not already have a property with that name
+                #otherwise, the expression will be ambiguous and likely fail
+                replaceLocalRe = re.compile(f"(?<!\.)({'|'.join(srcObj.PropertiesList)})")
+                expr = replaceLocalRe.sub(f"<<{srcObj.Label}>>.\\1", expr)
+                try:
+                    dstObj.evalExpression(expr) #will raise if invalid
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: expression validation error after massaging local refs: {e}\n")
+                    valid = False
+            return expr if valid else None
+
         def getNewPropertyName(self, obj, candidate):
             """When creating a new property and already there is a property with that
             same name, we can ask the user for a preferred new property name"""
@@ -2795,7 +2818,8 @@ DynamicData warning: {self.obj2.Label}.{self.Obj2PropName} was bound by an expre
                 self.obj2.setExpression(self.Obj2PropName, None)
             if not self.Obj1IsView and self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    self.obj2.setExpression(self.Obj2PropName, self.Obj1Expression)
+                    # replace any word (\w) with .\1
+                    self.obj2.setExpression(self.Obj2PropName, self.Obj1Expression.replace("(\w+)", ".\\1"))
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Expression}\n")
