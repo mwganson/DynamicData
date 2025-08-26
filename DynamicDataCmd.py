@@ -2683,35 +2683,33 @@ Break expression binding for selected property of {self.obj1.Label}""")
             return btn and btn.objectName() in ["setLeftBtn", "copyLeftBtn"] and not self.Obj1IsView and self.Obj2Expression or \
                     btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
         
-        def vaidateExpr(self, srcObj, dstObj, expr):
-                replaceLocalRe = re.compile(f"\b({'|'.join(srcObj.PropertiesList)})\b")
-                previous = expr
-                failed = False
+        def validateExpr(self, srcObj, dstObj, expr):
+            replaceLocalRe = re.compile(f"\\b({'|'.join(srcObj.PropertiesList)})\\b")
+            previous = expr
+            failed = False
+            try:
+                label = " " in srcObj.Label and f"<<{srcObj.Label}>>" or srcObj.Label
+                expr = replaceLocalRe.sub(f"{label}.\\1", expr)
+                dstObj.evalExpression(expr) #will raise if invalid
+            except Exception as e:
+                FreeCAD.Console.PrintWarning(f"DynamicData: expression validation failed: {expr}\n{e}\n")
+                failed = True
+                expr = previous
+            # qt dialog to edit expression if user wants
+            if previous != expr or failed:
+                new_expr, ok = QtGui.QInputDialog.getText(self, "Edit Ambiguous Local Expression",
+                                                f"Edit expression with label added for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}: ", text=expr)
+                if not new_expr or not ok:
+                    FreeCAD.Console.PrintError("DynamicData: operation cancelled by user.\n")
+                expr = new_expr
                 try:
-                    expr = replaceLocalRe.sub(f"<<{srcObj.Label}>>.\\1", expr)
                     dstObj.evalExpression(expr) #will raise if invalid
                 except Exception as e:
-                    failed = True
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} validating expression {expr} for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}\n")
-                    FreeCAD.Console.PrintError("DynamicData: you can edit the expression in the next dialog, or cancel to abort the operation.\n")
-                    expr = previous
-                    
-                # qt dialog to edit expression if user wants
-                if previous != expr or failed:
-                    new_expr, ok = QtGui.QInputDialog.getText(self, "Edit Expression",
-                                                    f"Edit expression for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}: ", text=expr)
-                    if not new_expr or not ok:
-                        FreeCAD.Console.PrintError("DynamicData: operation cancelled by user.\n")
-                    expr = new_expr
-                    try:
-                        dstObj.evalExpression(expr) #will raise if invalid
-                    except Exception as e:
-                        FreeCAD.Console.PrintError(f"DynamicData: error {e} validating expression {expr} for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}\n")
-                        FreeCAD.Console.PrintError("DynamicData: operation cancelled due to invalid expression.\n")
-                        expr = None
+                    FreeCAD.Console.PrintError("DynamicData: operation cancelled due to invalid expression.\n")
+                    expr = None
 
-                return expr
-                        
+            return expr
 
         def getNewPropertyName(self, obj, candidate):
             """When creating a new property and already there is a property with that
@@ -2738,7 +2736,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return False
             if self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    self.obj1.setExpression(propName, self.vaidateExpr(self.obj2, self.obj1, self.Obj2Expression))
+                    self.obj1.setExpression(propName, self.validateExpr(self.obj2, self.obj1, self.Obj2Expression))
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{propName} to {self.Obj2Expression}\n")
@@ -2766,7 +2764,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return False
             if self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    self.obj2.setExpression(propName, self.vaidateExpr(self.obj1, self.obj2, self.Obj1Expression))
+                    self.obj2.setExpression(propName, self.validateExpr(self.obj1, self.obj2, self.Obj1Expression))
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{propName} to {self.Obj1Expression}\n")
@@ -2794,7 +2792,7 @@ DynamicData warning: {self.obj1.Label}.{self.Obj1PropName} was bound by an expre
                 self.obj1.setExpression(self.Obj1PropName, None)
             if self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    self.obj1.setExpression(self.Obj1PropName, self.vaidateExpr(self.obj2, self.obj1, self.Obj2Expression))
+                    self.obj1.setExpression(self.Obj1PropName, self.validateExpr(self.obj2, self.obj1, self.Obj2Expression))
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Expression}\n")
@@ -2825,7 +2823,7 @@ DynamicData warning: {self.obj2.Label}.{self.Obj2PropName} was bound by an expre
                 self.obj2.setExpression(self.Obj2PropName, None)
             if not self.Obj1IsView and self.hasExpr() and self.byExpressionCheckBox.isChecked():
                 try:
-                    self.obj2.setExpression(self.Obj2PropName, self.vaidateExpr(self.obj1, self.obj2, self.Obj1Expression))
+                    self.obj2.setExpression(self.Obj2PropName, self.validateExpr(self.obj1, self.obj2, self.Obj1Expression))
                     return True
                 except Exception as e:
                     FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Expression}\n")
