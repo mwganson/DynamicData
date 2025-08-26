@@ -2629,9 +2629,12 @@ Break expression binding for selected property of {self.obj1.Label}""")
             msg = ""
             value_or_expression = "value"
             if radioBtn.objectName() in ["setLeftBtn", "setRightBtn", "copyLeftBtn", "copyRightBtn"]:
-                self.byExpressionCheckBox.setEnabled(True)
-                if self.hasExpr() and self.byExpressionCheckBox.isChecked():
-                    value_or_expression = "expression"
+                if self.hasExpr():
+                    self.byExpressionCheckBox.setEnabled(True)
+                    if self.byExpressionCheckBox.isChecked():
+                        value_or_expression = "expression"
+                else:
+                    self.byExpressionCheckBox.setEnabled(False)
             elif radioBtn.objectName() in ["bindLeftBtn", "bindRightBtn", "breakBindLeftBtn", "breakBindRightBtn"]:
                 self.byExpressionCheckBox.setEnabled(False)
             copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} {value_or_expression} to a new property in {self.obj1.Label}","blue")
