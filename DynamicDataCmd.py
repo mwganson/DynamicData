@@ -2684,7 +2684,9 @@ Break expression binding for selected property of {self.obj1.Label}""")
                     btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
         
         def validateExpr(self, srcObj, dstObj, expr):
-            replaceLocalRe = re.compile(f"\\b({'|'.join(srcObj.PropertiesList)})\\b")
+            tre = f"(?<!\\.)({'|'.join(srcObj.PropertiesList)})\\b"
+            FreeCAD.Console.PrintMessage(f"DynamicData: validating {tre}\n")
+            replaceLocalRe = re.compile(f"(?<!\\.)({'|'.join(srcObj.PropertiesList)})\\b")
             previous = expr
             failed = False
             try:
