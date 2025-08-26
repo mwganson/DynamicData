@@ -227,6 +227,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2025.08.24 (version 2.75)<br/>
+** add support for copying expressions -- thanks @fivethreeo<br/>
 * 2025.04.12 (version 2.74)<br/>
 ** fix bug introduced with transition from pyside2 to pyside6 in the move to group comand<br/>
 * 2025.02.27 (version 2.73)<br/>
