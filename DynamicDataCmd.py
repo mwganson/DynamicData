@@ -2687,8 +2687,6 @@ Break expression binding for selected property of {self.obj1.Label}""")
                     btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
         
         def validateExpr(self, srcObj, dstObj, expr):
-            tre = f"(?<!\\w\\.)({'|'.join(srcObj.PropertiesList)})\\b"
-            FreeCAD.Console.PrintMessage(f"DynamicData: validating {tre}\n")
             replaceLocalRe = re.compile(f"(?<!\\w\\.)\\.?({'|'.join(srcObj.PropertiesList)})\\b")
             previous = expr
             failed = False
@@ -2707,13 +2705,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 if not new_expr or not ok:
                     FreeCAD.Console.PrintError("DynamicData: operation cancelled by user.\n")
                 expr = new_expr
-                try:
-                    dstObj.evalExpression(expr) #will raise if invalid
-                except Exception as e:
-                    FreeCAD.Console.PrintError(f"DynamicData: error {e} validating expression {expr} for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}\n")
-                    FreeCAD.Console.PrintError("DynamicData: operation cancelled due to invalid expression.\n")
-                    expr = None
-
+            # no need to validate again, let setExpression handle it if it's bad
             return expr
 
         def getNewPropertyName(self, obj, candidate):
