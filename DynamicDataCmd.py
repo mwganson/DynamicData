@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2025.04.12"
-__version__ = "2.74"
+__date__    = "2025.08.24"
+__version__ = "2.75"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -2260,6 +2260,9 @@ dependency and linking by value would produce an incorrect value should the refe
 class DynamicDataCopyPropertyCommandClass(DynamicDataBaseCommandClass):
     """Copy Property Command"""
     class CopyDlg(QtGui.QDialog):
+
+        pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
+
         def __init__(self, cmd, obj1, obj2):
             super(DynamicDataCopyPropertyCommandClass.CopyDlg, self).__init__(Gui.getMainWindow())
             self.setAttribute(QtCore.Qt.WA_WindowPropagation, True)
@@ -2372,10 +2375,33 @@ Break expression binding for selected property of {self.obj1.Label}""")
             self.okBtn.setToolTip("Apply action and close dialog")
             self.applyBtn = QtGui.QPushButton("Apply")
             self.buttons.addButton(self.applyBtn, QtGui.QDialogButtonBox.ApplyRole)
+            # --- Container for checkbox + button box ---
+            hbox = QtGui.QHBoxLayout()
+
+            # Checkbox on the left
+            self.byExpressionCheckBox = QtGui.QCheckBox("Copy expressions")
+            self.byExpressionCheckBox.setToolTip(
+                "If checked, properties that have expressions are set as expressions on the other side."
+            )
+            self.byExpressionCheckBox.stateChanged.connect(self.checkBoxClicked)
+            self.byExpressionCheckBox.setChecked(self.pg.GetBool("UseExpression", False))
+            self.byExpressionCheckBox.setObjectName("byExpressionCheckBox")
+            self.byExpressionCheckBox.setEnabled(False)  # initially disabled
+
+            hbox.addWidget(self.byExpressionCheckBox)
+
+            # Spacer in between
+            hbox.addStretch(1)
+
+            # Button box (Ok / Cancel / Apply) on the right
+            hbox.addWidget(self.buttons)
+
+            # Put the whole row into the grid
+            self.layout.addLayout(hbox, 14, 0, 1, 5)
+
             self.buttons.accepted.connect(self.accept)
             self.buttons.rejected.connect(self.reject)
             self.applyBtn.clicked.connect(self.apply)
-            self.layout.addWidget(self.buttons, 14, 0, 1, 3)
             self.blockSignals(False)
             self.updateStatus()
 
@@ -2558,10 +2584,22 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return self.obj2.getDocumentationOfProperty(self.Obj2PropName)
             else:
                 return self.obj2.ViewObject.getDocumentationOfProperty(self.Obj2PropName)
-
-        def radioBtnClicked(self, button):
-            #print(f"radio button clicked = {button.objectName()}")
+            
+        def radioBtnClicked(self, btn):
+            self.updateOkButtonText()
             self.updateStatus()
+
+        def checkBoxClicked(self, state):
+            """called when checkbox is clicked, updates ok button text"""
+            self.updateOkButtonText()
+            self.updateStatus()
+
+        def updateOkButtonText(self):
+            btn = self.btnGroup.checkedButton()
+            text = btn.text()
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                text += " (Expr)"
+            self.okBtn.setText(text)
 
         def updateStatus(self):
             """updates the status label to give a preview of the action to be performed"""
@@ -2587,11 +2625,22 @@ Break expression binding for selected property of {self.obj1.Label}""")
             cyclicMsg2 = f"\nCircular dependency because {self.obj1.Label} already depends on {self.obj2.Label}." if cyclicMatch2 else ""
             cyclicClr1 = ["blue","red"][int(cyclicMatch1 or typeMismatch)]
             cyclicClr2 = ["blue","red"][int(cyclicMatch2 or typeMismatch)]
-
-            copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} to a new property in {self.obj1.Label}","blue")
-            copyRightMsg = (f"Copy {self.obj1.Label}{vobj1}.{self.Obj1PropName} to a new property in {self.obj2.Label}","blue")
-            setLeftMsg = (f"Set {self.obj1.Label}{vobj1}.{self.Obj1PropName} to value of {self.obj2.Label}{vobj2}.{self.Obj2PropName}{typeMsg}",typeClr)
-            setRightMsg = (f"Set {self.obj2.Label}{vobj2}.{self.Obj2PropName} to value of {self.obj1.Label}{vobj1}.{self.Obj1PropName}{typeMsg}",typeClr)
+            radioBtn = self.btnGroup.checkedButton()
+            msg = ""
+            value_or_expression = "value"
+            if radioBtn.objectName() in ["setLeftBtn", "setRightBtn", "copyLeftBtn", "copyRightBtn"]:
+                if self.hasExpr():
+                    self.byExpressionCheckBox.setEnabled(True)
+                    if self.byExpressionCheckBox.isChecked():
+                        value_or_expression = "expression"
+                else:
+                    self.byExpressionCheckBox.setEnabled(False)
+            elif radioBtn.objectName() in ["bindLeftBtn", "bindRightBtn", "breakBindLeftBtn", "breakBindRightBtn"]:
+                self.byExpressionCheckBox.setEnabled(False)
+            copyLeftMsg = (f"Copy {self.obj2.Label}{vobj2}.{self.Obj2PropName} {value_or_expression} to a new property in {self.obj1.Label}","blue")
+            copyRightMsg = (f"Copy {self.obj1.Label}{vobj1}.{self.Obj1PropName} {value_or_expression} to a new property in {self.obj2.Label}","blue")
+            setLeftMsg = (f"Set {self.obj1.Label}{vobj1}.{self.Obj1PropName} to {value_or_expression} of {self.obj2.Label}{vobj2}.{self.Obj2PropName}{typeMsg}",typeClr)
+            setRightMsg = (f"Set {self.obj2.Label}{vobj2}.{self.Obj2PropName} to {value_or_expression} of {self.obj1.Label}{vobj1}.{self.Obj1PropName}{typeMsg}",typeClr)
             if not vobj2:
                 bindLeftMsg = (f"Bind {self.obj2.Label}.{self.Obj2PropName} to {self.obj1.Label}.{self.Obj1PropName}{typeMsg}{cyclicMsg2}",typeClr2)
             else:
@@ -2623,16 +2672,41 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 "breakBindLeftBtn" : breakBindLeftMsg,
                 "breakBindRightBtn" : breakBindRightMsg,
             }
-            radioBtn = self.btnGroup.checkedButton()
-            self.okBtn.setText(radioBtn.text())
+
             dq = "\"" #double quote
+            self.updateOkButtonText()
             self.okBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and close dialog")
             self.applyBtn.setToolTip(f"Apply {dq}{radioBtn.text()}{dq} action and reopen dialog")
             msgTuple = msg_map[radioBtn.objectName()]
             self.statusLabel.setStyleSheet(f"color:{msgTuple[1]};")
-            self.statusLabel.setText(msgTuple[0])
+            self.statusLabel.setText(f"{msgTuple[0]}{msg}")
 
-
+        def hasExpr(self):
+            btn = self.btnGroup.checkedButton()
+            return btn and btn.objectName() in ["setLeftBtn", "copyLeftBtn"] and not self.Obj1IsView and self.Obj2Expression or \
+                    btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
+        
+        def validateExpr(self, srcObj, dstObj, expr):
+            replaceLocalRe = re.compile(f"(?<!\\w\\.)\\.?({'|'.join(srcObj.PropertiesList)})\\b")
+            previous = expr
+            failed = False
+            try:
+                label = " " in srcObj.Label and f"<<{srcObj.Label}>>" or srcObj.Label
+                expr = replaceLocalRe.sub(f"{label}.\\1", expr)
+                dstObj.evalExpression(expr) #will raise if invalid
+            except Exception as e:
+                FreeCAD.Console.PrintWarning(f"DynamicData: expression validation failed: {expr}\n{e}\n")
+                failed = True
+                expr = previous
+            # qt dialog to edit expression if user wants
+            if previous != expr or failed:
+                new_expr, ok = QtGui.QInputDialog.getText(self, "Edit Ambiguous Local Expression",
+                                                f"Edit expression with label added for {dstObj.Label}.{self.Obj1PropName if dstObj==self.obj1 else self.Obj2PropName}: ", text=expr)
+                if not new_expr or not ok:
+                    FreeCAD.Console.PrintError("DynamicData: operation cancelled by user.\n")
+                expr = new_expr
+            # no need to validate again, let setExpression handle it if it's bad
+            return expr
 
         def getNewPropertyName(self, obj, candidate):
             """When creating a new property and already there is a property with that
@@ -2644,6 +2718,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return None
 
             return new_name
+        
         def copyLeft(self):
             """copy the selected property from the list on the right to the object (self.obj1) on the left
             returns None if user aborts, False if there was some error, True on success
@@ -2656,12 +2731,20 @@ Break expression binding for selected property of {self.obj1.Label}""")
             except:
                 FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj1.Label}")
                 return False
-            try:
-                setattr(self.obj1, propName, self.Obj2Value)
-                return True
-            except:
-                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj2Value}, but property was created.\n")
-                return False
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj1.setExpression(propName, self.validateExpr(self.obj2, self.obj1, self.Obj2Expression))
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{propName} to {self.Obj2Expression}\n")
+                    return False
+            else:
+                try:
+                    setattr(self.obj1, propName, self.Obj2Value)
+                    return True
+                except:
+                    FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj2Value}, but property was created.\n")
+                    return False
 
         def copyRight(self):
             """copy the selected property from the list on the left to the object (self.obj2) on the right
@@ -2676,12 +2759,20 @@ Break expression binding for selected property of {self.obj1.Label}""")
             except:
                 FreeCAD.Console.PrintError(f"DynamicData: Error adding {propName} to {self.obj2.Label}")
                 return False
-            try:
-                setattr(self.obj2, propName, self.Obj1Value)
-                return True
-            except:
-                FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj1Value}, but property was created.\n")
-                return False
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj2.setExpression(propName, self.validateExpr(self.obj1, self.obj2, self.Obj1Expression))
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{propName} to {self.Obj1Expression}\n")
+                    return False
+            else:
+                try:
+                    setattr(self.obj2, propName, self.Obj1Value)
+                    return True
+                except:
+                    FreeCAD.Console.PrintError(f"DynamicData: Error setting {propName} to {self.Obj1Value}, but property was created.\n")
+                    return False
 
         def setLeft(self):
             """sets an existing property of self.obj1 to the same value of selected property in right side list"""
@@ -2696,15 +2787,23 @@ while {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
                 FreeCAD.Console.PrintWarning(f"""
 DynamicData warning: {self.obj1.Label}.{self.Obj1PropName} was bound by an expression:\n{self.Obj1Expression}\nbut it has now been cleared.""")
                 self.obj1.setExpression(self.Obj1PropName, None)
-            try:
-                if not self.Obj2IsView:
-                    setattr(self.obj1, self.Obj1PropName, self.Obj2Value)
-                else:
-                    setattr(self.obj1.ViewObject, self.Obj1PropName, self.Obj2Value)
-                return True
-            except Exception as e:
-                FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Value}\n")
-                return False
+            if self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj1.setExpression(self.Obj1PropName, self.validateExpr(self.obj2, self.obj1, self.Obj2Expression))
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Expression}\n")
+                    return False
+            else:
+                try:
+                    if not self.Obj2IsView:
+                        setattr(self.obj1, self.Obj1PropName, self.Obj2Value)
+                    else:
+                        setattr(self.obj1.ViewObject, self.Obj1PropName, self.Obj2Value)
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj1.Label}.{self.Obj1PropName} to {self.Obj2Value}\n")
+                    return False
 
         def setRight(self):
             """sets an existing property of self.obj2 to the same value of selected property in left side list"""
@@ -2719,15 +2818,23 @@ while {self.obj1.Label}.{self.Obj1PropName} is type {self.Obj1Type}""")
                 FreeCAD.Console.PrintWarning(f"""
 DynamicData warning: {self.obj2.Label}.{self.Obj2PropName} was bound by an expression:\n{self.Obj2Expression}\nbut it has now been cleared.""")
                 self.obj2.setExpression(self.Obj2PropName, None)
-            try:
-                if not self.Obj1IsView:
-                    setattr(self.obj2, self.Obj2PropName, self.Obj1Value)
-                else:
-                    setattr(self.obj2.ViewObject, self.Obj2PropName, self.Obj1Value)
-                return True
-            except Exception as e:
-                FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Value}\n")
-                return False
+            if not self.Obj1IsView and self.hasExpr() and self.byExpressionCheckBox.isChecked():
+                try:
+                    self.obj2.setExpression(self.Obj2PropName, self.validateExpr(self.obj1, self.obj2, self.Obj1Expression))
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Expression}\n")
+                    return False
+            else:
+                try:
+                    if not self.Obj1IsView:
+                        setattr(self.obj2, self.Obj2PropName, self.Obj1Value)
+                    else:
+                        setattr(self.obj2.ViewObject, self.Obj2PropName, self.Obj1Value)
+                    return True
+                except Exception as e:
+                    FreeCAD.Console.PrintError(f"DynamicData: error {e} setting {self.obj2.Label}.{self.Obj2PropName} to {self.Obj1Value}\n")
+                    return False
 
         def bindRight(self):
             """bind to the property on the right"""
@@ -2859,10 +2966,11 @@ which cannot be bound by expression.\n""")
                     self.obj1.Document.abortTransaction()
                 else:
                     self.obj1.Document.commitTransaction()
-
+            self.pg.SetBool("UseExpression", self.byExpressionCheckBox.isChecked())
             super().accept()
 
         def reject(self):
+            self.pg.SetBool("UseExpression", self.byExpressionCheckBox.isChecked())
             print("rejected")
             super().reject()
 
