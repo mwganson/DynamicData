@@ -5,7 +5,7 @@
   <version>2.75</version>
   <date>2025.08.24</date>
   <maintainer email="mwganson@gmail.com">TheMarkster</maintainer>
-  <license file="LICENSE">LGPL-2.1</license>
+  <license file="LICENSE">LGPL-2.1-or-later</license>
   <url type="repository" branch="master">https://github.com/mwganson/DynamicData</url>
   <url type="documentation">https://wiki.freecad.org/DynamicData_Workbench</url>
     <content>
