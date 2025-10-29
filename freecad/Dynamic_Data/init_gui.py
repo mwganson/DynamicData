@@ -22,7 +22,12 @@
 #
 #
 ###############################################################################
-import dynamicdatawb_locator
+
+import os
+import FreeCAD
+import FreeCADGui as Gui
+
+import freecad.Dynamic_Data.dynamicdatawb_locator as dynamicdatawb_locator
 dynamicdataWBPath = os.path.dirname(dynamicdatawb_locator.__file__)
 global dynamicdataWB_icons_path
 dynamicdataWB_icons_path = os.path.join(dynamicdataWBPath,'Resources','icons')
@@ -45,7 +50,7 @@ pg = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/DynamicData")
 
 ####################################################################################
 # Initialize the workbench
-class DynamicDataWorkbench(Workbench):
+class DynamicDataWorkbench(Gui.Workbench):
 
     global main_dynamicdataWB_Icon
     global hasRequests
@@ -61,7 +66,7 @@ class DynamicDataWorkbench(Workbench):
 
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
-        import DynamicDataCmd #needed files for FreeCAD commands
+        import freecad.Dynamic_Data.DynamicDataCmd as DynamicDataCmd #needed files for FreeCAD commands
         self.list = ["DynamicDataCreateObject", "DynamicDataAddProperty",
                     "DynamicDataEditEnumeration", "DynamicDataCreateConfiguration",
                     "DynamicDataRemoveProperty", "DynamicDataImportNamedConstraints",
@@ -130,7 +135,7 @@ class DynamicDataWorkbench(Workbench):
         def update_callback(latest_version):
             FreeCAD.Console.PrintWarning(f"DynamicData {latest_version} is now available in the Addon Manager.\n")
 
-        import DynamicDataCmd
+        import freecad.Dynamic_Data.DynamicDataCmd as DynamicDataCmd
         current_version = DynamicDataCmd.__version__
         user = "mwganson"
         repo = "DynamicData"

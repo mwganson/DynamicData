@@ -1,6 +1,6 @@
 # DynamicData Workbench
 
-![icon](Resources/icons/DynamicDataLogo.svg)
+![icon](freecad/Dynamic_Data/Resources/icons/DynamicDataLogo.svg)
 A [FreeCAD](https://freecad.org) workbench for creating and managing custom dynamic property container objects.
 
 ## Installation
@@ -15,21 +15,21 @@ With this workbench you can create custom FeaturePython objects to serve as cont
 
 ### Example Video:
 
-![animated gif example](Resources/media/example.gif)
+![animated gif example](Resources/Images/example.gif)
 
 ### Create Object
 
-![CreateObject icon](Resources/icons/CreateObject.svg)
+![CreateObject icon](freecad/Dynamic_Data/Resources/icons/CreateObject.svg)
 
 Creates a new DynamicData container object.  Since DynamicData was first written FreeCAD has allowed all objects to receive dynamic properties, so you could put the custom properties in any object, but in doing so there is greater risk of creating inadvertently circular references between objects.  Another advantage to creating this container object is if it is the only such dd object in the document, then many of the toolbar commands can be active even where no object is selected.  (But if another object is selected, then the commands, such as the command to add a new property, will attempt to work on that object.)
 
 ### Add Property
 
-![AddProperty icon](Resources/icons/AddProperty.svg)
+![AddProperty icon](freecad/Dynamic_Data/Resources/icons/AddProperty.svg)
 
 Adds a new custom property to the selected object.  The selected object need not be a DynamicData dd object.  If no object is selected this command will be disabled unless there is only one Dynamic Data (dd) object in the document, in which case the dd object will be used.
 
-![add property screenshot](Resources/media/add_property_scr.png)
+![add property screenshot](Resources/Images/add_property_scr.png)
 
 After selecting the property type, the next step is to give your new property a name and (optionally) a group name, tooltip, and an initial value.<br/>
 
@@ -38,7 +38,7 @@ All tooltips now get `[Type]` prepended.  Example, if type is `Length` the toolt
 
 Property names are no longer prepended with `dd` automatically.  The prefix is no longer needed with recent versions of FreeCAD where the bug in the expression engine has now been fixed.  If you wish to still continue using the dd prefix you can still do so when you create your property name.  I considered adding a preference for this, but rejected the idea after some deliberation, feeling it would unnecessary complicate the code.  Below is a screenshot of the expression engine property suggestion box that pops up when entering a property reference.
 
-![dd constraint reference screenshot](Resources/media/dd_constraint_reference_scr.png)
+![dd constraint reference screenshot](Resources/Images/dd_constraint_reference_scr.png)
 
 DynamicData's built-in evaluator has been replaced with FreeCAD's integrated expression evaluator.  This simplifies the code, and since the expression evaluator is what has the final say on how values get interpreted, this creates a more uniform format for property values.  But I still did some custom evaluations for some property types to make them easier for the user to input starting values.  For example, when setting the initial value for a new Vector property type you can simply enter "(10,20,30)" in the value field in DynamicData's add property dialog, but this won't work when entering it directly into the expression engine.  Behind the scenes in DynamicData some preprocessing is done to make that entry work.  Similarly, for the Color property types you can enter the desired color in 3 different formats, for example for the color red you could enter: "(255,0,0)" or "#ff0000" or simply "red" (without the quotes).  You can also leave the value field blank and later select the desired color from a color picker dialog in FreeCAD.
 
@@ -100,20 +100,20 @@ Since this evaluates to 0 or 1 depending on user selection it could be used as a
 For the Link property type (not App::Link objects, but the property that links to another object) you can simply enter the object's name or label.  If the evaluation label says "None" then that means it wasn't able to find the object.  Double check the spelling.  Something similar can be done for other Link types, such as LinkList and LinkSubList.  Follow the initial placeholder text for guidance on the syntax for setting the default values for advanced property types.  If there is already a value there in the Value field, clear it to see the placeholder text.
 
 ### Edit Enumerations
-![Edit Enumerations icon](Resources/icons/DynamicDataEditEnumerations.svg)
+![Edit Enumerations icon](freecad/Dynamic_Data/Resources/icons/DynamicDataEditEnumerations.svg)
 
 Use this tool to edit the enums in an Enumeration property.  If there are more than one enumeration properties in the document you can use the list widget in the dialog
 to select the enumeration property to edit.  Editing is just a matter of typing the new enums into the text field at the bottom of the dialog, one line per enum.  Note: you must have an enumeration property already in the object.  Create one with the add property tool, and then use this tool to edit it.  FreeCAD does provide an editor for these property types, but you have to jump through a few hoops to get to it.  Right click a property label -> show all, then expand the enumration in the tree, and click the [...] button to open the editor.  Or, you can edit them with DynamicData.
 
-![edit enumerations screenshot](Resources/media/edit_enumerations_scr.png)
+![edit enumerations screenshot](Resources/Images/edit_enumerations_scr.png)
 
 ### Create/Edit Configuration
-![Create/Edit Configuration icon](Resources/icons/DynamicDataCreateConfiguration.svg)
+![Create/Edit Configuration icon](freecad/Dynamic_Data/Resources/icons/DynamicDataCreateConfiguration.svg)
 
 Use this tool to create a configuration.  A configuration is a set of properties that are controlled by a single enumeration property.  The screenshot below shows the
 configuration editor dialog in v2.50.
 
-![Create/edit configuration screenshot](Resources/media/create_configuration_scr.png)
+![Create/edit configuration screenshot](Resources/Images/create_configuration_scr.png)
 
 The configuration name is the name of the enumeration property and also the name of the group that the properties that get created will go into.  Another group with this same name, but with "List" added to it is created, and in that group will be put the List properties needed for the configuration.
 
@@ -129,15 +129,15 @@ Toggle the Show help checkbox to see some additional information while the dialo
 
 ### Remove Property
 
-![RemoveProperty icon](Resources/icons/RemoveProperty.svg)
+![RemoveProperty icon](freecad/Dynamic_Data/Resources/icons/RemoveProperty.svg)
 
 Use this tool to remove a property previously added using the Add Property tool or the Copy property command.  Select the property in the list you would like to remove.  You may also choose to remove all properties in one go. This only works on dynamic properties that you have added, and not on an object's build=in properties, such as the Radius property of a Part workbench Cylinder primitive.  If you don't see the property in the dialog, then it could be because it is not a dynamic property.  **Note:** This action can be undone with Undo/Redo in FreeCAD.
 
-![remove property screenshot](Resources/media/remove_property_scr.png)
+![remove property screenshot](Resources/Images/remove_property_scr.png)
 
 ### Import Aliases
 
-![ImportAliases icon](Resources/icons/ImportAliases.svg)
+![ImportAliases icon](freecad/Dynamic_Data/Resources/icons/ImportAliases.svg)
 
 Use this to import aliases from selected spreadsheets as properties into selected object.  The selected object need not be a DynamicData dd object, but care must be taken to avoid circular references if not using a dd object.
 
@@ -158,7 +158,7 @@ This operation can be undone using FreeCAD's undo toolbar command.  The undo ope
 
 ### Import Named Constraints
 
-![ImportNamedConstraints icon](Resources/icons/ImportNamedConstraints.svg)
+![ImportNamedConstraints icon](freecad/Dynamic_Data/Resources/icons/ImportNamedConstraints.svg)
 
 Use this to import named constraints from selected sketches as properties into selected dd object.
 
@@ -173,11 +173,11 @@ As of version 2.66 now the imports are expression aware and will copy the expres
 This operation can be undone with FreeCAD's Undo toolbar icon (or CTRL+Z on Windows) the sketch will be reset back to its former state before the import, and the newly created dd property objects will be removed.  It is suggested to save your file before using this feature, and then carefully ensure you are satisfied with the import before saving again.
 
 ### Copy Property
-![CopyProperty icon](Resources/icons/CopyProperty.svg)
+![CopyProperty icon](freecad/Dynamic_Data/Resources/icons/CopyProperty.svg)
 
 In previous versions this feature was a combination of a number of input dialog prompts, but has now been consolidated into a single dialog.  Here is a screenshot of the new dialog.
 
-![copy property example screenshot](Resources/media/copy_property_scr.png)
+![copy property example screenshot](Resources/Images/copy_property_scr.png)
 
 In this dialog you can copy a property from one object to another (or make a copy of the property in the same object if you only select one object before executing the command). Copying, in this context, means to make a new property of the same type as the original property and set it to the same value as the original, same tooltip, and same group name.  You can also "set" a value of one property to the value of another.  Setting, in this context, means updating the value of an existing property.  The distinction between copying and setting is that in copying a new property is created, while in setting an existing property is modified.  You can also "bind" a property to another via the expression engine.  When a property is bound to another property, then whenever that property changes, the bound property will change with it.  For example, you might have a property named Length in your dd object and you would like the Length property of a PartDesign::Pad to update itself automatically when you change the Length property of the dd object.  You can accomplish this with the bind command by binding the Pad's Length property to the dd object's Length property.  The properties need not have the same name, but they must be the same property type or else the workbench will not execute the command.  (You still might be able to do it in FreeCAD in some cases, for example binding a Length property to a Float property.)
 
@@ -199,7 +199,7 @@ Move dynamic properties to a different group, or create a new group to put them 
 
 ### Settings
 
-![Settings icon](Resources/icons/Settings.svg)
+![Settings icon](freecad/Dynamic_Data/Resources/icons/Settings.svg)
 
 Use this to change workbench settings.
 
@@ -227,6 +227,8 @@ If this is True when you create a new dd object it will be added to the currentl
 When you add a new property type you are presented with a list of property types to select from. This list is sorted alphabetically beginning with "Acceleration".  But before we get to the "Acceleration" property type we have at the top of the list the most recently used property types, which are sorted in the order of most recently used.  This setting allows you to choose how many of the most recently used property types you want listed before we get to the rest of the alphabetized list.  A setting of 0 here would disable the most recently used list.  Default is 5.  Maximum is 25.  This value is stored in FreeCAD's parameters, accessible via Tools menu -> Edit Parameters.  This parameter is an Integer type in BaseApp -> Preferences -> Mod -> DynamicData -> mruLength.
 
 ### Release notes
+* 2025.10.29 (version 2.76)<br/>
+** internally reorganize python module structure -- thanks @PhoneDroid<br/>
 * 2025.08.24 (version 2.75)<br/>
 ** add support for copying expressions -- thanks @fivethreeo<br/>
 * 2025.04.12 (version 2.74)<br/>

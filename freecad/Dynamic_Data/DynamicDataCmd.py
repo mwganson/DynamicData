@@ -26,8 +26,8 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2025.08.24"
-__version__ = "2.75"
+__date__    = "2025.10.29"
+__version__ = "2.76"
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -2584,7 +2584,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return self.obj2.getDocumentationOfProperty(self.Obj2PropName)
             else:
                 return self.obj2.ViewObject.getDocumentationOfProperty(self.Obj2PropName)
-            
+
         def radioBtnClicked(self, btn):
             self.updateOkButtonText()
             self.updateStatus()
@@ -2685,7 +2685,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
             btn = self.btnGroup.checkedButton()
             return btn and btn.objectName() in ["setLeftBtn", "copyLeftBtn"] and not self.Obj1IsView and self.Obj2Expression or \
                     btn.objectName() in ["setRightBtn", "copyRightBtn"] and not self.Obj2IsView and self.Obj1Expression
-        
+
         def validateExpr(self, srcObj, dstObj, expr):
             replaceLocalRe = re.compile(f"(?<!\\w\\.)\\.?({'|'.join(srcObj.PropertiesList)})\\b")
             previous = expr
@@ -2718,7 +2718,7 @@ Break expression binding for selected property of {self.obj1.Label}""")
                 return None
 
             return new_name
-        
+
         def copyLeft(self):
             """copy the selected property from the list on the right to the object (self.obj1) on the left
             returns None if user aborts, False if there was some error, True on success
