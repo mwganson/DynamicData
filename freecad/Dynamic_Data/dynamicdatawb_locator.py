@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
 ###############################################################################
 #
 #  Copyright 2018 Mark Ganson <TheMarkster> mwganson at gmail
