@@ -26,8 +26,9 @@
 __title__   = "DynamicData"
 __author__  = "Mark Ganson <TheMarkster>"
 __url__     = "https://github.com/mwganson/DynamicData"
-__date__    = "2025.10.29"
-__version__ = "2.76"
+__date__    = "2025.11.26"
+__version__ = "2.77"
+
 version = float(__version__)
 mostRecentTypes=[]
 mostRecentTypesLength = 5 #will be updated from parameters
@@ -3056,4 +3057,3 @@ Gui.addCommand("DynamicDataSetTooltip", DynamicDataSetTooltipCommandClass())
 Gui.addCommand("DynamicDataSettings", DynamicDataSettingsCommandClass())
 Gui.addCommand("DynamicDataCopyProperty", DynamicDataCopyPropertyCommandClass())
 Gui.addCommand("DynamicDataCommands", DynamicDataCommands())
-
